@@ -504,7 +504,7 @@ class LoadImagesAndLabels(Dataset):
 
         # Read cache
         [cache.pop(k) for k in ('hash', 'version', 'msgs')]  # remove items
-        labels, shapes, self.segments = zip(*cache.values())
+        labels, shapes, self.segments, self.classification_labels = zip(*cache.values())
         nl = len(np.concatenate(labels, 0))  # number of labels
         assert nl > 0 or not augment, f'{prefix}All labels empty in {cache_path}, can not start training. {HELP_URL}'
         self.labels = list(labels)
@@ -615,13 +615,13 @@ class LoadImagesAndLabels(Dataset):
                         desc=desc,
                         total=len(self.im_files),
                         bar_format=TQDM_BAR_FORMAT)
-            for im_file, lb, shape, segments, nm_f, nf_f, ne_f, nc_f, msg in pbar:
+            for im_file, lb, shape, segments, nm_f, nf_f, ne_f, nc_f, msg, classification_line in pbar:
                 nm += nm_f
                 nf += nf_f
                 ne += ne_f
                 nc += nc_f
                 if im_file:
-                    x[im_file] = [lb, shape, segments]
+                    x[im_file] = [lb, shape, segments, classification_line]
                 if msg:
                     msgs.append(msg)
                 pbar.desc = f'{desc} {nf} images, {nm + ne} backgrounds, {nc} corrupt'
@@ -724,7 +724,14 @@ class LoadImagesAndLabels(Dataset):
         img = img.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
         img = np.ascontiguousarray(img)
 
-        return torch.from_numpy(img), labels_out, self.im_files[index], shapes
+        # Get classification label for this image
+        classification_label = self.classification_labels[index]
+        if classification_label is not None:
+            classification_tensor = torch.tensor([float(x) for x in classification_label], dtype=torch.float32)
+        else:
+            classification_tensor = torch.zeros(3, dtype=torch.float32)  # Default to [0,0,0]
+
+        return torch.from_numpy(img), labels_out, self.im_files[index], shapes, classification_tensor
 
     def load_image(self, i):
         # Loads 1 image from dataset index 'i', returns (im, original hw, resized hw)
@@ -893,10 +900,10 @@ class LoadImagesAndLabels(Dataset):
 
     @staticmethod
     def collate_fn(batch):
-        im, label, path, shapes = zip(*batch)  # transposed
+        im, label, path, shapes, classification_label = zip(*batch)  # transposed
         for i, lb in enumerate(label):
             lb[:, 0] = i  # add target image index for build_targets()
-        return torch.stack(im, 0), torch.cat(label, 0), path, shapes
+        return torch.stack(im, 0), torch.cat(label, 0), torch.stack(classification_label, 0), path, shapes
 
     @staticmethod
     def collate_fn4(batch):
@@ -1018,12 +1025,33 @@ def verify_image_label(args):
         if os.path.isfile(lb_file):
             nf = 1  # label found
             with open(lb_file) as f:
-                lb = [x.split() for x in f.read().strip().splitlines() if len(x)]
-                if any(len(x) > 6 for x in lb):  # is segment
-                    classes = np.array([x[0] for x in lb], dtype=np.float32)
-                    segments = [np.array(x[1:], dtype=np.float32).reshape(-1, 2) for x in lb]  # (cls, xy1...)
-                    lb = np.concatenate((classes.reshape(-1, 1), segments2boxes(segments)), 1)  # (cls, xywh)
-                lb = np.array(lb, dtype=np.float32)
+                lines = f.read().strip().splitlines()
+                # Handle combined detection + classification format
+                detection_lines = []
+                classification_line = None
+                
+                for line in lines:
+                    if len(line.strip()) == 0:
+                        continue
+                    parts = line.split()
+                    if len(parts) == 5:  # Detection line: class_id x y width height
+                        detection_lines.append(parts)
+                    elif len(parts) == 3:  # Classification line: one-hot encoding
+                        classification_line = parts
+                    else:
+                        # Skip malformed lines
+                        continue
+                
+                if detection_lines:
+                    lb = detection_lines
+                    if any(len(x) > 6 for x in lb):  # is segment
+                        classes = np.array([x[0] for x in lb], dtype=np.float32)
+                        segments = [np.array(x[1:], dtype=np.float32).reshape(-1, 2) for x in lb]  # (cls, xy1...)
+                        lb = np.concatenate((classes.reshape(-1, 1), segments2boxes(segments)), 1)  # (cls, xywh)
+                    lb = np.array(lb, dtype=np.float32)
+                else:
+                    lb = np.zeros((0, 5), dtype=np.float32)
+                    
             nl = len(lb)
             if nl:
                 assert lb.shape[1] == 5, f'labels require 5 columns, {lb.shape[1]} columns detected'
@@ -1041,11 +1069,11 @@ def verify_image_label(args):
         else:
             nm = 1  # label missing
             lb = np.zeros((0, 5), dtype=np.float32)
-        return im_file, lb, shape, segments, nm, nf, ne, nc, msg
+        return im_file, lb, shape, segments, nm, nf, ne, nc, msg, classification_line
     except Exception as e:
         nc = 1
         msg = f'{prefix}WARNING ⚠️ {im_file}: ignoring corrupt image/label: {e}'
-        return [None, None, None, None, nm, nf, ne, nc, msg]
+        return [None, None, None, None, nm, nf, ne, nc, msg, None]
 
 
 class HUBDatasetStats():

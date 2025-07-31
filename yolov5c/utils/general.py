@@ -370,14 +370,17 @@ def check_git_info(path='.'):
     import git
     try:
         repo = git.Repo(path)
-        remote = repo.remotes.origin.url.replace('.git', '')  # i.e. 'https://github.com/ultralytics/yolov5'
+        try:
+            remote = repo.remotes.origin.url.replace('.git', '')  # i.e. 'https://github.com/ultralytics/yolov5'
+        except:
+            remote = None
         commit = repo.head.commit.hexsha  # i.e. '3134699c73af83aac2a481435550b968d5792c0d'
         try:
             branch = repo.active_branch.name  # i.e. 'main'
         except TypeError:  # not on any branch
             branch = None  # i.e. 'detached HEAD' state
         return {'remote': remote, 'branch': branch, 'commit': commit}
-    except git.exc.InvalidGitRepositoryError:  # path is not a git dir
+    except:  # any git error
         return {'remote': None, 'branch': None, 'commit': None}
 
 
