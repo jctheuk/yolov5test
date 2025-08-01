@@ -4,3 +4,4 @@ test: ../Regurgitation-YOLODataset-Detection/test/images
 
 nc: 4
 names: ['AR', 'MR', 'PR', 'TR']
+cls_names: ['PSAX', 'PLAX', 'A4C']

@@ -160,14 +160,15 @@ def check_label_issues(dataset_path):
         if files:
             print(f"\n{issue_type.replace('_', ' ').title()}: {len(files)} files")
             for file in files[:10]:  # Show first 10
-                print(f"  - {file}")
+                full_path = os.path.join(dataset_path, file)
+                print(f"  - {full_path}")
             if len(files) > 10:
                 print(f"  ... and {len(files) - 10} more")
         else:
             print(f"\n{issue_type.replace('_', ' ').title()}: None found")
 
 def main():
-    dataset_path = "Regurgitation-YOLODataset-1new"
+    dataset_path = "Regurgitation-YOLODataset-Detection"
     
     print("=== YOLO Dataset Analysis ===")
     print(f"Dataset path: {dataset_path}")
