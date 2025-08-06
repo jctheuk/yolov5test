@@ -1119,3 +1119,81 @@ if Path(inspect.stack()[0].filename).parent.parent.as_posix() in inspect.stack()
     cv2.imread, cv2.imwrite, cv2.imshow = imread, imwrite, imshow  # redefine
 
 # Variables ------------------------------------------------------------------------------------------------------------
+
+
+def parse_model_output(model_output):
+    """
+    Parse model output to consistently handle dual outputs.
+    
+    Args:
+        model_output: Output from model forward pass
+        
+    Returns:
+        tuple: (detection_outputs, classification_output)
+            - detection_outputs: List[Tensor] - list of detection tensors
+            - classification_output: Tensor or None - classification tensor
+    """
+    if isinstance(model_output, tuple) and len(model_output) == 2:
+        detection_outputs, classification_output = model_output
+    else:
+        detection_outputs = model_output
+        classification_output = None
+    
+    # Handle case where detection_outputs is already a list (from YOLOv5 model)
+    if isinstance(detection_outputs, list):
+        # If it's a list, it should contain tensors
+        if len(detection_outputs) > 0 and not isinstance(detection_outputs[0], torch.Tensor):
+            # If the first element is not a tensor, this might be a nested list
+            # Flatten it to get the actual tensors
+            flattened = []
+            for item in detection_outputs:
+                if isinstance(item, list):
+                    flattened.extend(item)
+                else:
+                    flattened.append(item)
+            detection_outputs = flattened
+    elif isinstance(detection_outputs, torch.Tensor):
+        # If it's a single tensor, convert to list
+        detection_outputs = [detection_outputs]
+    else:
+        # Ensure detection_outputs is always a list
+        detection_outputs = [detection_outputs]
+    
+    # Final validation - ensure all elements are tensors
+    for i, output in enumerate(detection_outputs):
+        if not isinstance(output, torch.Tensor):
+            raise ValueError(f"Detection output {i} must be a tensor, got {type(output)}")
+    
+    return detection_outputs, classification_output
+
+
+def validate_detection_outputs(detection_outputs):
+    """
+    Validate that detection outputs are in the correct format.
+    
+    Args:
+        detection_outputs: List[Tensor] - detection outputs
+        
+    Returns:
+        bool: True if valid, raises error if invalid
+    """
+    if not isinstance(detection_outputs, list):
+        raise ValueError(f"Detection outputs must be a list, got {type(detection_outputs)}")
+    
+    for i, output in enumerate(detection_outputs):
+        if not isinstance(output, torch.Tensor):
+            raise ValueError(f"Detection output {i} must be a tensor, got {type(output)}")
+        
+        # During training, YOLOv5 outputs 5D tensors: (batch, anchors, height, width, detection_info)
+        # During inference, YOLOv5 outputs 4D tensors: (batch, channels, height, width)
+        # Or 3D tensors for concatenated inference outputs: (batch, detections, info)
+        if len(output.shape) not in [3, 4, 5]:
+            raise ValueError(f"Detection output {i} must have 3, 4, or 5 dimensions, got shape {output.shape}")
+        
+        # Additional validation for 5D tensors (training format)
+        if len(output.shape) == 5:
+            # Check that the last dimension contains detection info (typically 6 values: x, y, w, h, obj_conf, cls_conf)
+            if output.shape[-1] < 5:  # At minimum: x, y, w, h, obj_conf
+                raise ValueError(f"Detection output {i} 5D tensor last dimension must be >= 5, got {output.shape[-1]}")
+    
+    return True

@@ -1,10 +1,16 @@
-# YOLO Detection Dataset
-names:
-- AR
-- MR
-- PR
-- TR
-nc: 4
-train: C:/Users/darks/Desktop/yolov5test/Regurgitation-YOLODataset-Detection/train/images
-val: C:/Users/darks/Desktop/yolov5test/Regurgitation-YOLODataset-Detection/valid/images
-test: C:/Users/darks/Desktop/yolov5test/Regurgitation-YOLODataset-Detection/test/images
+# YOLO Multi-Task Dataset (Detection + Classification)
+# Detection: 4 classes (AR, MR, PR, TR) - Valve regurgitation types
+# Classification: 3 classes (PSAX, PLAX, A4C) - Echocardiogram views
+
+# Dataset paths (relative to yolov5c directory where training script runs)
+train: ../Regurgitation-YOLODataset-Detection/train/images
+val: ../Regurgitation-YOLODataset-Detection/valid/images
+test: ../Regurgitation-YOLODataset-Detection/test/images
+
+# Detection configuration
+nc: 4  # number of detection classes
+names: ['AR', 'MR', 'PR', 'TR']  # detection class names
+
+# Classification configuration
+num_cls: 3  # number of classification classes
+cls_names: ['PSAX', 'PLAX', 'A4C']  # classification class names

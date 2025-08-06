@@ -1,0 +1,10 @@
+# YOLOv5 Dataset Configuration
+names:
+- AR
+- MR
+- PR
+- TR
+nc: 4
+train: regurgitation-yolov5/train/images
+val: regurgitation-yolov5/valid/images
+test: regurgitation-yolov5/test/images

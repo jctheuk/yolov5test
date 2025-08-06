@@ -128,11 +128,28 @@ def run(
         # Inference
         with dt[1]:
             visualize = increment_path(save_dir / Path(path).stem, mkdir=True) if visualize else False
-            pred = model(im, augment=augment, visualize=visualize)
+            model_output = model(im, augment=augment, visualize=visualize)
+            
+            # Parse model output consistently
+            from utils.general import parse_model_output
+            pred, classification_output = parse_model_output(model_output)
+            
+            # For detection, we only use the detection outputs
+            # pred is already a list of tensors, we need to apply NMS to each
 
         # NMS
         with dt[2]:
-            pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
+            # Handle different prediction formats
+            if isinstance(pred, list):
+                # If pred is a list, apply NMS to each element
+                processed_preds = []
+                for p in pred:
+                    processed = non_max_suppression(p, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
+                    processed_preds.extend(processed)
+                pred = processed_preds
+            else:
+                # Single prediction tensor
+                pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
 
         # Second-stage classifier (optional)
         # pred = utils.general.apply_classifier(pred, classifier_model, im, im0s)

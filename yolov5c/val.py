@@ -191,93 +191,91 @@ def run(
     s = ('%22s' + '%11s' * 6) % ('Class', 'Images', 'Instances', 'P', 'R', 'mAP50', 'mAP50-95')
     tp, fp, p, r, f1, mp, mr, map50, ap50, map = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
     dt = Profile(), Profile(), Profile()  # profiling times
-    loss = torch.zeros(3, device=device)
+    loss = torch.zeros(4, device=device)  # box, obj, cls, cls_task
     jdict, stats, ap, ap_class = [], [], [], []
     callbacks.run('on_val_start')
     pbar = tqdm(dataloader, desc=s, bar_format=TQDM_BAR_FORMAT)  # progress bar
-    for batch_i, (im, targets, paths, shapes) in enumerate(pbar):
+    for batch_i, (im, labels, classification_labels, paths, shapes) in enumerate(pbar):
         callbacks.run('on_val_batch_start')
         with dt[0]:
             if cuda:
                 im = im.to(device, non_blocking=True)
-                targets = targets.to(device)
+                labels = labels.to(device)
             im = im.half() if half else im.float()  # uint8 to fp16/32
             im /= 255  # 0 - 255 to 0.0 - 1.0
             nb, _, height, width = im.shape  # batch size, channels, height, width
 
         # Inference
         with dt[1]:
-            preds, train_out = model(im) if compute_loss else (model(im, augment=augment), None)
+            # Get model outputs
+            model_output = model(im)
+            
+            # Parse model output consistently
+            from utils.general import parse_model_output, validate_detection_outputs
+            preds, classification_output = parse_model_output(model_output)
+            
+            # Validate detection outputs - preds should be a list of tensors
+            if isinstance(preds, list):
+                validate_detection_outputs(preds)
+            else:
+                # If preds is not a list, convert it to a list
+                preds = [preds] if isinstance(preds, torch.Tensor) else list(preds)
+                validate_detection_outputs(preds)
+            
+            # For loss computation, we need the same outputs
+            if compute_loss:
+                train_output = model_output
+            else:
+                train_output = None
+            
+            # Handle different output formats for predictions
+            if isinstance(preds, tuple) and len(preds) == 2:
+                preds, _ = preds  # Ignore classification for NMS
+            else:
+                preds = preds
 
         # Loss
         if compute_loss:
-            loss += compute_loss(train_out, targets)[1]  # box, obj, cls        # NMS
-        targets[:, 2:] *= torch.tensor((width, height, width, height), device=device)  # to pixels
-        lb = [targets[targets[:, 0] == i, 1:] for i in range(nb)] if save_hybrid else []  # for autolabelling
+            # For loss computation, we need training-mode outputs
+            model.train()  # Switch to training mode temporarily
+            with torch.no_grad():
+                train_output = model(im)  # Get training-mode outputs
+            model.eval()  # Switch back to evaluation mode
+            
+            # Parse training output for loss computation
+            train_detections, train_classification = parse_model_output(train_output)
+            # Only use detection output for loss computation
+            loss += compute_loss(train_detections, labels)[1]  # box, obj, cls, cls_task
+        labels[:, 2:] *= torch.tensor((width, height, width, height), device=device)  # to pixels
+        lb = [labels[labels[:, 0] == i, 1:] for i in range(nb)] if save_hybrid else []  # for autolabelling
+        # NMS
         with dt[2]:
-            if isinstance(preds, tuple) and len(preds) > 1:
-                # If preds is a tuple, assume it contains (detection_preds, class_preds)
-                det_preds, class_preds = preds
-                
-                # Process detection predictions
-                det_preds = non_max_suppression(det_preds,
-                                          conf_thres,
-                                          iou_thres,
-                                          labels=lb,
-                                          multi_label=True,
-                                          agnostic=single_cls,
-                                          max_det=max_det)
-                                          
-                # Store the processed detection predictions back in preds
-                preds = det_preds
-                  # Process classification batch for confusion matrix
-                # Use cleaner approach for classification labels
-                if hasattr(dataloader.dataset, 'classification_labels'):
-                    # If dataset provides classification labels directly
-                    batch_indices = targets[:, 0].long()  # Get batch indices
-                    class_labels = torch.tensor([dataloader.dataset.classification_labels[int(idx)] 
-                                              for idx in batch_indices], device=device)
-                elif targets.shape[1] >= 6:  # If targets has at least 6 columns, last column could be class labels
-                    class_labels = targets[:, -1].long()  # Get class labels from the last column
-                else:
-                    # Try to get classification labels from path if they're encoded in filename
-                    # Format: path might be .../class_1/image.jpg or .../image_class1.jpg
-                    batch_indices = targets[:, 0].long()  # Get batch indices
-                    try:
-                        image_paths = [Path(dataloader.dataset.im_files[int(idx)]).stem for idx in batch_indices]
-                        # Example parsing logic - adapt to your naming convention
-                        class_labels = torch.tensor([int(p.split('_')[-1]) if '_' in p else 0 
-                                                for p in image_paths], device=device)
-                    except:
-                        class_labels = None
-                
-                if class_labels is not None and class_labels.numel() > 0 and class_preds is not None:
-                    # Process classification batch for confusion matrix
-                    confusion_matrix.process_classification_batch(class_labels, class_preds.argmax(dim=1))
-                    LOGGER.info(f"Processed classification metrics for {len(class_labels)} images")
-            else:
-                # Normal detection-only case
-                preds = non_max_suppression(preds,
-                                          conf_thres,
-                                          iou_thres,
-                                          labels=lb,
-                                          multi_label=True,
-                                          agnostic=single_cls,
-                                          max_det=max_det)
+            # Process detection predictions - preds is already a list of tensors
+            processed_det_preds = []
+            for det_pred in preds:
+                processed_det = non_max_suppression(det_pred,
+                                              conf_thres,
+                                              iou_thres,
+                                              labels=lb,
+                                              multi_label=True,
+                                              agnostic=single_cls,
+                                              max_det=max_det)
+                processed_det_preds.extend(processed_det)
+            preds = processed_det_preds
 
         # Metrics
         for si, pred in enumerate(preds):
-            labels = targets[targets[:, 0] == si, 1:]
-            nl, npr = labels.shape[0], pred.shape[0]  # number of labels, predictions
+            target_labels = labels[labels[:, 0] == si, 1:]
+            nl, npr = target_labels.shape[0], pred.shape[0]  # number of labels, predictions
             path, shape = Path(paths[si]), shapes[si][0]
             correct = torch.zeros(npr, niou, dtype=torch.bool, device=device)  # init
             seen += 1
 
             if npr == 0:
                 if nl:
-                    stats.append((correct, *torch.zeros((2, 0), device=device), labels[:, 0]))
+                    stats.append((correct, *torch.zeros((2, 0), device=device), target_labels[:, 0]))
                     if plots:
-                        confusion_matrix.process_batch(detections=None, labels=labels[:, 0])
+                        confusion_matrix.process_batch(detections=None, labels=target_labels[:, 0])
                 continue
 
             # Predictions
@@ -288,13 +286,13 @@ def run(
 
             # Evaluate
             if nl:
-                tbox = xywh2xyxy(labels[:, 1:5])  # target boxes
+                tbox = xywh2xyxy(target_labels[:, 1:5])  # target boxes
                 scale_boxes(im[si].shape[1:], tbox, shape, shapes[si][1])  # native-space labels
-                labelsn = torch.cat((labels[:, 0:1], tbox), 1)  # native-space labels
+                labelsn = torch.cat((target_labels[:, 0:1], tbox), 1)  # native-space labels
                 correct = process_batch(predn, labelsn, iouv)
                 if plots:
                     confusion_matrix.process_batch(predn, labelsn)
-            stats.append((correct, pred[:, 4], pred[:, 5], labels[:, 0]))  # (correct, conf, pcls, tcls)
+            stats.append((correct, pred[:, 4], pred[:, 5], target_labels[:, 0]))  # (correct, conf, pcls, tcls)
 
             # Save/log
             if save_txt:
@@ -303,12 +301,49 @@ def run(
                 save_one_json(predn, jdict, path, class_map)  # append to COCO-JSON dictionary
             callbacks.run('on_val_image_end', pred, predn, path, names, im[si])
 
+        # Classification validation (if classification output exists)
+        if classification_output is not None:
+            from utils.classification_metrics import validate_classification_outputs
+            
+            # Extract classification targets from the label files
+            # The classification labels are embedded in the detection label files
+            cls_targets = []
+            for si, path in enumerate(paths):
+                label_path = Path(str(path).replace('images', 'labels')).with_suffix('.txt')
+                if label_path.exists():
+                    with open(label_path, 'r') as f:
+                        lines = f.readlines()
+                        if len(lines) >= 2:
+                            # Second line contains classification labels (one-hot encoded)
+                            cls_line = lines[1].strip().split()
+                            if len(cls_line) == 3:  # Should be 3 classes
+                                cls_target = int(cls_line.index('1'))  # Convert one-hot to class index
+                                cls_targets.append(cls_target)
+                            else:
+                                cls_targets.append(0)  # Default to class 0
+                        else:
+                            cls_targets.append(0)  # Default to class 0
+                else:
+                    cls_targets.append(0)  # Default to class 0
+            
+            # Convert to tensor
+            cls_targets = torch.tensor(cls_targets, device=device, dtype=torch.long)
+            
+            # Validate classification outputs with targets
+            cls_metrics = validate_classification_outputs(
+                classification_output=classification_output,
+                targets=cls_targets,
+                class_names=['PSAX', 'PLAX', 'A4C'],  # From your data.yaml
+                save_dir=save_dir if batch_i == 0 else None,  # Save only for first batch
+                verbose=verbose
+            )
+
         # Plot images
         if plots and batch_i < 3:
-            plot_images(im, targets, paths, save_dir / f'val_batch{batch_i}_labels.jpg', names)  # labels
+            plot_images(im, labels, paths, save_dir / f'val_batch{batch_i}_labels.jpg', names)  # labels
             plot_images(im, output_to_target(preds), paths, save_dir / f'val_batch{batch_i}_pred.jpg', names)  # pred
 
-        callbacks.run('on_val_batch_end', batch_i, im, targets, paths, shapes, preds)
+        callbacks.run('on_val_batch_end', batch_i, im, labels, paths, shapes, preds)
 
     # Compute metrics
     stats = [torch.cat(x, 0).cpu().numpy() for x in zip(*stats)]  # to numpy
@@ -376,7 +411,13 @@ def run(
     maps = np.zeros(nc) + map
     for i, c in enumerate(ap_class):
         maps[c] = ap[i]
-    return (mp, mr, map50, map, *(loss.cpu() / len(dataloader)).tolist()), maps, t
+    
+    # Prepare classification results if available
+    cls_results = None
+    if 'classification_metrics' in locals():
+        cls_results = classification_metrics
+    
+    return (mp, mr, map50, map, *(loss.cpu() / len(dataloader)).tolist()), maps, t, cls_results
 
 
 def parse_opt():

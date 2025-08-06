@@ -35,6 +35,7 @@ import numpy as np
 import torch
 import torch.distributed as dist
 import torch.nn as nn
+import torch.nn.functional as F
 import yaml
 from torch.optim import lr_scheduler
 from tqdm import tqdm
@@ -61,16 +62,159 @@ from utils.general import (LOGGER, TQDM_BAR_FORMAT, check_amp, check_dataset, ch
 from utils.loggers import Loggers
 from utils.loggers.comet.comet_utils import check_comet_resume
 from utils.loss import ComputeLoss
+from utils.dual_loss import ComputeDualLoss
 from utils.metrics import fitness
 from utils.plots import plot_evolve
 #add smartCrossEntropyLoss
 from utils.torch_utils import (EarlyStopping, ModelEMA, de_parallel, select_device, smart_DDP, smart_optimizer,
                                smart_resume, torch_distributed_zero_first, smartCrossEntropyLoss)
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
 RANK = int(os.getenv('RANK', -1))
 WORLD_SIZE = int(os.getenv('WORLD_SIZE', 1))
 GIT_INFO = check_git_info()
+
+
+def create_classification_labels_from_paths(image_paths, num_classes=3, cls_names=None):
+    """
+    Create classification labels from image paths based on filename patterns
+    Args:
+        image_paths: List of image file paths
+        num_classes: Number of classification classes
+        cls_names: List of classification class names
+    Returns:
+        torch.Tensor: One-hot encoded classification labels
+    """
+    batch_size = len(image_paths)
+    classification_labels = torch.zeros(batch_size, num_classes)
+    
+    # Default class names if not provided
+    if cls_names is None:
+        cls_names = ['PSAX', 'PLAX', 'A4C']
+    
+    for batch_idx, img_path in enumerate(image_paths):
+        filename = Path(img_path).name.lower()
+        
+        # Define view classes based on filename patterns
+        # Class 0: PSAX (Parasternal Short Axis)
+        # Class 1: PLAX (Parasternal Long Axis)  
+        # Class 2: A4C (Apical 4-Chamber)
+        
+        if any(keyword in filename for keyword in ['psax', 'parasternal_short', 'short_axis']):
+            classification_labels[batch_idx, 0] = 1.0  # PSAX
+        elif any(keyword in filename for keyword in ['plax', 'parasternal_long', 'long_axis']):
+            classification_labels[batch_idx, 1] = 1.0  # PLAX
+        elif any(keyword in filename for keyword in ['a4c', 'apical_4ch', '4ch', 'apical_4_chamber']):
+            classification_labels[batch_idx, 2] = 1.0  # A4C
+        else:
+            # Default to A4C if no clear pattern (most common view)
+            classification_labels[batch_idx, 2] = 1.0
+    
+    return classification_labels
+
+
+def plot_classification_metrics(cls_results, save_dir, epoch):
+    """
+    Plot classification metrics over training epochs
+    """
+    metrics_file = save_dir / 'classification_metrics.txt'
+    
+    # Read existing metrics or create new file
+    if metrics_file.exists():
+        with open(metrics_file, 'r') as f:
+            lines = f.readlines()
+            epochs = []
+            accuracies = []
+            precisions = []
+            recalls = []
+            f1_scores = []
+            
+            for line in lines:
+                if line.strip() and not line.startswith('#'):
+                    parts = line.strip().split(',')
+                    if len(parts) >= 5:
+                        epochs.append(int(parts[0]))
+                        accuracies.append(float(parts[1]))
+                        precisions.append(float(parts[2]))
+                        recalls.append(float(parts[3]))
+                        f1_scores.append(float(parts[4]))
+    else:
+        epochs = []
+        accuracies = []
+        precisions = []
+        recalls = []
+        f1_scores = []
+    
+    # Add current epoch metrics
+    epochs.append(epoch)
+    accuracies.append(cls_results.get('accuracy', 0))
+    precisions.append(cls_results.get('precision', 0))
+    recalls.append(cls_results.get('recall', 0))
+    f1_scores.append(cls_results.get('f1_score', 0))
+    
+    # Save updated metrics
+    with open(metrics_file, 'w') as f:
+        f.write("# epoch,accuracy,precision,recall,f1_score\n")
+        for i in range(len(epochs)):
+            f.write(f"{epochs[i]},{accuracies[i]:.4f},{precisions[i]:.4f},{recalls[i]:.4f},{f1_scores[i]:.4f}\n")
+    
+    # Create plots
+    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+    fig.suptitle('Classification Metrics Over Training Epochs', fontsize=16)
+    
+    # Accuracy plot
+    axes[0, 0].plot(epochs, accuracies, 'b-', linewidth=2, marker='o')
+    axes[0, 0].set_title('Accuracy')
+    axes[0, 0].set_xlabel('Epoch')
+    axes[0, 0].set_ylabel('Accuracy')
+    axes[0, 0].grid(True, alpha=0.3)
+    axes[0, 0].set_ylim(0, 1)
+    
+    # Precision plot
+    axes[0, 1].plot(epochs, precisions, 'g-', linewidth=2, marker='s')
+    axes[0, 1].set_title('Precision')
+    axes[0, 1].set_xlabel('Epoch')
+    axes[0, 1].set_ylabel('Precision')
+    axes[0, 1].grid(True, alpha=0.3)
+    axes[0, 1].set_ylim(0, 1)
+    
+    # Recall plot
+    axes[1, 0].plot(epochs, recalls, 'r-', linewidth=2, marker='^')
+    axes[1, 0].set_title('Recall')
+    axes[1, 0].set_xlabel('Epoch')
+    axes[1, 0].set_ylabel('Recall')
+    axes[1, 0].grid(True, alpha=0.3)
+    axes[1, 0].set_ylim(0, 1)
+    
+    # F1-Score plot
+    axes[1, 1].plot(epochs, f1_scores, 'm-', linewidth=2, marker='d')
+    axes[1, 1].set_title('F1-Score')
+    axes[1, 1].set_xlabel('Epoch')
+    axes[1, 1].set_ylabel('F1-Score')
+    axes[1, 1].grid(True, alpha=0.3)
+    axes[1, 1].set_ylim(0, 1)
+    
+    plt.tight_layout()
+    plt.savefig(save_dir / 'classification_metrics.png', dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    # Create combined metrics plot
+    plt.figure(figsize=(10, 6))
+    plt.plot(epochs, accuracies, 'b-', linewidth=2, marker='o', label='Accuracy')
+    plt.plot(epochs, precisions, 'g-', linewidth=2, marker='s', label='Precision')
+    plt.plot(epochs, recalls, 'r-', linewidth=2, marker='^', label='Recall')
+    plt.plot(epochs, f1_scores, 'm-', linewidth=2, marker='d', label='F1-Score')
+    plt.title('Classification Metrics Comparison', fontsize=14)
+    plt.xlabel('Epoch', fontsize=12)
+    plt.ylabel('Score', fontsize=12)
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.ylim(0, 1)
+    plt.tight_layout()
+    plt.savefig(save_dir / 'classification_metrics_combined.png', dpi=300, bbox_inches='tight')
+    plt.close()
 
 
 def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictionary
@@ -274,7 +418,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     stopper, stop = EarlyStopping(patience=opt.patience), False
     # Attach hyperparameters to the model
     model.hyp = hyp
-    compute_loss = ComputeLoss(model)  # init loss class
+    compute_loss = ComputeDualLoss(model)  # init dual loss class for detection + classification
     callbacks.run('on_train_start')
     LOGGER.info(f'Image sizes {imgsz} train, {imgsz} val\n'
                 f'Using {train_loader.num_workers * WORLD_SIZE} dataloader workers\n'
@@ -294,15 +438,15 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
         # b = int(random.uniform(0.25 * imgsz, 0.75 * imgsz + gs) // gs * gs)
         # dataset.mosaic_border = [b - imgsz, -b]  # height, width borders
 
-        mloss = torch.zeros(3, device=device)  # mean losses
+        mloss = torch.zeros(4, device=device)  # mean losses (box, obj, cls, cls_task)
         if RANK != -1:
             train_loader.sampler.set_epoch(epoch)
         pbar = enumerate(train_loader)
-        LOGGER.info(('\n' + '%11s' * 7) % ('Epoch', 'GPU_mem', 'box_loss', 'obj_loss', 'cls_loss', 'Instances', 'Size'))
+        LOGGER.info(('\n' + '%11s' * 8) % ('Epoch', 'GPU_mem', 'box_loss', 'obj_loss', 'cls_loss', 'cls_task_loss', 'Instances', 'Size'))
         if RANK in {-1, 0}:
             pbar = tqdm(pbar, total=nb, bar_format=TQDM_BAR_FORMAT)  # progress bar
         optimizer.zero_grad()
-        for i, (imgs, targets, paths, _) in pbar:  # batch -------------------------------------------------------------
+        for i, (imgs, targets, paths, _, classification_labels) in pbar:  # batch -------------------------------------------------------------
             callbacks.run('on_train_batch_start')
             ni = i + nb * epoch  # number integrated batches (since train start)
             imgs = imgs.to(device, non_blocking=True).float() / 255  # uint8 to float32, 0-255 to 0.0-1.0
@@ -326,98 +470,116 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                     ns = [math.ceil(x * sf / gs) * gs for x in imgs.shape[2:]]  # new shape (stretched to gs-multiple)
                     imgs = nn.functional.interpolate(imgs, size=ns, mode='bilinear', align_corners=False)
 
-        # Assume classification_labels may be None if there's no classification data
-        classification_labels = None 
-
         with torch.autograd.set_detect_anomaly(True):
             with torch.cuda.amp.autocast(amp):
                 try:
                     # Forward pass
-                    pred = model(imgs)
-
+                    model_output = model(imgs)
+                    
+                    # Parse model output consistently
+                    from utils.general import parse_model_output, validate_detection_outputs
+                    detections, class_outputs = parse_model_output(model_output)
+                    
+                    # Validate detection outputs
+                    validate_detection_outputs(detections)
+                    
                     # Move classification labels to device if not None
                     if classification_labels is not None:
-                        classification_labels = classification_labels.to(device)
-
-                    # Identify detections vs. classification outputs
-                    detections = None
-                    class_outputs = None
-
-                    if isinstance(pred, tuple) and len(pred) == 2:
-                        detections, class_outputs = pred
-                    elif isinstance(pred, list):
-                        detections = pred  # list of detection Tensors
-                    else:
-                        detections = pred                    # Print detection shapes for debugging only occasionally
-                    if i == 0 and epoch % 5 == 0:  # Only print once per 5 epochs
-                        if isinstance(detections, list):
-                            for idx, d in enumerate(detections):
-                                LOGGER.info(f"detections[{idx}].shape = {d.shape}")
-                        else:
-                            LOGGER.info(f"detections.shape = {detections.shape}")
-
-                        if class_outputs is not None:
-                            LOGGER.info(f"class_outputs.shape = {class_outputs.shape}")# Compute detection loss
-                    # Make sure targets is on the same device as detections
-                    targets = targets.to(detections[0].device)
-                    detection_loss, loss_items = compute_loss(detections, targets)
-                    print(f"detection_loss = {detection_loss.item()}")                    # Classification loss if both outputs and labels exist
-                    classification_loss = torch.tensor(0.0, device=device)  # Initialize as tensor
-                    if class_outputs is not None and classification_labels is not None:
-                        # Calculate class weights to address class imbalance
-                        if hasattr(dataset, 'labels'):
-                            # Extract all labels from dataset
-                            all_labels = torch.cat([torch.from_numpy(lbl[:, 0]) for lbl in dataset.labels])
-                            # Count occurrences of each class
-                            classes, counts = torch.unique(all_labels, return_counts=True)
-                            # Calculate weights (inverse frequency)
-                            class_weights = 1.0 / counts.float()
-                            # Normalize weights
-                            class_weights = class_weights / class_weights.sum() * len(classes)
-                            # Move weights to device
-                            class_weights = class_weights.to(device)
-                            # Use weighted loss
-                            criterion = nn.CrossEntropyLoss(weight=class_weights)
-                        else:
-                            # Fallback to standard loss if dataset structure is different
-                            criterion = nn.CrossEntropyLoss()
+                        # Convert classification labels to proper format
+                        if isinstance(classification_labels, tuple):
+                            # Flatten tuple and convert to class indices
+                            flat_labels = []
+                            for item in classification_labels:
+                                if isinstance(item, (list, tuple)):
+                                    flat_labels.extend(item)
+                                else:
+                                    flat_labels.append(item)
                             
-                        # Get class indices from one-hot encoded labels
-                        label_indices = classification_labels.argmax(dim=1)
-                        
-                        # Apply label smoothing
-                        classification_loss = criterion(class_outputs, label_indices)
-                        
-                        if i % 100 == 0:  # Reduce print frequency to avoid slowdown
-                            print(f"classification_loss = {classification_loss.item()}")# Weight the classification loss compared to detection loss                    # Get the weight from hyperparameters or use a dynamic weighting scheme
-                    classification_loss_weight = opt.hyp.get('classification_weight', 0.5)  # Higher weight for classification
+                            # Convert to class indices (assuming one-hot format)
+                            class_indices = []
+                            for i in range(0, len(flat_labels), 3):
+                                if i + 2 < len(flat_labels):
+                                    # Find which class is active (1.0)
+                                    if flat_labels[i] == 1.0:
+                                        class_indices.append(0)  # PSAX
+                                    elif flat_labels[i + 1] == 1.0:
+                                        class_indices.append(1)  # PLAX
+                                    elif flat_labels[i + 2] == 1.0:
+                                        class_indices.append(2)  # A4C
+                                    else:
+                                        class_indices.append(0)  # Default
+                            
+                            # Ensure batch size matches
+                            actual_batch_size = imgs.size(0)
+                            if len(class_indices) != actual_batch_size:
+                                # Pad or truncate to match batch size
+                                if len(class_indices) < actual_batch_size:
+                                    class_indices.extend([0] * (actual_batch_size - len(class_indices)))
+                                else:
+                                    class_indices = class_indices[:actual_batch_size]
+                            
+                            classification_labels = torch.tensor(class_indices, dtype=torch.long, device=device)
+                        else:
+                            # If it's already a tensor, ensure it's the right format
+                            if classification_labels.dim() == 1:
+                                # Convert one-hot to class indices
+                                classification_labels = classification_labels.argmax(dim=0).unsqueeze(0)
+                            classification_labels = classification_labels.to(device)
+
+                    # detections and class_outputs are already properly parsed by parse_model_output
+                    # No need to re-process them here
                     
-                    # Dynamic loss weighting - gradually increase classification weight
-                    progress = epoch / opt.epochs  # Training progress (0 to 1)
-                    if progress < 0.2:  # First 20% of training
-                        # Start with lower classification weight
-                        dynamic_weight = classification_loss_weight * 0.2
-                    elif progress < 0.5:  # 20%-50% of training
-                        # Linear increase
-                        dynamic_weight = classification_loss_weight * (0.2 + (progress - 0.2) * 2.0)
-                    else:  # Last 50% of training
-                        # Full weight
-                        dynamic_weight = classification_loss_weight
+                    # Ensure class_outputs has the right shape
+                    if class_outputs is not None:
+                        if len(class_outputs.shape) == 1:
+                            # If it's 1D, reshape to (1, num_classes)
+                            class_outputs = class_outputs.unsqueeze(0)
+                        elif len(class_outputs.shape) > 2:
+                            # If it's more than 2D, flatten to (batch_size, num_classes)
+                            batch_size = class_outputs.shape[0]
+                            class_outputs = class_outputs.view(batch_size, -1)
                     
-                    # Apply loss weighting
-                    total_loss = detection_loss + dynamic_weight * classification_loss
+                    # Debug logging (only occasionally)
+                    if i == 0 and epoch % 5 == 0:
+                        LOGGER.info(f"Detection outputs: {len(detections)} tensors")
+                        for idx, d in enumerate(detections):
+                            LOGGER.info(f"Detection {idx} shape: {d.shape}")
+                        if class_outputs is not None:
+                            LOGGER.info(f"Classification output shape: {class_outputs.shape}")
                     
-                    # Log the weighted losses for monitoring
-                    if i % 10 == 0:  # Log every 10 batches
-                        LOGGER.info(f"Detection loss: {detection_loss.item():.4f}, "
-                                   f"Classification loss: {classification_loss.item():.4f} "
-                                   f"(weight: {dynamic_weight:.3f})")
+                    # Extract classification targets from label files
+                    cls_targets = []
+                    for path in paths:
+                        label_path = Path(str(path).replace('images', 'labels')).with_suffix('.txt')
+                        if label_path.exists():
+                            with open(label_path, 'r') as f:
+                                lines = f.readlines()
+                                if len(lines) >= 2:
+                                    # Second line contains classification labels (one-hot encoded)
+                                    cls_line = lines[1].strip().split()
+                                    if len(cls_line) == 3:  # Should be 3 classes
+                                        cls_target = int(cls_line.index('1'))  # Convert one-hot to class index
+                                        cls_targets.append(cls_target)
+                                    else:
+                                        cls_targets.append(0)  # Default to class 0
+                                else:
+                                    cls_targets.append(0)  # Default to class 0
+                        else:
+                            cls_targets.append(0)  # Default to class 0
+                    
+                    # Convert to tensor
+                    cls_targets = torch.tensor(cls_targets, device=device, dtype=torch.long)
+                    
+                    # Compute dual loss (detection + classification)
+                    targets = targets.to(device)
+                    total_loss, loss_items = compute_loss(model_output, targets, cls_targets)
+                    
+                    # Log the losses for monitoring
+                    if i % 100 == 0:  # Log every 100 batches
+                        LOGGER.info(f"Batch {i}: total_loss = {total_loss.item():.4f}, loss_items = {loss_items.tolist()}")
+                    
                     if torch.isnan(total_loss):
                         raise ValueError("NaN loss encountered during training.")
-                    
-                    # Only print loss occasionally to avoid slowing down training
-                    if i % 100 == 0:
-                        LOGGER.info(f"Batch {i}: total_loss = {total_loss.item():.4f}, detection_loss = {detection_loss.item():.4f}, classification_loss = {classification_loss.item():.4f}")
 
                     if RANK != -1:
                         total_loss *= WORLD_SIZE
@@ -449,7 +611,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             if RANK in {-1, 0}:
                 mloss = (mloss * i + loss_items) / (i + 1)  # update mean losses
                 mem = f'{torch.cuda.memory_reserved() / 1E9 if torch.cuda.is_available() else 0:.3g}G'  # (GB)
-                pbar.set_description(('%11s' * 2 + '%11.4g' * 5) %
+                pbar.set_description(('%11s' * 2 + '%11.4g' * 6) %
                                      (f'{epoch}/{epochs - 1}', mem, *mloss, targets.shape[0], imgs.shape[-1]))
                 callbacks.run('on_train_batch_end', model, ni, imgs, targets, paths, list(mloss))
                 if callbacks.stop_training:
@@ -466,7 +628,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             ema.update_attr(model, include=['yaml', 'nc', 'hyp', 'names', 'stride', 'class_weights'])
             final_epoch = (epoch + 1 == epochs) or stopper.possible_stop
             if not noval or final_epoch:  # Calculate mAP
-                results, maps, _ = validate.run(data_dict,
+                results, maps, _, cls_results = validate.run(data_dict,
                                                 batch_size=batch_size // WORLD_SIZE * 2,
                                                 imgsz=imgsz,
                                                 half=amp,
@@ -483,6 +645,19 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             stop = stopper(epoch=epoch, fitness=fi)  # early stop check
             if fi > best_fitness:
                 best_fitness = fi
+            
+            # Handle classification results if available
+            if cls_results is not None:
+                # Log classification metrics
+                LOGGER.info(f"Classification Results - Accuracy: {cls_results.get('accuracy', 0):.4f}, "
+                           f"Precision: {cls_results.get('precision', 0):.4f}, "
+                           f"Recall: {cls_results.get('recall', 0):.4f}, "
+                           f"F1-Score: {cls_results.get('f1_score', 0):.4f}")
+                
+                # Create classification metrics plots
+                if plots and not evolve:
+                    plot_classification_metrics(cls_results, save_dir, epoch)
+            
             log_vals = list(mloss) + list(results) + lr
             callbacks.run('on_fit_epoch_end', log_vals, epoch, best_fitness, fi)
 

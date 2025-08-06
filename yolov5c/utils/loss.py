@@ -118,14 +118,25 @@ class ComputeLoss:
         self.anchors = m.anchors
         self.device = device
 
-    def __call__(self, p, targets):  # predictions, targets
+    def __call__(self, p, targets, cls_targets=None):  # predictions, targets, classification_targets
+        # Handle dual outputs: p can be either detection outputs only or (detection_outputs, classification_output)
+        if isinstance(p, tuple) and len(p) == 2:
+            detection_outputs, classification_output = p
+        else:
+            detection_outputs = p
+            classification_output = None
+        
+        # Ensure detection_outputs is a list
+        if not isinstance(detection_outputs, list):
+            detection_outputs = [detection_outputs]
+        
         lcls = torch.zeros(1, device=self.device)  # class loss
         lbox = torch.zeros(1, device=self.device)  # box loss
         lobj = torch.zeros(1, device=self.device)  # object loss
-        tcls, tbox, indices, anchors = self.build_targets(p, targets)  # targets
+        tcls, tbox, indices, anchors = self.build_targets(detection_outputs, targets)  # targets
 
         # Losses
-        for i, pi in enumerate(p):  # layer index, layer predictions
+        for i, pi in enumerate(detection_outputs):  # layer index, layer predictions
             b, a, gj, gi = indices[i]  # image, anchor, gridy, gridx
             tobj = torch.zeros(pi.shape[:4], dtype=pi.dtype, device=self.device)  # target obj
 
@@ -172,7 +183,8 @@ class ComputeLoss:
         lcls *= self.hyp['cls']
         bs = tobj.shape[0]  # batch size
 
-        return (lbox + lobj + lcls) * bs, torch.cat((lbox, lobj, lcls)).detach()    
+        # Return detection loss only (classification loss is handled separately)
+        return (lbox + lobj + lcls) * bs, torch.cat((lbox, lobj, lcls)).detach()
     def build_targets(self, p, targets):
         # Build targets for compute_loss(), input targets(image,class,x,y,w,h)
         na, nt = self.na, targets.shape[0]  # number of anchors, targets

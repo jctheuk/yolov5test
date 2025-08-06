@@ -61,7 +61,10 @@ class Detect(nn.Module):
             bs, _, ny, nx = x[i].shape  # x(bs,255,20,20) to x(bs,3,20,20,85)
             x[i] = x[i].view(bs, self.na, self.no, ny, nx).permute(0, 1, 3, 4, 2).contiguous()
 
-            if not self.training:  # inference
+            if self.training:
+                # For training, just store the raw outputs
+                z.append(x[i])
+            else:  # inference
                 if self.dynamic or self.grid[i].shape[2:4] != x[i].shape[2:4]:
                     self.grid[i], self.anchor_grid[i] = self._make_grid(nx, ny, i)
 
@@ -77,21 +80,20 @@ class Detect(nn.Module):
                     y = torch.cat((xy, wh, conf), 4)
                 z.append(y.view(bs, self.na * nx * ny, self.no))
 
-        return x if self.training else (torch.cat(z, 1), ) if self.export else (torch.cat(z, 1), x)
+        # Return consistent format: always return a list of tensors for detection outputs
+        if self.training:
+            return z  # Return individual raw detection outputs for training
+        else:
+            detection_outputs = [torch.cat(z, 1)] if z else []
+            return detection_outputs
 
     def _make_grid(self, nx=20, ny=20, i=0, torch_1_10=check_version(torch.__version__, '1.10.0')):
-        print(f"\n[_make_grid Debug] i={i}, nx={nx}, ny={ny}")
-        print("[_make_grid Debug] stride:", self.stride)
-        print("[_make_grid Debug] anchors:", self.anchors)
-        print("[_make_grid Debug] anchor index i => anchors[i]:", self.anchors[i])
         d = self.anchors[i].device
         t = self.anchors[i].dtype
         shape = 1, self.na, ny, nx, 2  # grid shape
         y, x = torch.arange(ny, device=d, dtype=t), torch.arange(nx, device=d, dtype=t)
         yv, xv = torch.meshgrid(y, x, indexing='ij') if torch_1_10 else torch.meshgrid(y, x)  # torch>=0.7 compatibility
         grid = torch.stack((xv, yv), 2).expand(shape) - 0.5  # add grid offset, i.e. y = 2.0 * x - 0.5
-        print("self.anchors[i]:", self.anchors[i])
-        print("self.stride[i]:", self.stride[i])
         anchor_grid = (self.anchors[i] * self.stride[i]).view((1, self.na, 1, 1, 2)).expand(shape)
         return grid, anchor_grid
 
@@ -123,13 +125,6 @@ class BaseModel(nn.Module):
         for m in self.model:
             if m.f != -1:  # if not from previous layer
                 x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
-                
-                # Debug: Print shapes for concat layers
-                if hasattr(m, 'type') and 'Concat' in m.type:
-                    if isinstance(x, list):
-                        print(f"Concat layer inputs: {[t.shape for t in x]}")
-                    else:
-                        print(f"Concat input (not a list): {x.shape}")
             
             if profile:
                 self._profile_one_layer(m, x, dt)
@@ -220,9 +215,15 @@ class DetectionModel(BaseModel):
             if isinstance(out, (list, tuple)):
                 LOGGER.info(f"--- Debug: model forward outputs: {len(out)} items ---")
                 for i, o in enumerate(out):
-                    LOGGER.info(f"    Output {i} shape: {list(o.shape)}")
+                    if hasattr(o, 'shape'):
+                        LOGGER.info(f"    Output {i} shape: {list(o.shape)}")
+                    else:
+                        LOGGER.info(f"    Output {i} type: {type(o)}")
             else:
-                LOGGER.info(f"--- Debug: single output shape: {list(out.shape)} ---")
+                if hasattr(out, 'shape'):
+                    LOGGER.info(f"--- Debug: single output shape: {list(out.shape)} ---")
+                else:
+                    LOGGER.info(f"--- Debug: single output type: {type(out)} ---")
 
             # YOLOv5 logic:  compute stride(s) by ratio s / out[i].shape[-2]
             # If the model outputs multiple scales, we get a list of strides
@@ -231,9 +232,26 @@ class DetectionModel(BaseModel):
                 # do it again to create the stride
                 y = forward_once(torch.zeros(1, ch, s, s))
                 if isinstance(y, (list, tuple)):
-                    m.stride = torch.tensor([s / x.shape[-2] for x in y])  # multi-scale
+                    # Handle dual output case (detection + classification)
+                    detection_outputs = []
+                    for output in y:
+                        if hasattr(output, 'shape') and len(output.shape) >= 3:
+                            # This is a detection output (has spatial dimensions)
+                            detection_outputs.append(output)
+                    
+                    if detection_outputs:
+                        m.stride = torch.tensor([s / x.shape[-2] for x in detection_outputs])  # multi-scale
+                    else:
+                        # Fallback: use default strides
+                        m.stride = torch.tensor([8.0, 16.0, 32.0])
+                        LOGGER.warning("Could not compute strides from model output, using defaults")
                 else:
-                    m.stride = torch.tensor([s / y.shape[-2]])  # single-scale
+                    if hasattr(y, 'shape') and len(y.shape) >= 3:
+                        m.stride = torch.tensor([s / y.shape[-2]])  # single-scale
+                    else:
+                        # Fallback: use default stride
+                        m.stride = torch.tensor([32.0])
+                        LOGGER.warning("Could not compute stride from model output, using default")
 
             # ### DEBUG: Print out the computed stride
             LOGGER.info(f"--- Debug: computed strides = {m.stride.tolist()} ---")
@@ -255,8 +273,72 @@ class DetectionModel(BaseModel):
 
     def forward(self, x, augment=False, profile=False, visualize=False):
         if augment:
-            return self._forward_augment(x)
-        return self._forward_once(x, profile, visualize)
+            # Handle augmentation case - return consistent format
+            detection_outputs, classification_output = self._forward_augment(x)
+            return detection_outputs, classification_output
+        
+        # Check if model has classification layer
+        has_classification = any(isinstance(m, YOLOv5WithClassification) for m in self.model)
+        
+        if has_classification:
+            # Use the original YOLOv5 forward pattern but collect classification output
+            y, dt = [], []  # outputs
+            classification_output = None
+            detection_outputs = None
+            
+            for m in self.model:
+                if m.f != -1:  # if not from previous layer
+                    x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
+                
+                if profile:
+                    self._profile_one_layer(m, x, dt)
+                x = m(x)  # run
+                
+                # Store classification output if this is the classification layer
+                if isinstance(m, YOLOv5WithClassification):
+                    classification_output = x
+                # Store detection outputs if this is the Detect layer
+                elif isinstance(m, Detect):
+                    detection_outputs = x
+                
+                y.append(x if m.i in self.save else None)  # save output
+                if visualize:
+                    feature_visualization(x, m.type, m.i, save_dir=visualize)
+            
+            # Ensure detection_outputs is always a list of tensors
+            if detection_outputs is None:
+                # If no Detect layer found, use the final output
+                if isinstance(x, list):
+                    detection_outputs = x
+                elif isinstance(x, tuple):
+                    # Handle case where Detect layer returns (detections, original_list)
+                    detection_outputs = x[0] if len(x) > 0 else []
+                    if not isinstance(detection_outputs, list):
+                        detection_outputs = [detection_outputs]
+                else:
+                    detection_outputs = [x]
+            elif isinstance(detection_outputs, list):
+                # Already a list of tensors
+                pass
+            elif isinstance(detection_outputs, tuple):
+                # Handle case where Detect layer returns (detections, original_list)
+                detection_outputs = detection_outputs[0] if len(detection_outputs) > 0 else []
+                if not isinstance(detection_outputs, list):
+                    detection_outputs = [detection_outputs]
+            else:
+                # Single tensor, convert to list
+                detection_outputs = [detection_outputs]
+            
+            # Always return both detection and classification outputs
+            return detection_outputs, classification_output
+        else:
+            # Standard detection-only forward (original YOLOv5 behavior)
+            detection_outputs = self._forward_once(x, profile, visualize)
+            # Ensure detection_outputs is always a list of tensors
+            if isinstance(detection_outputs, list):
+                return detection_outputs, None
+            else:
+                return [detection_outputs], None
 
     def _forward_augment(self, x):
         # multi-scale test-time augmentation
@@ -266,11 +348,16 @@ class DetectionModel(BaseModel):
         y = []
         for si, fi in zip(s, f):
             xi = scale_img(x.flip(fi) if fi else x, si, gs=int(self.stride.max()))
-            yi = self._forward_once(xi)[0]  # only detection output if multi-out
+            yi = self._forward_once(xi)  # Get detection outputs
+            # Ensure yi is a list of tensors
+            if isinstance(yi, list):
+                yi = yi[0]  # Take first detection output for augmentation
             yi = self._descale_pred(yi, fi, si, img_size)
             y.append(yi)
         y = self._clip_augmented(y)
-        return torch.cat(y, 1), None
+        # Return consistent format: (detection_outputs, classification_output)
+        # For augmentation, we only use detection outputs, classification is None
+        return [torch.cat(y, 1)], None
 
     def _descale_pred(self, p, flips, scale, img_size):
         # De-scale augmented predictions
@@ -396,9 +483,6 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
 
         n = max(round(n * gd), 1) if n > 1 else n
 
-        # Debug: print out f before processing
-        print(f"Layer {i}: f={f}, ch={ch}")
-
         # Determine input channels (c1)
         if isinstance(f, int):
             # Original YOLOv5 logic simply uses Python indexing, including negative indexing
@@ -457,12 +541,6 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
         np = sum(x.numel() for x in m_.parameters())
         m_.i, m_.f, m_.type, m_.np = i, f, t, np
         LOGGER.info(f'{i:>3}{str(f):>18}{n:>3}{np:10.0f}  {t:<40}{str(args):<30}')
-
-        # Debug: check f before save.extend
-        if isinstance(f, int):
-            print(f"Checking f={f} at layer i={i}")
-        else:
-            print(f"Checking list f={f} at layer i={i}")
 
         save.extend(x % i for x in ([f] if isinstance(f, int) else f) if x != -1)
         layers.append(m_)

@@ -727,7 +727,22 @@ class LoadImagesAndLabels(Dataset):
         # Get classification label for this image
         classification_label = self.classification_labels[index]
         if classification_label is not None:
-            classification_tensor = torch.tensor([float(x) for x in classification_label], dtype=torch.float32)
+            # Ensure classification_label is a list/tuple of 3 values
+            if isinstance(classification_label, (list, tuple)):
+                if len(classification_label) == 3:
+                    classification_tensor = torch.tensor([float(x) for x in classification_label], dtype=torch.float32)
+                else:
+                    # Pad or truncate to 3 values
+                    values = [float(x) for x in classification_label[:3]]
+                    while len(values) < 3:
+                        values.append(0.0)
+                    classification_tensor = torch.tensor(values, dtype=torch.float32)
+            else:
+                # If it's a single value, convert to one-hot
+                value = float(classification_label)
+                classification_tensor = torch.zeros(3, dtype=torch.float32)
+                if 0 <= value < 3:
+                    classification_tensor[int(value)] = 1.0
         else:
             classification_tensor = torch.zeros(3, dtype=torch.float32)  # Default to [0,0,0]
 
@@ -903,7 +918,17 @@ class LoadImagesAndLabels(Dataset):
         im, label, path, shapes, classification_label = zip(*batch)  # transposed
         for i, lb in enumerate(label):
             lb[:, 0] = i  # add target image index for build_targets()
-        return torch.stack(im, 0), torch.cat(label, 0), torch.stack(classification_label, 0), path, shapes
+        
+        # Handle classification labels properly - ensure they're tensors before stacking
+        classification_tensors = []
+        for cls_label in classification_label:
+            if isinstance(cls_label, torch.Tensor):
+                classification_tensors.append(cls_label)
+            else:
+                # Convert to tensor if it's not already
+                classification_tensors.append(torch.tensor(cls_label, dtype=torch.float32))
+        
+        return torch.stack(im, 0), torch.cat(label, 0), torch.stack(classification_tensors, 0), path, shapes
 
     @staticmethod
     def collate_fn4(batch):

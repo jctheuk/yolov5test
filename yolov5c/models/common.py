@@ -909,7 +909,10 @@ class YOLOv5WithClassification(nn.Module):
         x = self.flatten(x)  # Flatten to (batch_size, in_channels)
         x = self.dropout(x)  # Apply dropout for regularization
         x = self.fc(x)  # Fully connected layer
-        return x
+        return x  # Shape: (batch_size, num_classes)
+
+
+
 
     
 # SE
