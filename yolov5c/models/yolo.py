@@ -54,6 +54,14 @@ class Detect(nn.Module):
         self.m = nn.ModuleList(nn.Conv2d(x, self.no * self.na, 1) for x in ch)  # output conv
         self.inplace = inplace  # use inplace ops (e.g. slice assignment)
 
+    @property
+    def stride_tensor(self):
+        """Get stride tensor, with fallback to default values if not set"""
+        if self.stride is None:
+            # Return default strides based on number of layers
+            return torch.tensor([8.0 * (2 ** i) for i in range(self.nl)])
+        return self.stride
+
     def forward(self, x):
         z = []  # inference output
         for i in range(self.nl):
@@ -70,12 +78,16 @@ class Detect(nn.Module):
 
                 if isinstance(self, Segment):  # (boxes + masks)
                     xy, wh, conf, mask = x[i].split((2, 2, self.nc + 1, self.no - self.nc - 5), 4)
-                    xy = (xy.sigmoid() * 2 + self.grid[i]) * self.stride[i]  # xy
+                    # Use stride_tensor property for safe access
+                    stride_i = self.stride_tensor[i] if i < len(self.stride_tensor) else 8.0 * (2 ** i)
+                    xy = (xy.sigmoid() * 2 + self.grid[i]) * stride_i  # xy
                     wh = (wh.sigmoid() * 2) ** 2 * self.anchor_grid[i]  # wh
                     y = torch.cat((xy, wh, conf.sigmoid(), mask), 4)
                 else:  # Detect (boxes only)
                     xy, wh, conf = x[i].sigmoid().split((2, 2, self.nc + 1), 4)
-                    xy = (xy * 2 + self.grid[i]) * self.stride[i]  # xy
+                    # Use stride_tensor property for safe access
+                    stride_i = self.stride_tensor[i] if i < len(self.stride_tensor) else 8.0 * (2 ** i)
+                    xy = (xy * 2 + self.grid[i]) * stride_i  # xy
                     wh = (wh * 2) ** 2 * self.anchor_grid[i]  # wh
                     y = torch.cat((xy, wh, conf), 4)
                 z.append(y.view(bs, self.na * nx * ny, self.no))
@@ -94,7 +106,11 @@ class Detect(nn.Module):
         y, x = torch.arange(ny, device=d, dtype=t), torch.arange(nx, device=d, dtype=t)
         yv, xv = torch.meshgrid(y, x, indexing='ij') if torch_1_10 else torch.meshgrid(y, x)  # torch>=0.7 compatibility
         grid = torch.stack((xv, yv), 2).expand(shape) - 0.5  # add grid offset, i.e. y = 2.0 * x - 0.5
-        anchor_grid = (self.anchors[i] * self.stride[i]).view((1, self.na, 1, 1, 2)).expand(shape)
+        
+        # Use stride_tensor property for safe access
+        stride_i = self.stride_tensor[i] if i < len(self.stride_tensor) else 8.0 * (2 ** i)
+        anchor_grid = (self.anchors[i] * stride_i).view((1, self.na, 1, 1, 2)).expand(shape)
+        
         return grid, anchor_grid
 
 
@@ -191,7 +207,7 @@ class DetectionModel(BaseModel):
             self.yaml['nc'] = nc
         if anchors:
             LOGGER.info(f"Overriding model.yaml anchors with anchors={anchors}")
-            self.yaml['anchors'] = round(anchors)
+            self.yaml['anchors'] = anchors  # Don't call round() on list
 
         # Parse the model from YAML
         self.model, self.save = parse_model(deepcopy(self.yaml), ch=[ch])
@@ -205,13 +221,27 @@ class DetectionModel(BaseModel):
             s = 256  # typically 256 => 2x minimum stride
             m.inplace = self.inplace
 
+            # Initialize stride with default values first
+            if m.stride is None:
+                # Set default strides based on the number of detection layers
+                if hasattr(m, 'nl'):
+                    m.stride = torch.tensor([8.0 * (2 ** i) for i in range(m.nl)])
+                else:
+                    m.stride = torch.tensor([8.0, 16.0, 32.0])  # Default for 3 scales
+
             # For Segment heads, the forward() returns (detections, proto)
             # so we define a small helper that picks the detection outputs
             forward_once = (lambda x: self.forward(x)[0]) if isinstance(m, Segment) else self.forward
 
             # ### DEBUG: Show the final outputs from the dummy forward
             dummy_input = torch.zeros(1, ch, s, s)
-            out = forward_once(dummy_input)
+            
+            # Set model to eval mode temporarily for dummy forward pass
+            self.eval()
+            with torch.no_grad():
+                out = forward_once(dummy_input)
+            self.train()
+            
             if isinstance(out, (list, tuple)):
                 LOGGER.info(f"--- Debug: model forward outputs: {len(out)} items ---")
                 for i, o in enumerate(out):
@@ -230,7 +260,9 @@ class DetectionModel(BaseModel):
             # e.g. [8., 16., 32.]
             with torch.no_grad():
                 # do it again to create the stride
+                self.eval()
                 y = forward_once(torch.zeros(1, ch, s, s))
+                self.train()
                 if isinstance(y, (list, tuple)):
                     # Handle dual output case (detection + classification)
                     detection_outputs = []

@@ -62,7 +62,6 @@ from utils.general import (LOGGER, TQDM_BAR_FORMAT, check_amp, check_dataset, ch
 from utils.loggers import Loggers
 from utils.loggers.comet.comet_utils import check_comet_resume
 from utils.loss import ComputeLoss
-from utils.dual_loss import ComputeDualLoss
 from utils.metrics import fitness
 from utils.plots import plot_evolve
 #add smartCrossEntropyLoss
@@ -231,7 +230,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     # Hyperparameters
     if isinstance(hyp, str):
         with open(hyp, errors='ignore') as f:
-            hyp = yaml.safe_load(f)  # load hyps dictnl
+            hyp = yaml.safe_load(f)  # load hyps dict
     LOGGER.info(colorstr('hyperparameters: ') + ', '.join(f'{k}={v}' for k, v in hyp.items()))
     opt.hyp = hyp.copy()  # for saving hyps to checkpoints
 
@@ -264,6 +263,10 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     nc = 1 if single_cls else int(data_dict['nc'])  # number of classes
     names = {0: 'item'} if single_cls and len(data_dict['names']) != 1 else data_dict['names']  # class names
     is_coco = isinstance(val_path, str) and val_path.endswith('coco/val2017.txt')  # COCO dataset
+    
+    # Get classification info
+    num_cls = data_dict.get('num_cls', 3)  # number of classification classes
+    cls_names = data_dict.get('cls_names', ['PSAX', 'PLAX', 'A4C'])  # classification class names
 
     # Model
     check_suffix(weights, '.pt')  # check weights
@@ -282,11 +285,13 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     else:
         model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
     amp = check_amp(model)  # check AMP
+    
     # Print model architecture
     print("\nModel architecture:\n")
     print(model)
     print("\nEnd of model architecture.\n")
-        # Freeze
+    
+    # Freeze
     freeze = [f'model.{x}.' for x in (freeze if len(freeze) > 1 else range(freeze[0]))]  # layers to freeze
     for k, v in model.named_parameters():
         v.requires_grad = True  # train all layers
@@ -359,10 +364,6 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                                               seed=opt.seed)
     labels = np.concatenate(dataset.labels, 0)
 
-
-    # mlc = int(labels[:, 0].max())  # max label class
-    # assert mlc < nc, f'Label class {mlc} exceeds nc={nc} in {data}. Possible class labels are 0-{nc - 1}'
-
     # Process 0
     if RANK in {-1, 0}:
         val_loader = create_dataloader(val_path,
@@ -418,12 +419,19 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     stopper, stop = EarlyStopping(patience=opt.patience), False
     # Attach hyperparameters to the model
     model.hyp = hyp
-    compute_loss = ComputeDualLoss(model)  # init dual loss class for detection + classification
+    compute_loss = ComputeLoss(model)  # init dual loss class for detection + classification
     callbacks.run('on_train_start')
     LOGGER.info(f'Image sizes {imgsz} train, {imgsz} val\n'
                 f'Using {train_loader.num_workers * WORLD_SIZE} dataloader workers\n'
                 f"Logging results to {colorstr('bold', save_dir)}\n"
                 f'Starting training for {epochs} epochs...')
+    LOGGER.info(f'Detection classes: {nc}, Classification classes: {num_cls}')
+    
+    # Training metrics tracking
+    train_losses = []
+    val_losses = []
+    classification_accuracies = []
+    
     for epoch in range(start_epoch, epochs):  # epoch ------------------------------------------------------------------
         callbacks.run('on_train_epoch_start')
         model.train()
@@ -446,7 +454,12 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
         if RANK in {-1, 0}:
             pbar = tqdm(pbar, total=nb, bar_format=TQDM_BAR_FORMAT)  # progress bar
         optimizer.zero_grad()
-        for i, (imgs, targets, paths, _, classification_labels) in pbar:  # batch -------------------------------------------------------------
+        
+        epoch_loss = 0.0
+        epoch_cls_acc = 0.0
+        num_batches = 0
+        
+        for i, (imgs, targets, paths, shapes, classification_labels) in pbar:  # batch -------------------------------------------------------------
             callbacks.run('on_train_batch_start')
             ni = i + nb * epoch  # number integrated batches (since train start)
             imgs = imgs.to(device, non_blocking=True).float() / 255  # uint8 to float32, 0-255 to 0.0-1.0
@@ -470,153 +483,155 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                     ns = [math.ceil(x * sf / gs) * gs for x in imgs.shape[2:]]  # new shape (stretched to gs-multiple)
                     imgs = nn.functional.interpolate(imgs, size=ns, mode='bilinear', align_corners=False)
 
-        with torch.autograd.set_detect_anomaly(True):
-            with torch.cuda.amp.autocast(amp):
-                try:
-                    # Forward pass
-                    model_output = model(imgs)
-                    
-                    # Parse model output consistently
-                    from utils.general import parse_model_output, validate_detection_outputs
-                    detections, class_outputs = parse_model_output(model_output)
-                    
-                    # Validate detection outputs
-                    validate_detection_outputs(detections)
-                    
-                    # Move classification labels to device if not None
-                    if classification_labels is not None:
-                        # Convert classification labels to proper format
-                        if isinstance(classification_labels, tuple):
-                            # Flatten tuple and convert to class indices
-                            flat_labels = []
-                            for item in classification_labels:
-                                if isinstance(item, (list, tuple)):
-                                    flat_labels.extend(item)
-                                else:
-                                    flat_labels.append(item)
-                            
-                            # Convert to class indices (assuming one-hot format)
-                            class_indices = []
-                            for i in range(0, len(flat_labels), 3):
-                                if i + 2 < len(flat_labels):
-                                    # Find which class is active (1.0)
-                                    if flat_labels[i] == 1.0:
-                                        class_indices.append(0)  # PSAX
-                                    elif flat_labels[i + 1] == 1.0:
-                                        class_indices.append(1)  # PLAX
-                                    elif flat_labels[i + 2] == 1.0:
-                                        class_indices.append(2)  # A4C
+            with torch.autograd.set_detect_anomaly(True):
+                with torch.cuda.amp.autocast(amp):
+                    try:
+                        # Forward pass
+                        model_output = model(imgs)
+                        
+                        # Parse model output consistently
+                        from utils.general import parse_model_output, validate_detection_outputs
+                        detections, class_outputs = parse_model_output(model_output)
+                        
+                        # Validate detection outputs
+                        validate_detection_outputs(detections)
+                        
+                        # Process classification labels
+                        if classification_labels is not None:
+                            # Convert classification labels to proper format
+                            if isinstance(classification_labels, (list, tuple)):
+                                # Handle tuple of tensors or lists
+                                if len(classification_labels) > 0:
+                                    if isinstance(classification_labels[0], torch.Tensor):
+                                        # Stack tensors from tuple
+                                        classification_labels = torch.stack(classification_labels)
+                                    elif isinstance(classification_labels[0], (list, tuple)):
+                                        # Convert nested lists/tuples to tensors first
+                                        tensor_list = []
+                                        for cls in classification_labels:
+                                            if isinstance(cls, (list, tuple)):
+                                                tensor_list.append(torch.tensor(cls, dtype=torch.float32))
+                                            else:
+                                                tensor_list.append(torch.tensor([cls], dtype=torch.float32))
+                                        classification_labels = torch.stack(tensor_list)
                                     else:
-                                        class_indices.append(0)  # Default
+                                        # Convert simple list/tuple to tensor
+                                        classification_labels = torch.tensor(classification_labels, dtype=torch.float32)
+                                else:
+                                    classification_labels = torch.zeros(imgs.shape[0], dtype=torch.float32, device=device)
+                            else:
+                                classification_labels = classification_labels.to(device)
+                            
+                            # Handle one-hot encoded labels
+                            if classification_labels.dim() > 1 and classification_labels.shape[-1] > 1:
+                                # Convert one-hot to class indices
+                                classification_labels = classification_labels.argmax(dim=-1)
+                            
+                            # Ensure labels are long tensors
+                            if classification_labels.dtype != torch.long:
+                                classification_labels = classification_labels.long()
                             
                             # Ensure batch size matches
-                            actual_batch_size = imgs.size(0)
-                            if len(class_indices) != actual_batch_size:
+                            if classification_labels.shape[0] != imgs.shape[0]:
                                 # Pad or truncate to match batch size
-                                if len(class_indices) < actual_batch_size:
-                                    class_indices.extend([0] * (actual_batch_size - len(class_indices)))
+                                if classification_labels.shape[0] < imgs.shape[0]:
+                                    # Pad with zeros
+                                    pad_size = imgs.shape[0] - classification_labels.shape[0]
+                                    classification_labels = torch.cat([classification_labels, torch.zeros(pad_size, dtype=torch.long, device=device)])
                                 else:
-                                    class_indices = class_indices[:actual_batch_size]
-                            
-                            classification_labels = torch.tensor(class_indices, dtype=torch.long, device=device)
+                                    # Truncate
+                                    classification_labels = classification_labels[:imgs.shape[0]]
                         else:
-                            # If it's already a tensor, ensure it's the right format
-                            if classification_labels.dim() == 1:
-                                # Convert one-hot to class indices
-                                classification_labels = classification_labels.argmax(dim=0).unsqueeze(0)
-                            classification_labels = classification_labels.to(device)
-
-                    # detections and class_outputs are already properly parsed by parse_model_output
-                    # No need to re-process them here
-                    
-                    # Ensure class_outputs has the right shape
-                    if class_outputs is not None:
-                        if len(class_outputs.shape) == 1:
-                            # If it's 1D, reshape to (1, num_classes)
-                            class_outputs = class_outputs.unsqueeze(0)
-                        elif len(class_outputs.shape) > 2:
-                            # If it's more than 2D, flatten to (batch_size, num_classes)
-                            batch_size = class_outputs.shape[0]
-                            class_outputs = class_outputs.view(batch_size, -1)
-                    
-                    # Debug logging (only occasionally)
-                    if i == 0 and epoch % 5 == 0:
-                        LOGGER.info(f"Detection outputs: {len(detections)} tensors")
-                        for idx, d in enumerate(detections):
-                            LOGGER.info(f"Detection {idx} shape: {d.shape}")
+                            # Create default classification labels if none provided
+                            classification_labels = torch.zeros(imgs.shape[0], dtype=torch.long, device=device)
+                        
+                        # Ensure class_outputs has the right shape
                         if class_outputs is not None:
-                            LOGGER.info(f"Classification output shape: {class_outputs.shape}")
+                            if len(class_outputs.shape) == 1:
+                                # If it's 1D, reshape to (1, num_classes)
+                                class_outputs = class_outputs.unsqueeze(0)
+                            elif len(class_outputs.shape) > 2:
+                                # If it's more than 2D, flatten to (batch_size, num_classes)
+                                batch_size = class_outputs.shape[0]
+                                class_outputs = class_outputs.view(batch_size, -1)
+                        
+                        # Compute dual loss (detection + classification)
+                        targets = targets.to(device)
+                        total_loss, loss_items = compute_loss(model_output, targets, classification_labels)
+                        
+                        # Calculate classification accuracy
+                        if isinstance(model_output, tuple) and len(model_output) == 2:
+                            _, cls_output = model_output
+                            if cls_output is not None:
+                                pred_classes = torch.argmax(cls_output, dim=1)
+                                correct = (pred_classes == classification_labels).sum().item()
+                                epoch_cls_acc += correct / classification_labels.shape[0]
+                        
+                        epoch_loss += total_loss.item()
+                        num_batches += 1
+                        
+                        if torch.isnan(total_loss):
+                            raise ValueError("NaN loss encountered during training.")
+
+                        if RANK != -1:
+                            total_loss *= WORLD_SIZE
+
+                        if opt.quad:
+                            total_loss *= 4
+
+                    except Exception as e:
+                        print(f"Error during forward/loss computation: {e}")
+                        raise
                     
-                    # Extract classification targets from label files
-                    cls_targets = []
-                    for path in paths:
-                        label_path = Path(str(path).replace('images', 'labels')).with_suffix('.txt')
-                        if label_path.exists():
-                            with open(label_path, 'r') as f:
-                                lines = f.readlines()
-                                if len(lines) >= 2:
-                                    # Second line contains classification labels (one-hot encoded)
-                                    cls_line = lines[1].strip().split()
-                                    if len(cls_line) == 3:  # Should be 3 classes
-                                        cls_target = int(cls_line.index('1'))  # Convert one-hot to class index
-                                        cls_targets.append(cls_target)
-                                    else:
-                                        cls_targets.append(0)  # Default to class 0
+                # Backward pass
+                scaler.scale(total_loss).backward()
+
+                # Optimize - https://pytorch.org/docs/master/notes/amp_examples.html
+                if ni - last_opt_step >= accumulate:
+                    scaler.unscale_(optimizer)  # unscale gradients
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10.0)  # clip gradients
+                    scaler.step(optimizer)  # optimizer.step
+                    scaler.update()
+                    optimizer.zero_grad()
+                    if ema:
+                        ema.update(model)
+                    last_opt_step = ni
+
+                # Log
+                if RANK in {-1, 0}:
+                    # Convert loss_items list to tensor if needed
+                    if isinstance(loss_items, list):
+                        # Debug: Print loss items shapes
+                        print(f"Debug: loss_items shapes: {[item.shape if hasattr(item, 'shape') else 'no shape' for item in loss_items]}")
+                        
+                        # Ensure all tensors have the same shape before stacking
+                        processed_loss_items = []
+                        for item in loss_items:
+                            if isinstance(item, torch.Tensor):
+                                if item.numel() == 0:
+                                    processed_loss_items.append(torch.tensor(0.0, device=item.device))
+                                elif item.dim() == 0:
+                                    processed_loss_items.append(item.unsqueeze(0))
                                 else:
-                                    cls_targets.append(0)  # Default to class 0
-                        else:
-                            cls_targets.append(0)  # Default to class 0
+                                    processed_loss_items.append(item)
+                            else:
+                                processed_loss_items.append(torch.tensor(0.0, device=device))
+                        
+                        # Stack and flatten to 1D (e.g., shape [4])
+                        loss_items_tensor = torch.stack(processed_loss_items).view(-1)
+                    else:
+                        loss_items_tensor = loss_items
                     
-                    # Convert to tensor
-                    cls_targets = torch.tensor(cls_targets, device=device, dtype=torch.long)
-                    
-                    # Compute dual loss (detection + classification)
-                    targets = targets.to(device)
-                    total_loss, loss_items = compute_loss(model_output, targets, cls_targets)
-                    
-                    # Log the losses for monitoring
-                    if i % 100 == 0:  # Log every 100 batches
-                        LOGGER.info(f"Batch {i}: total_loss = {total_loss.item():.4f}, loss_items = {loss_items.tolist()}")
-                    
-                    if torch.isnan(total_loss):
-                        raise ValueError("NaN loss encountered during training.")
-
-                    if RANK != -1:
-                        total_loss *= WORLD_SIZE
-
-                    if opt.quad:
-                        total_loss *= 4
-
-                except Exception as e:
-                    print(f"Error during forward/loss computation: {e}")
-                    raise
-                
-            # Backward pass
-            scaler.scale(total_loss).backward()
-
-
-
-            # Optimize - https://pytorch.org/docs/master/notes/amp_examples.html
-            if ni - last_opt_step >= accumulate:
-                scaler.unscale_(optimizer)  # unscale gradients
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10.0)  # clip gradients
-                scaler.step(optimizer)  # optimizer.step
-                scaler.update()
-                optimizer.zero_grad()
-                if ema:
-                    ema.update(model)
-                last_opt_step = ni
-
-            # Log
-            if RANK in {-1, 0}:
-                mloss = (mloss * i + loss_items) / (i + 1)  # update mean losses
-                mem = f'{torch.cuda.memory_reserved() / 1E9 if torch.cuda.is_available() else 0:.3g}G'  # (GB)
-                pbar.set_description(('%11s' * 2 + '%11.4g' * 6) %
-                                     (f'{epoch}/{epochs - 1}', mem, *mloss, targets.shape[0], imgs.shape[-1]))
-                callbacks.run('on_train_batch_end', model, ni, imgs, targets, paths, list(mloss))
-                if callbacks.stop_training:
-                    return
-            # end batch ------------------------------------------------------------------------------------------------
+                    mloss = (mloss * i + loss_items_tensor) / (i + 1)  # update mean losses
+                    mem = f'{torch.cuda.memory_reserved() / 1E9 if torch.cuda.is_available() else 0:.3g}G'  # (GB)
+                    # Ensure mloss is a 1D list of floats for formatting
+                    mloss_list = [float(x) for x in mloss.view(-1).tolist()]
+                    pbar.set_description(('%11s' * 2 + '%11.4g' * 6) %
+                                         (f'{epoch}/{epochs - 1}', mem, *mloss_list, targets.shape[0], imgs.shape[-1]))
+                    callbacks.run('on_train_batch_end', model, ni, imgs, targets, paths, list(mloss))
+                    if callbacks.stop_training:
+                        return
+                # end batch ------------------------------------------------------------------------------------------------
 
         # Scheduler
         lr = [x['lr'] for x in optimizer.param_groups]  # for loggers
@@ -649,14 +664,25 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             # Handle classification results if available
             if cls_results is not None:
                 # Log classification metrics
-                LOGGER.info(f"Classification Results - Accuracy: {cls_results.get('accuracy', 0):.4f}, "
-                           f"Precision: {cls_results.get('precision', 0):.4f}, "
-                           f"Recall: {cls_results.get('recall', 0):.4f}, "
-                           f"F1-Score: {cls_results.get('f1_score', 0):.4f}")
+                cls_accuracy = cls_results.get('accuracy', 0.0)
+                cls_precision = cls_results.get('precision', 0.0)
+                cls_recall = cls_results.get('recall', 0.0)
+                cls_f1 = cls_results.get('f1_score', 0.0)
+                
+                LOGGER.info(f"Classification Results - Accuracy: {cls_accuracy:.4f}, "
+                           f"Precision: {cls_precision:.4f}, "
+                           f"Recall: {cls_recall:.4f}, "
+                           f"F1-Score: {cls_f1:.4f}")
+                
+                # Store classification accuracy for tracking
+                classification_accuracies.append(cls_accuracy)
                 
                 # Create classification metrics plots
                 if plots and not evolve:
                     plot_classification_metrics(cls_results, save_dir, epoch)
+            else:
+                # If no classification results, append 0
+                classification_accuracies.append(0.0)
             
             log_vals = list(mloss) + list(results) + lr
             callbacks.run('on_fit_epoch_end', log_vals, epoch, best_fitness, fi)
@@ -701,7 +727,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                 strip_optimizer(f)  # strip optimizers
                 if f is best:
                     LOGGER.info(f'\nValidating {f}...')
-                    results, _, _ = validate.run(
+                    results, _, _, _ = validate.run(
                         data_dict,
                         batch_size=batch_size // WORLD_SIZE * 2,
                         imgsz=imgsz,

@@ -894,22 +894,74 @@ class YOLOv5WithClassification(nn.Module):
     def __init__(self, in_channels, num_classes):
         super(YOLOv5WithClassification, self).__init__()
         self.num_classes = num_classes
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))  # Output size of (1, 1)
-        self.flatten = nn.Flatten()
-        self.dropout = nn.Dropout(0.2)  # Add dropout for regularization
-        self.fc = nn.Linear(in_channels, num_classes)  # Initialize FC layer directly
         
-        # Initialize weights properly
-        nn.init.xavier_uniform_(self.fc.weight)
-        if self.fc.bias is not None:
-            nn.init.constant_(self.fc.bias, 0)
+        # More sophisticated classification head
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.maxpool = nn.AdaptiveMaxPool2d((1, 1))
+        self.flatten = nn.Flatten()
+        
+        # Feature extraction layers
+        self.feature_extractor = nn.Sequential(
+            nn.Conv2d(in_channels, in_channels // 2, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(in_channels // 2),
+            nn.SiLU(inplace=True),
+            nn.Conv2d(in_channels // 2, in_channels // 4, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(in_channels // 4),
+            nn.SiLU(inplace=True),
+        )
+        
+        # Calculate the total feature dimension after pooling
+        # We use both avg and max pooling, so total features = (in_channels // 4) * 2
+        total_features = (in_channels // 4) * 2
+        
+        # Classification layers - use LayerNorm instead of BatchNorm1d to avoid batch size issues
+        self.classifier = nn.Sequential(
+            nn.Linear(total_features, in_channels // 4),
+            nn.LayerNorm(in_channels // 4),
+            nn.SiLU(inplace=True),
+            nn.Dropout(0.3),
+            nn.Linear(in_channels // 4, in_channels // 8),
+            nn.LayerNorm(in_channels // 8),
+            nn.SiLU(inplace=True),
+            nn.Dropout(0.2),
+            nn.Linear(in_channels // 8, num_classes)
+        )
+        
+        # Initialize weights
+        self._initialize_weights()
+
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                nn.init.normal_(m.weight, 0, 0.01)
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
 
     def forward(self, x):
-        x = self.avgpool(x)  # Pooling to (1, 1)
-        x = self.flatten(x)  # Flatten to (batch_size, in_channels)
-        x = self.dropout(x)  # Apply dropout for regularization
-        x = self.fc(x)  # Fully connected layer
-        return x  # Shape: (batch_size, num_classes)
+        # Feature extraction
+        features = self.feature_extractor(x)
+        
+        # Global pooling (both average and max)
+        avg_pooled = self.avgpool(features)
+        max_pooled = self.maxpool(features)
+        
+        # Concatenate pooled features along channel dimension
+        pooled = torch.cat([avg_pooled, max_pooled], dim=1)
+        
+        # Flatten
+        flattened = self.flatten(pooled)
+        
+        # Classification
+        output = self.classifier(flattened)
+        
+        return output
 
 
 

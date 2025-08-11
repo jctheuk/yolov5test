@@ -538,3 +538,307 @@ def save_one_box(xyxy, im, file=Path('im.jpg'), gain=1.02, pad=10, square=False,
         # cv2.imwrite(f, crop)  # save BGR, https://github.com/ultralytics/yolov5/issues/7007 chroma subsampling issue
         Image.fromarray(crop[..., ::-1]).save(f, quality=95, subsampling=0)  # save RGB
     return crop
+
+
+def plot_detection_metrics(detection_results, class_names, save_dir, prefix=''):
+    """
+    Plot detection metrics in a bar chart format similar to the log table
+    
+    Args:
+        detection_results: Dictionary with detection metrics
+        class_names: List of class names
+        save_dir: Directory to save plots
+        prefix: Prefix for saved files
+    """
+    save_dir = Path(save_dir)
+    save_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Extract metrics
+    precision = detection_results.get('precision_per_class', [])
+    recall = detection_results.get('recall_per_class', [])
+    map50 = detection_results.get('map50_per_class', [])
+    map50_95 = detection_results.get('map50_95_per_class', [])
+    
+    # Ensure all arrays have the same length as class_names
+    num_classes = len(class_names)
+    precision = list(precision) + [0.0] * (num_classes - len(precision))
+    recall = list(recall) + [0.0] * (num_classes - len(recall))
+    map50 = list(map50) + [0.0] * (num_classes - len(map50))
+    map50_95 = list(map50_95) + [0.0] * (num_classes - len(map50_95))
+    
+    # Truncate to match class_names length
+    precision = precision[:num_classes]
+    recall = recall[:num_classes]
+    map50 = map50[:num_classes]
+    map50_95 = map50_95[:num_classes]
+    
+    # Create figure with subplots
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
+    fig.suptitle('Detection Metrics by Class', fontsize=16, fontweight='bold')
+    
+    x = np.arange(len(class_names))
+    width = 0.35
+    
+    # Precision
+    bars1 = ax1.bar(x, precision, width, label='Precision', color='skyblue', alpha=0.8)
+    ax1.set_xlabel('Classes')
+    ax1.set_ylabel('Precision')
+    ax1.set_title('Precision per Class')
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(class_names, rotation=45)
+    ax1.set_ylim(0, 1)
+    ax1.grid(True, alpha=0.3)
+    
+    # Add value labels on bars
+    for bar, val in zip(bars1, precision):
+        height = bar.get_height()
+        ax1.annotate(f'{val:.3f}', xy=(bar.get_x() + bar.get_width() / 2, height),
+                    xytext=(0, 3), textcoords="offset points", ha='center', va='bottom')
+    
+    # Recall
+    bars2 = ax2.bar(x, recall, width, label='Recall', color='lightcoral', alpha=0.8)
+    ax2.set_xlabel('Classes')
+    ax2.set_ylabel('Recall')
+    ax2.set_title('Recall per Class')
+    ax2.set_xticks(x)
+    ax2.set_xticklabels(class_names, rotation=45)
+    ax2.set_ylim(0, 1)
+    ax2.grid(True, alpha=0.3)
+    
+    # Add value labels on bars
+    for bar, val in zip(bars2, recall):
+        height = bar.get_height()
+        ax2.annotate(f'{val:.3f}', xy=(bar.get_x() + bar.get_width() / 2, height),
+                    xytext=(0, 3), textcoords="offset points", ha='center', va='bottom')
+    
+    # mAP@0.5
+    bars3 = ax3.bar(x, map50, width, label='mAP@0.5', color='lightgreen', alpha=0.8)
+    ax3.set_xlabel('Classes')
+    ax3.set_ylabel('mAP@0.5')
+    ax3.set_title('mAP@0.5 per Class')
+    ax3.set_xticks(x)
+    ax3.set_xticklabels(class_names, rotation=45)
+    ax3.set_ylim(0, 1)
+    ax3.grid(True, alpha=0.3)
+    
+    # Add value labels on bars
+    for bar, val in zip(bars3, map50):
+        height = bar.get_height()
+        ax3.annotate(f'{val:.3f}', xy=(bar.get_x() + bar.get_width() / 2, height),
+                    xytext=(0, 3), textcoords="offset points", ha='center', va='bottom')
+    
+    # mAP@0.5:0.95
+    bars4 = ax4.bar(x, map50_95, width, label='mAP@0.5:0.95', color='gold', alpha=0.8)
+    ax4.set_xlabel('Classes')
+    ax4.set_ylabel('mAP@0.5:0.95')
+    ax4.set_title('mAP@0.5:0.95 per Class')
+    ax4.set_xticks(x)
+    ax4.set_xticklabels(class_names, rotation=45)
+    ax4.set_ylim(0, 1)
+    ax4.grid(True, alpha=0.3)
+    
+    # Add value labels on bars
+    for bar, val in zip(bars4, map50_95):
+        height = bar.get_height()
+        ax4.annotate(f'{val:.3f}', xy=(bar.get_x() + bar.get_width() / 2, height),
+                    xytext=(0, 3), textcoords="offset points", ha='center', va='bottom')
+    
+    plt.tight_layout()
+    plt.savefig(save_dir / f'{prefix}detection_metrics_chart.png', dpi=300, bbox_inches='tight')
+    plt.close()
+
+
+def plot_classification_metrics(classification_results, class_names, save_dir, prefix=''):
+    """
+    Plot classification metrics in a bar chart format
+    
+    Args:
+        classification_results: Dictionary with classification metrics
+        class_names: List of class names  
+        save_dir: Directory to save plots
+        prefix: Prefix for saved files
+    """
+    save_dir = Path(save_dir)
+    save_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Extract metrics
+    precision = classification_results.get('precision_per_class', [])
+    recall = classification_results.get('recall_per_class', [])
+    f1 = classification_results.get('f1_per_class', [])
+    
+    # Ensure all arrays have the same length as class_names
+    num_classes = len(class_names)
+    precision = list(precision) + [0.0] * (num_classes - len(precision))
+    recall = list(recall) + [0.0] * (num_classes - len(recall))
+    f1 = list(f1) + [0.0] * (num_classes - len(f1))
+    
+    # Truncate to match class_names length
+    precision = precision[:num_classes]
+    recall = recall[:num_classes]
+    f1 = f1[:num_classes]
+    
+    # Create figure
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+    fig.suptitle('Classification Metrics by Class', fontsize=16, fontweight='bold')
+    
+    x = np.arange(len(class_names))
+    width = 0.6
+    
+    # Precision
+    bars1 = ax1.bar(x, precision, width, label='Precision', color='skyblue', alpha=0.8)
+    ax1.set_xlabel('Classes')
+    ax1.set_ylabel('Precision')
+    ax1.set_title('Classification Precision per Class')
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(class_names, rotation=45)
+    ax1.set_ylim(0, 1)
+    ax1.grid(True, alpha=0.3)
+    
+    # Add value labels on bars
+    for bar, val in zip(bars1, precision):
+        height = bar.get_height()
+        ax1.annotate(f'{val:.3f}', xy=(bar.get_x() + bar.get_width() / 2, height),
+                    xytext=(0, 3), textcoords="offset points", ha='center', va='bottom')
+    
+    # Recall
+    bars2 = ax2.bar(x, recall, width, label='Recall', color='lightcoral', alpha=0.8)
+    ax2.set_xlabel('Classes')
+    ax2.set_ylabel('Recall')
+    ax2.set_title('Classification Recall per Class')
+    ax2.set_xticks(x)
+    ax2.set_xticklabels(class_names, rotation=45)
+    ax2.set_ylim(0, 1)
+    ax2.grid(True, alpha=0.3)
+    
+    # Add value labels on bars
+    for bar, val in zip(bars2, recall):
+        height = bar.get_height()
+        ax2.annotate(f'{val:.3f}', xy=(bar.get_x() + bar.get_width() / 2, height),
+                    xytext=(0, 3), textcoords="offset points", ha='center', va='bottom')
+    
+    # F1 Score
+    bars3 = ax3.bar(x, f1, width, label='F1 Score', color='lightgreen', alpha=0.8)
+    ax3.set_xlabel('Classes')
+    ax3.set_ylabel('F1 Score')
+    ax3.set_title('Classification F1 Score per Class')
+    ax3.set_xticks(x)
+    ax3.set_xticklabels(class_names, rotation=45)
+    ax3.set_ylim(0, 1)
+    ax3.grid(True, alpha=0.3)
+    
+    # Add value labels on bars
+    for bar, val in zip(bars3, f1):
+        height = bar.get_height()
+        ax3.annotate(f'{val:.3f}', xy=(bar.get_x() + bar.get_width() / 2, height),
+                    xytext=(0, 3), textcoords="offset points", ha='center', va='bottom')
+    
+    plt.tight_layout()
+    plt.savefig(save_dir / f'{prefix}classification_metrics_chart.png', dpi=300, bbox_inches='tight')
+    plt.close()
+
+
+def plot_combined_metrics_table(detection_results, classification_results, class_names, save_dir, prefix=''):
+    """
+    Create a table-style visualization similar to the log output
+    
+    Args:
+        detection_results: Dictionary with detection metrics
+        classification_results: Dictionary with classification metrics
+        class_names: List of class names
+        save_dir: Directory to save plots
+        prefix: Prefix for saved files
+    """
+    save_dir = Path(save_dir)
+    save_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Create figure with table layout
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
+    fig.suptitle('Metrics Summary Table', fontsize=16, fontweight='bold')
+    
+    # Detection table data
+    det_precision = detection_results.get('precision_per_class', [])
+    det_recall = detection_results.get('recall_per_class', [])
+    det_map50 = detection_results.get('map50_per_class', [])
+    det_map50_95 = detection_results.get('map50_95_per_class', [])
+    
+    # Classification table data  
+    cls_precision = classification_results.get('precision_per_class', [])
+    cls_recall = classification_results.get('recall_per_class', [])
+    cls_f1 = classification_results.get('f1_per_class', [])
+    
+    # Prepare detection table
+    det_headers = ['Class', 'Precision', 'Recall', 'mAP@0.5', 'mAP@0.5:0.95']
+    det_data = []
+    
+    for i, class_name in enumerate(class_names):
+        row = [
+            class_name,
+            f"{det_precision[i]:.3f}" if i < len(det_precision) else "0.000",
+            f"{det_recall[i]:.3f}" if i < len(det_recall) else "0.000", 
+            f"{det_map50[i]:.3f}" if i < len(det_map50) else "0.000",
+            f"{det_map50_95[i]:.3f}" if i < len(det_map50_95) else "0.000"
+        ]
+        det_data.append(row)
+    
+    # Prepare classification table
+    cls_headers = ['Class', 'Precision', 'Recall', 'F1 Score']
+    cls_data = []
+    
+    for i, class_name in enumerate(class_names):
+        row = [
+            class_name,
+            f"{cls_precision[i]:.3f}" if i < len(cls_precision) else "0.000",
+            f"{cls_recall[i]:.3f}" if i < len(cls_recall) else "0.000",
+            f"{cls_f1[i]:.3f}" if i < len(cls_f1) else "0.000"
+        ]
+        cls_data.append(row)
+    
+    # Create detection table
+    ax1.axis('tight')
+    ax1.axis('off')
+    det_table = ax1.table(cellText=det_data, colLabels=det_headers, 
+                         cellLoc='center', loc='center',
+                         colColours=['lightblue']*len(det_headers))
+    det_table.auto_set_font_size(False)
+    det_table.set_fontsize(10)
+    det_table.scale(1.2, 2)
+    ax1.set_title('Detection Metrics', fontsize=14, fontweight='bold', pad=20)
+    
+    # Create classification table
+    ax2.axis('tight')
+    ax2.axis('off')
+    cls_table = ax2.table(cellText=cls_data, colLabels=cls_headers,
+                         cellLoc='center', loc='center',
+                         colColours=['lightgreen']*len(cls_headers))
+    cls_table.auto_set_font_size(False)
+    cls_table.set_fontsize(10)
+    cls_table.scale(1.2, 2)
+    ax2.set_title('Classification Metrics', fontsize=14, fontweight='bold', pad=20)
+    
+    plt.tight_layout()
+    plt.savefig(save_dir / f'{prefix}metrics_table.png', dpi=300, bbox_inches='tight')
+    plt.close()
+
+
+def create_all_metrics_visualizations(detection_results, classification_results, class_names, save_dir, prefix=''):
+    """
+    Create all metrics visualizations
+    
+    Args:
+        detection_results: Dictionary with detection metrics
+        classification_results: Dictionary with classification metrics
+        class_names: List of class names
+        save_dir: Directory to save plots
+        prefix: Prefix for saved files
+    """
+    print(f"Creating metrics visualizations in {save_dir}")
+    
+    # Create individual charts
+    plot_detection_metrics(detection_results, class_names, save_dir, prefix)
+    plot_classification_metrics(classification_results, class_names, save_dir, prefix)
+    plot_combined_metrics_table(detection_results, classification_results, class_names, save_dir, prefix)
+    
+    print(f"✅ Metrics visualizations saved:")
+    print(f"   - {prefix}detection_metrics_chart.png")
+    print(f"   - {prefix}classification_metrics_chart.png") 
+    print(f"   - {prefix}metrics_table.png")

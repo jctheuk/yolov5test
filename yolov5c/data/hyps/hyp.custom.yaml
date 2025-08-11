@@ -7,21 +7,21 @@ classification_weight: 0.3  # Weight for classification task vs detection task (
 cls_task: 0.3  # Weight for classification task loss in dual loss computation
 
 # Learning rate parameters
-lr0: 0.01  # initial learning rate
-lrf: 0.1  # final OneCycleLR learning rate
+lr0: 0.001  # initial learning rate (reduced from 0.01 for better convergence)
+lrf: 0.01  # final OneCycleLR learning rate (reduced for better convergence)
 momentum: 0.937  # SGD momentum/Adam beta1
 weight_decay: 0.0005  # optimizer weight decay
 
 # Warmup parameters
-warmup_epochs: 3.0  # warmup epochs (reduced from 5.0 for faster convergence)
+warmup_epochs: 5.0  # warmup epochs (increased for better stability)
 warmup_momentum: 0.8  # warmup initial momentum
 warmup_bias_lr: 0.1  # warmup initial bias lr
 
 # Loss weights (optimized for multi-task)
-box: 0.05  # box loss gain (reduced to give more weight to classification)
-cls: 0.5  # cls loss gain (increased for better classification)
+box: 0.1  # box loss gain (increased from 0.05 for better detection)
+cls: 0.3  # cls loss gain (reduced from 0.5 for better balance)
 cls_pw: 1.0  # cls BCELoss positive_weight
-obj: 1.0  # obj loss gain (reduced from 1.3)
+obj: 1.0  # obj loss gain (kept at 1.0)
 obj_pw: 1.0  # obj BCELoss positive_weight
 
 # IoU and anchor parameters
@@ -32,16 +32,16 @@ anchor_t: 4.0  # anchor-multiple threshold (reduced from 4.27)
 fl_gamma: 1.5  # focal loss gamma
 
 # Augmentation parameters (optimized for medical images)
-hsv_h: 0.015  # image HSV-Hue augmentation (fraction) - keep low for medical images
-hsv_s: 0.7  # image HSV-Saturation augmentation (fraction)
-hsv_v: 0.4  # image HSV-Value augmentation (fraction)
-degrees: 10.0  # image rotation (+/- deg) - increased for better generalization
-translate: 0.1  # image translation (+/- fraction)
-scale: 0.5  # image scale (+/- gain) - enabled for better generalization
+hsv_h: 0.01  # image HSV-Hue augmentation (fraction) - reduced for medical images
+hsv_s: 0.3  # image HSV-Saturation augmentation (fraction) - reduced for medical images
+hsv_v: 0.2  # image HSV-Value augmentation (fraction) - reduced for medical images
+degrees: 5.0  # image rotation (+/- deg) - reduced for medical images
+translate: 0.05  # image translation (+/- fraction) - reduced for medical images
+scale: 0.3  # image scale (+/- gain) - reduced for medical images
 shear: 0.0  # image shear (+/- deg) - disabled for medical images
 perspective: 0.0  # image perspective (+/- fraction) - disabled for medical images
 flipud: 0.0  # image flip up-down (probability) - disabled for medical images
-fliplr: 0.5  # image flip left-right (probability) - enabled for better generalization
+fliplr: 0.3  # image flip left-right (probability) - reduced for medical images
 mosaic: 0.0  # image mosaic (probability) - disabled for medical images
 mixup: 0.0  # image mixup (probability) - disabled for medical images
 copy_paste: 0.0  # segment copy-paste (probability) - disabled for medical images

@@ -121,6 +121,16 @@ def create_dataloader(path,
     if rect and shuffle:
         LOGGER.warning('WARNING ⚠️ --rect is incompatible with DataLoader shuffle, setting shuffle=False')
         shuffle = False
+    
+    # Handle YAML files by calling check_dataset first
+    if isinstance(path, (str, Path)) and str(path).endswith(('.yaml', '.yml')):
+        print(f"🔍 Debug: Processing YAML file: {path}")
+        from .general import check_dataset
+        data_dict = check_dataset(path)
+        print(f"🔍 Debug: check_dataset returned: {data_dict}")
+        path = data_dict['train']  # Use the resolved train path
+        print(f"🔍 Debug: Using train path: {path}")
+    
     with torch_distributed_zero_first(rank):  # init dataset *.cache only once if DDP
         dataset = LoadImagesAndLabels(
             path,
@@ -723,13 +733,15 @@ class LoadImagesAndLabels(Dataset):
         # Convert
         img = img.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
         img = np.ascontiguousarray(img)
+        img = torch.from_numpy(img).float()  # Convert to tensor
 
         # Get classification label for this image
         classification_label = self.classification_labels[index]
         if classification_label is not None:
-            # Ensure classification_label is a list/tuple of 3 values
+            # Ensure classification_label is a list/tuple of 3 values (one-hot encoding)
             if isinstance(classification_label, (list, tuple)):
                 if len(classification_label) == 3:
+                    # Already in one-hot format, convert to tensor
                     classification_tensor = torch.tensor([float(x) for x in classification_label], dtype=torch.float32)
                 else:
                     # Pad or truncate to 3 values
@@ -744,9 +756,24 @@ class LoadImagesAndLabels(Dataset):
                 if 0 <= value < 3:
                     classification_tensor[int(value)] = 1.0
         else:
-            classification_tensor = torch.zeros(3, dtype=torch.float32)  # Default to [0,0,0]
+            # Default to class 0 in one-hot format
+            classification_tensor = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float32)
 
-        return torch.from_numpy(img), labels_out, self.im_files[index], shapes, classification_tensor
+        # DEBUG: Print label information for first few samples
+        if index < 5:  # Only print for first 5 samples to avoid spam
+            print(f"\n[DEBUG] Sample {index}:")
+            print(f"  Image: {self.im_files[index]}")
+            print(f"  Detection labels shape: {labels_out.shape}")
+            print(f"  Detection labels content: {labels_out}")
+            print(f"  Classification label raw: {classification_label}")
+            print(f"  Classification tensor: {classification_tensor}")
+            print(f"  Classification tensor shape: {classification_tensor.shape}")
+
+        # Return
+        if self.augment:
+            return img, labels_out, self.im_files[index], shapes, classification_tensor
+        else:
+            return img, labels_out, self.im_files[index], shapes, classification_tensor
 
     def load_image(self, i):
         # Loads 1 image from dataset index 'i', returns (im, original hw, resized hw)
@@ -915,20 +942,35 @@ class LoadImagesAndLabels(Dataset):
 
     @staticmethod
     def collate_fn(batch):
-        im, label, path, shapes, classification_label = zip(*batch)  # transposed
+        # YOLOv5 custom collate function, i.e. how 2 images + labels constitute a batch
+        im, label, path, shapes, classification_labels = zip(*batch)  # transposed
         for i, lb in enumerate(label):
             lb[:, 0] = i  # add target image index for build_targets()
         
-        # Handle classification labels properly - ensure they're tensors before stacking
-        classification_tensors = []
-        for cls_label in classification_label:
-            if isinstance(cls_label, torch.Tensor):
-                classification_tensors.append(cls_label)
+        # Convert classification_labels to tensor if needed
+        if classification_labels and any(cls is not None for cls in classification_labels):
+            # Filter out None values and convert to tensors
+            valid_cls_labels = []
+            for cls in classification_labels:
+                if cls is not None:
+                    if isinstance(cls, torch.Tensor):
+                        valid_cls_labels.append(cls)
+                    elif isinstance(cls, (list, np.ndarray)):
+                        valid_cls_labels.append(torch.tensor(cls, dtype=torch.float32))
+                    else:
+                        valid_cls_labels.append(torch.tensor([cls], dtype=torch.float32))
+                else:
+                    # If no classification label, create a default one
+                    valid_cls_labels.append(torch.tensor([0.0], dtype=torch.float32))
+            
+            if valid_cls_labels:
+                classification_tensors = torch.stack(valid_cls_labels, 0)
             else:
-                # Convert to tensor if it's not already
-                classification_tensors.append(torch.tensor(cls_label, dtype=torch.float32))
+                classification_tensors = torch.empty(0, dtype=torch.float32)
+        else:
+            classification_tensors = torch.empty(0, dtype=torch.float32)
         
-        return torch.stack(im, 0), torch.cat(label, 0), torch.stack(classification_tensors, 0), path, shapes
+        return torch.stack(im, 0), torch.cat(label, 0), path, shapes, classification_tensors
 
     @staticmethod
     def collate_fn4(batch):
@@ -1094,11 +1136,34 @@ def verify_image_label(args):
         else:
             nm = 1  # label missing
             lb = np.zeros((0, 5), dtype=np.float32)
+        
+        # Process classification line
+        if classification_line is not None:
+            try:
+                # Convert classification line to proper format
+                cls_values = [float(x) for x in classification_line]
+                if len(cls_values) == 3:  # One-hot encoded
+                    # Keep as one-hot encoding for classification training
+                    classification_line = cls_values
+                else:
+                    # Assume it's already a class index, convert to one-hot
+                    class_idx = int(cls_values[0]) if cls_values else 0
+                    one_hot = [0.0, 0.0, 0.0]
+                    if 0 <= class_idx < 3:
+                        one_hot[class_idx] = 1.0
+                    classification_line = one_hot
+            except (ValueError, IndexError):
+                # Default to class 0 if parsing fails
+                classification_line = [1.0, 0.0, 0.0]
+        else:
+            # Default classification label (one-hot for class 0)
+            classification_line = [1.0, 0.0, 0.0]
+            
         return im_file, lb, shape, segments, nm, nf, ne, nc, msg, classification_line
     except Exception as e:
         nc = 1
         msg = f'{prefix}WARNING ⚠️ {im_file}: ignoring corrupt image/label: {e}'
-        return [None, None, None, None, nm, nf, ne, nc, msg, None]
+        return [None, None, None, None, nm, nf, ne, nc, msg, [0]]
 
 
 class HUBDatasetStats():

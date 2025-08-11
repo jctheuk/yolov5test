@@ -129,7 +129,8 @@ def run(
     # Initialize/load model and set device
     training = model is not None
     if training:  # called by train.py
-        device, pt, jit, engine = next(model.parameters()).device, True, False, False  # get model device, PyTorch model
+        device, pt, jit, engine = next(model.parameters()).device, True, False, False
+
         half &= device.type != 'cpu'  # half precision only supported on CUDA
         model.half() if half else model.float()
     else:  # called directly
@@ -158,7 +159,7 @@ def run(
     # Configure
     model.eval()
     cuda = device.type != 'cpu'
-    is_coco = isinstance(data.get('val'), str) and data['val'].endswith(f'coco{os.sep}val2017.txt')  # COCO dataset
+    is_coco = isinstance(data.get('val'), str) and data['val'].endswith(f'coco{os.sep}val.txt')  # COCO dataset
     nc = 1 if single_cls else int(data['nc'])  # number of classes
     iouv = torch.linspace(0.5, 0.95, 10, device=device)  # iou vector for mAP@0.5:0.95
     niou = iouv.numel()
@@ -167,8 +168,8 @@ def run(
     if not training:
         if pt and not single_cls:  # check --weights are trained on --data
             ncm = model.model.nc
-            assert ncm == nc, f'{weights} ({ncm} classes) trained on different --data than what you passed ({nc} ' \
-                              f'classes). Pass correct combination of --weights and --data that are trained together.'
+            assert ncm == nc, f'{weights} ({ncm} classes) trained on different --data than what you passed to this ' \
+                              f'script i.e. {data} ({nc} classes). Pass models trained on --data {data}'
         model.warmup(imgsz=(1 if pt else batch_size, 3, imgsz, imgsz))  # warmup
         pad, rect = (0.0, False) if task == 'speed' else (0.5, pt)  # square inference for benchmarks
         task = task if task in ('train', 'val', 'test') else 'val'  # path to train/val/test images
@@ -184,23 +185,31 @@ def run(
 
     seen = 0
     confusion_matrix = ConfusionMatrix(nc=nc)
-    names = model.names if hasattr(model, 'names') else model.module.names  # get class names
-    if isinstance(names, (list, tuple)):  # old format
-        names = dict(enumerate(names))
+    names = {k: v for k, v in enumerate(model.names)} if hasattr(model, 'names') else {i: f'class{i}' for i in range(nc)}
     class_map = coco80_to_coco91_class() if is_coco else list(range(1000))
     s = ('%22s' + '%11s' * 6) % ('Class', 'Images', 'Instances', 'P', 'R', 'mAP50', 'mAP50-95')
-    tp, fp, p, r, f1, mp, mr, map50, ap50, map = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
-    dt = Profile(), Profile(), Profile()  # profiling times
-    loss = torch.zeros(4, device=device)  # box, obj, cls, cls_task
-    jdict, stats, ap, ap_class = [], [], [], []
+    # Use three profiling timers for preprocessing, inference, and NMS
+    dt = (Profile(), Profile(), Profile())  # profiles
+    loss = torch.zeros(4, device=device)
+    jdict, stats = [], []
+    
+    # Classification metrics tracking
+    all_cls_outputs = []
+    all_cls_targets = []
+    cls_correct = 0
+    cls_total = 0
+
     callbacks.run('on_val_start')
     pbar = tqdm(dataloader, desc=s, bar_format=TQDM_BAR_FORMAT)  # progress bar
-    for batch_i, (im, labels, classification_labels, paths, shapes) in enumerate(pbar):
+    # Match dataloader return order: (images, targets, paths, shapes, classification_labels)
+    for batch_i, (im, labels, paths, shapes, classification_labels) in enumerate(pbar):
         callbacks.run('on_val_batch_start')
         with dt[0]:
             if cuda:
                 im = im.to(device, non_blocking=True)
                 labels = labels.to(device)
+                if classification_labels is not None:
+                    classification_labels = classification_labels.to(device)
             im = im.half() if half else im.float()  # uint8 to fp16/32
             im /= 255  # 0 - 255 to 0.0 - 1.0
             nb, _, height, width = im.shape  # batch size, channels, height, width
@@ -236,16 +245,23 @@ def run(
 
         # Loss
         if compute_loss:
-            # For loss computation, we need training-mode outputs
+            # For loss computation, we need training-mode outputs (include both detection and classification)
             model.train()  # Switch to training mode temporarily
             with torch.no_grad():
                 train_output = model(im)  # Get training-mode outputs
             model.eval()  # Switch back to evaluation mode
-            
-            # Parse training output for loss computation
-            train_detections, train_classification = parse_model_output(train_output)
-            # Only use detection output for loss computation
-            loss += compute_loss(train_detections, labels)[1]  # box, obj, cls, cls_task
+
+            # Compute loss using full output tuple and both label types
+            loss_items = compute_loss(train_output, labels, classification_labels)[1]
+            # Ensure tensor and consistent shape before accumulating
+            if isinstance(loss_items, list):
+                loss_items_tensor = torch.stack([
+                    (x if isinstance(x, torch.Tensor) else torch.tensor(float(x), device=device)).view(-1)[0]
+                    for x in loss_items
+                ]).to(device)
+            else:
+                loss_items_tensor = loss_items.to(device).view(-1)
+            loss += loss_items_tensor  # box, obj, cls, cls_task
         labels[:, 2:] *= torch.tensor((width, height, width, height), device=device)  # to pixels
         lb = [labels[labels[:, 0] == i, 1:] for i in range(nb)] if save_hybrid else []  # for autolabelling
         # NMS
@@ -302,41 +318,45 @@ def run(
             callbacks.run('on_val_image_end', pred, predn, path, names, im[si])
 
         # Classification validation (if classification output exists)
-        if classification_output is not None:
-            from utils.classification_metrics import validate_classification_outputs
+        if classification_output is not None and classification_labels is not None:
+            # Process classification labels
+            if classification_labels.dim() > 1 and classification_labels.shape[-1] > 1:
+                # Convert one-hot encoded labels to class indices
+                cls_targets = classification_labels.argmax(dim=1)
+            else:
+                cls_targets = classification_labels.long()
             
-            # Extract classification targets from the label files
-            # The classification labels are embedded in the detection label files
-            cls_targets = []
-            for si, path in enumerate(paths):
-                label_path = Path(str(path).replace('images', 'labels')).with_suffix('.txt')
-                if label_path.exists():
-                    with open(label_path, 'r') as f:
-                        lines = f.readlines()
-                        if len(lines) >= 2:
-                            # Second line contains classification labels (one-hot encoded)
-                            cls_line = lines[1].strip().split()
-                            if len(cls_line) == 3:  # Should be 3 classes
-                                cls_target = int(cls_line.index('1'))  # Convert one-hot to class index
-                                cls_targets.append(cls_target)
-                            else:
-                                cls_targets.append(0)  # Default to class 0
-                        else:
-                            cls_targets.append(0)  # Default to class 0
+            # Ensure batch size matches
+            if cls_targets.shape[0] != im.shape[0]:
+                if cls_targets.shape[0] < im.shape[0]:
+                    # Pad with zeros
+                    pad_size = im.shape[0] - cls_targets.shape[0]
+                    cls_targets = torch.cat([cls_targets, torch.zeros(pad_size, dtype=torch.long, device=device)])
                 else:
-                    cls_targets.append(0)  # Default to class 0
+                    # Truncate
+                    cls_targets = cls_targets[:im.shape[0]]
             
-            # Convert to tensor
-            cls_targets = torch.tensor(cls_targets, device=device, dtype=torch.long)
+            # Calculate classification accuracy
+            if classification_output.dim() > 1:
+                pred_classes = torch.argmax(classification_output, dim=1)
+            else:
+                pred_classes = classification_output.long()
             
-            # Validate classification outputs with targets
-            cls_metrics = validate_classification_outputs(
-                classification_output=classification_output,
-                targets=cls_targets,
-                class_names=['PSAX', 'PLAX', 'A4C'],  # From your data.yaml
-                save_dir=save_dir if batch_i == 0 else None,  # Save only for first batch
-                verbose=verbose
-            )
+            # Ensure predictions and targets have the same shape
+            if pred_classes.shape[0] != cls_targets.shape[0]:
+                if pred_classes.shape[0] < cls_targets.shape[0]:
+                    pred_classes = pred_classes[:cls_targets.shape[0]]
+                else:
+                    cls_targets = cls_targets[:pred_classes.shape[0]]
+            
+            # Calculate correct predictions
+            correct_cls = (pred_classes == cls_targets).sum().item()
+            cls_correct += correct_cls
+            cls_total += cls_targets.shape[0]
+            
+            # Collect for final metrics
+            all_cls_outputs.append(classification_output.cpu())
+            all_cls_targets.append(cls_targets.cpu())
 
         # Plot images
         if plots and batch_i < 3:
@@ -375,19 +395,68 @@ def run(
         confusion_matrix.plot(save_dir=save_dir, names=list(names.values()))
         callbacks.run('on_val_end', nt, tp, fp, p, r, f1, ap, ap50, ap_class, confusion_matrix)
 
+    # Compute classification metrics
+    cls_results = None
+    if cls_total > 0:
+        cls_accuracy = cls_correct / cls_total
+        
+        # Compute additional classification metrics if we have outputs
+        if all_cls_outputs and all_cls_targets:
+            try:
+                from sklearn.metrics import precision_recall_fscore_support, accuracy_score
+                
+                # Concatenate all outputs and targets
+                all_cls_outputs = torch.cat(all_cls_outputs, dim=0)
+                all_cls_targets = torch.cat(all_cls_targets, dim=0)
+                
+                # Convert to numpy for sklearn
+                if all_cls_outputs.dim() > 1:
+                    pred_classes = torch.argmax(all_cls_outputs, dim=1).cpu().numpy()
+                else:
+                    pred_classes = all_cls_outputs.cpu().numpy()
+                
+                true_classes = all_cls_targets.cpu().numpy()
+                
+                # Calculate metrics
+                precision, recall, f1_score, _ = precision_recall_fscore_support(
+                    true_classes, pred_classes, average='weighted', zero_division=0
+                )
+                
+                cls_results = {
+                    'accuracy': cls_accuracy,
+                    'precision': precision,
+                    'recall': recall,
+                    'f1_score': f1_score,
+                    'total_samples': cls_total
+                }
+                
+                LOGGER.info(f'Classification Results - Accuracy: {cls_accuracy:.4f}, '
+                           f'Precision: {precision:.4f}, Recall: {recall:.4f}, '
+                           f'F1-Score: {f1_score:.4f}')
+                
+            except ImportError:
+                LOGGER.warning("sklearn not available, only accuracy will be computed")
+                cls_results = {
+                    'accuracy': cls_accuracy,
+                    'total_samples': cls_total
+                }
+        else:
+            cls_results = {
+                'accuracy': cls_accuracy,
+                'total_samples': cls_total
+            }
+
     # Save JSON
-    if save_json and len(jdict):
+    if save_json and (jdict or save_dir):
         w = Path(weights[0] if isinstance(weights, list) else weights).stem if weights is not None else ''  # weights
-        anno_json = str(Path('../datasets/coco/annotations/instances_val2017.json'))  # annotations
-        if not os.path.exists(anno_json):
-            anno_json = os.path.join(data['path'], 'annotations', 'instances_val2017.json')
-        pred_json = str(save_dir / f'{w}_predictions.json')  # predictions
+        anno_json = str(Path('../datasets/coco/annotations/instances_val2017.json') if is_coco else data.get('path', '') / 'annotations.json')  # annotations json
+        pred_json = str(save_dir / f"{w}_predictions.json")  # predictions json
         LOGGER.info(f'\nEvaluating pycocotools mAP... saving {pred_json}...')
         with open(pred_json, 'w') as f:
             json.dump(jdict, f)
 
         try:  # https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocoEvalDemo.ipynb
-            check_requirements('pycocotools>=2.0.6')
+            check_requirements(['pycocotools'])
             from pycocotools.coco import COCO
             from pycocotools.cocoeval import COCOeval
 
@@ -404,19 +473,13 @@ def run(
             LOGGER.info(f'pycocotools unable to run: {e}')
 
     # Return results
-    model.float()  # for training
+    model.float() if half else None  # for training
     if not training:
         s = f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ''
         LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}{s}")
     maps = np.zeros(nc) + map
     for i, c in enumerate(ap_class):
         maps[c] = ap[i]
-    
-    # Prepare classification results if available
-    cls_results = None
-    if 'classification_metrics' in locals():
-        cls_results = classification_metrics
-    
     return (mp, mr, map50, map, *(loss.cpu() / len(dataloader)).tolist()), maps, t, cls_results
 
 
