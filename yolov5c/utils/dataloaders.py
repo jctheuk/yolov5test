@@ -124,12 +124,9 @@ def create_dataloader(path,
     
     # Handle YAML files by calling check_dataset first
     if isinstance(path, (str, Path)) and str(path).endswith(('.yaml', '.yml')):
-        print(f"🔍 Debug: Processing YAML file: {path}")
         from .general import check_dataset
         data_dict = check_dataset(path)
-        print(f"🔍 Debug: check_dataset returned: {data_dict}")
         path = data_dict['train']  # Use the resolved train path
-        print(f"🔍 Debug: Using train path: {path}")
     
     with torch_distributed_zero_first(rank):  # init dataset *.cache only once if DDP
         dataset = LoadImagesAndLabels(
@@ -759,15 +756,7 @@ class LoadImagesAndLabels(Dataset):
             # Default to class 0 in one-hot format
             classification_tensor = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float32)
 
-        # DEBUG: Print label information for first few samples
-        if index < 5:  # Only print for first 5 samples to avoid spam
-            print(f"\n[DEBUG] Sample {index}:")
-            print(f"  Image: {self.im_files[index]}")
-            print(f"  Detection labels shape: {labels_out.shape}")
-            print(f"  Detection labels content: {labels_out}")
-            print(f"  Classification label raw: {classification_label}")
-            print(f"  Classification tensor: {classification_tensor}")
-            print(f"  Classification tensor shape: {classification_tensor.shape}")
+
 
         # Return
         if self.augment:
@@ -855,11 +844,7 @@ class LoadImagesAndLabels(Dataset):
                                            perspective=self.hyp['perspective'],
                                            border=self.mosaic_border)  # border to remove
         
-        # Save the augmented image
-        save_dir = '/work/jonchang41/yolov5/augmented/images'
-        os.makedirs(save_dir, exist_ok=True)
-        save_path = os.path.join(save_dir, f'augmented_{index}.jpg')
-        cv2.imwrite(save_path, img4)
+
 
         return img4, labels4
 

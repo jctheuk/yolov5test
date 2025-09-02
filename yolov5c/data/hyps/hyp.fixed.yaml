@@ -3,8 +3,7 @@
 # Optimized to fix classification performance issues
 
 # Multi-task learning parameters - REDUCED CLASSIFICATION WEIGHT
-classification_weight: 0.25  # Reduced to 0.25 for better balance
-cls_task: 0.25  # Reduced to 0.25 to give less importance to classification
+cls_task: 0.517  # Adjusted for 75% detection : 25% classification distribution
 
 # Learning rate parameters - KEEPING ORIGINAL VALUES
 lr0: 0.001  # Keeping original learning rate as requested
@@ -17,11 +16,11 @@ warmup_epochs: 10.0  # Increased from 5.0 for better stability
 warmup_momentum: 0.8  # warmup initial momentum
 warmup_bias_lr: 0.1  # warmup initial bias lr
 
-# Loss weights - REBALANCED FOR BETTER CLASSIFICATION
-box: 0.05  # Reduced box loss to give more focus to classification
-cls: 0.5  # Increased cls loss for better detection-classification balance
+# Loss weights - KEEP DETECTION, ADJUST CLASSIFICATION FOR 75:25
+box: 0.05  # Keep original box loss weight
+cls: 0.5  # Keep original detection classification weight
 cls_pw: 1.0  # cls BCELoss positive_weight
-obj: 1.0  # obj loss gain (kept at 1.0)
+obj: 1.0  # Keep original objectness weight
 obj_pw: 1.0  # obj BCELoss positive_weight
 
 # IoU and anchor parameters

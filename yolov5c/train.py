@@ -297,10 +297,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
         model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
     amp = check_amp(model)  # check AMP
     
-    # Print model architecture
-    print("\nModel architecture:\n")
-    print(model)
-    print("\nEnd of model architecture.\n")
+
     
     # Freeze
     freeze = [f'model.{x}.' for x in (freeze if len(freeze) > 1 else range(freeze[0]))]  # layers to freeze
@@ -497,7 +494,6 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
 
             with torch.autograd.set_detect_anomaly(True):
                 with torch.cuda.amp.autocast(amp):
-                    try:
                         # Forward pass
                         model_output = model(imgs)
                         
@@ -590,10 +586,6 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
 
                         if opt.quad:
                             total_loss *= 4
-
-                    except Exception as e:
-                        print(f"Error during forward/loss computation: {e}")
-                        raise
                     
                 # Backward pass
                 scaler.scale(total_loss).backward()
@@ -605,36 +597,17 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                     # Enhanced gradient clipping to prevent NaN
                     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)  # reduced from 10.0
                     
-                    # Check for NaN gradients before optimizer step
-                    has_nan = False
-                    for param in model.parameters():
-                        if param.grad is not None:
-                            if torch.isnan(param.grad).any() or torch.isinf(param.grad).any():
-                                has_nan = True
-                                print(f"Warning: NaN/Inf gradient detected at epoch {epoch}, batch {i}")
-                                break
-                    
-                    if not has_nan:
-                        scaler.step(optimizer)  # optimizer.step
-                        scaler.update()
-                        optimizer.zero_grad()
-                        if ema:
-                            ema.update(model)
-                        last_opt_step = ni
-                    else:
-                        # Skip this update if NaN detected
-                        scaler.update()
-                        optimizer.zero_grad()
-                        print(f"Skipping optimizer step due to NaN gradients at epoch {epoch}, batch {i}")
-                        last_opt_step = ni
+                    scaler.step(optimizer)  # optimizer.step
+                    scaler.update()
+                    optimizer.zero_grad()
+                    if ema:
+                        ema.update(model)
+                    last_opt_step = ni
 
                 # Log
                 if RANK in {-1, 0}:
                     # Convert loss_items list to tensor if needed
                     if isinstance(loss_items, list):
-                        # Debug: Print loss items shapes
-                        print(f"Debug: loss_items shapes: {[item.shape if hasattr(item, 'shape') else 'no shape' for item in loss_items]}")
-                        
                         # Ensure all tensors have the same shape before stacking
                         processed_loss_items = []
                         for item in loss_items:
