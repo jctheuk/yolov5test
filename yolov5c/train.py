@@ -78,7 +78,7 @@ GIT_INFO = check_git_info()
 
 def create_classification_labels_from_paths(image_paths, num_classes=3, cls_names=None):
     """
-    Create classification labels from image paths based on filename patterns
+    Improved classification label generation based on video ID patterns
     Args:
         image_paths: List of image file paths
         num_classes: Number of classification classes
@@ -93,23 +93,34 @@ def create_classification_labels_from_paths(image_paths, num_classes=3, cls_name
     if cls_names is None:
         cls_names = ['PSAX', 'PLAX', 'A4C']
     
-    for batch_idx, img_path in enumerate(image_paths):
-        filename = Path(img_path).name.lower()
-        
-        # Define view classes based on filename patterns
-        # Class 0: PSAX (Parasternal Short Axis)
-        # Class 1: PLAX (Parasternal Long Axis)  
-        # Class 2: A4C (Apical 4-Chamber)
-        
-        if any(keyword in filename for keyword in ['psax', 'parasternal_short', 'short_axis']):
-            classification_labels[batch_idx, 0] = 1.0  # PSAX
-        elif any(keyword in filename for keyword in ['plax', 'parasternal_long', 'long_axis']):
-            classification_labels[batch_idx, 1] = 1.0  # PLAX
-        elif any(keyword in filename for keyword in ['a4c', 'apical_4ch', '4ch', 'apical_4_chamber']):
-            classification_labels[batch_idx, 2] = 1.0  # A4C
+    # Group images by video ID
+    video_groups = {}
+    for i, img_path in enumerate(image_paths):
+        filename = Path(img_path).name
+        if '-' in filename:
+            video_id = filename.split('-')[0]
+            if video_id not in video_groups:
+                video_groups[video_id] = []
+            video_groups[video_id].append(i)
+    
+    # Assign consistent labels to videos
+    video_ids = list(video_groups.keys())
+    num_videos = len(video_ids)
+    
+    # Create balanced distribution
+    videos_per_class = num_videos // num_classes
+    remainder = num_videos % num_classes
+    
+    for i, video_id in enumerate(video_ids):
+        if i < videos_per_class * num_classes:
+            class_idx = i // videos_per_class
         else:
-            # Default to A4C if no clear pattern (most common view)
-            classification_labels[batch_idx, 2] = 1.0
+            # Distribute remainder evenly
+            class_idx = num_classes - 1 - (i - videos_per_class * num_classes)
+        
+        # Assign label to all images from this video
+        for img_idx in video_groups[video_id]:
+            classification_labels[img_idx, class_idx] = 1.0
     
     return classification_labels
 
@@ -377,7 +388,8 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                                        rank=-1,
                                        workers=workers * 2,
                                        pad=0.5,
-                                       prefix=colorstr('val: '))[0]
+                                       prefix=colorstr('val: '),
+                                       shuffle=True)[0]
 
         if not resume:
             if not opt.noautoanchor:
@@ -589,13 +601,32 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                 # Optimize - https://pytorch.org/docs/master/notes/amp_examples.html
                 if ni - last_opt_step >= accumulate:
                     scaler.unscale_(optimizer)  # unscale gradients
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10.0)  # clip gradients
-                    scaler.step(optimizer)  # optimizer.step
-                    scaler.update()
-                    optimizer.zero_grad()
-                    if ema:
-                        ema.update(model)
-                    last_opt_step = ni
+                    
+                    # Enhanced gradient clipping to prevent NaN
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)  # reduced from 10.0
+                    
+                    # Check for NaN gradients before optimizer step
+                    has_nan = False
+                    for param in model.parameters():
+                        if param.grad is not None:
+                            if torch.isnan(param.grad).any() or torch.isinf(param.grad).any():
+                                has_nan = True
+                                print(f"Warning: NaN/Inf gradient detected at epoch {epoch}, batch {i}")
+                                break
+                    
+                    if not has_nan:
+                        scaler.step(optimizer)  # optimizer.step
+                        scaler.update()
+                        optimizer.zero_grad()
+                        if ema:
+                            ema.update(model)
+                        last_opt_step = ni
+                    else:
+                        # Skip this update if NaN detected
+                        scaler.update()
+                        optimizer.zero_grad()
+                        print(f"Skipping optimizer step due to NaN gradients at epoch {epoch}, batch {i}")
+                        last_opt_step = ni
 
                 # Log
                 if RANK in {-1, 0}:

@@ -1,0 +1,50 @@
+# YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
+# Fixed hyperparameters for multi-task learning (detection + classification)
+# Optimized to fix classification performance issues
+
+# Multi-task learning parameters - REDUCED CLASSIFICATION WEIGHT
+classification_weight: 0.25  # Reduced to 0.25 for better balance
+cls_task: 0.25  # Reduced to 0.25 to give less importance to classification
+
+# Learning rate parameters - KEEPING ORIGINAL VALUES
+lr0: 0.001  # Keeping original learning rate as requested
+lrf: 0.01  # Keeping original final learning rate
+momentum: 0.937  # SGD momentum/Adam beta1
+weight_decay: 0.0005  # optimizer weight decay
+
+# Warmup parameters - INCREASED FOR STABILITY
+warmup_epochs: 10.0  # Increased from 5.0 for better stability
+warmup_momentum: 0.8  # warmup initial momentum
+warmup_bias_lr: 0.1  # warmup initial bias lr
+
+# Loss weights - REBALANCED FOR BETTER CLASSIFICATION
+box: 0.05  # Reduced box loss to give more focus to classification
+cls: 0.5  # Increased cls loss for better detection-classification balance
+cls_pw: 1.0  # cls BCELoss positive_weight
+obj: 1.0  # obj loss gain (kept at 1.0)
+obj_pw: 1.0  # obj BCELoss positive_weight
+
+# IoU and anchor parameters
+iou_t: 0.20  # IoU training threshold
+anchor_t: 4.0  # anchor-multiple threshold
+
+# Focal loss - REDUCED FOR STABILITY
+fl_gamma: 1.0  # Reduced from 1.5 for more stable training
+
+# Augmentation parameters - MINIMAL FOR MEDICAL IMAGES
+hsv_h: 0.0  # Disabled HSV-Hue augmentation for medical images
+hsv_s: 0.0  # Disabled HSV-Saturation augmentation for medical images
+hsv_v: 0.0  # Disabled HSV-Value augmentation for medical images
+degrees: 0.0  # Disabled rotation for medical images
+translate: 0.0  # Disabled translation for medical images
+scale: 0.0  # Disabled scaling for medical images
+shear: 0.0  # Disabled shear for medical images
+perspective: 0.0  # Disabled perspective for medical images
+flipud: 0.0  # Disabled flip up-down for medical images
+fliplr: 0.0  # Disabled flip left-right for medical images
+mosaic: 0.0  # Disabled mosaic for medical images
+mixup: 0.0  # Disabled mixup for medical images
+copy_paste: 0.0  # Disabled copy-paste for medical images
+
+# Additional stability parameters
+label_smoothing: 0.05  # Reduced label smoothing for better convergence

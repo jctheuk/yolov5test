@@ -897,7 +897,6 @@ class YOLOv5WithClassification(nn.Module):
         
         # More sophisticated classification head
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.maxpool = nn.AdaptiveMaxPool2d((1, 1))
         self.flatten = nn.Flatten()
         
         # Feature extraction layers
@@ -911,8 +910,8 @@ class YOLOv5WithClassification(nn.Module):
         )
         
         # Calculate the total feature dimension after pooling
-        # We use both avg and max pooling, so total features = (in_channels // 4) * 2
-        total_features = (in_channels // 4) * 2
+        # We use only avg pooling now, so total features = in_channels // 4
+        total_features = in_channels // 4
         
         # Classification layers - use LayerNorm instead of BatchNorm1d to avoid batch size issues
         self.classifier = nn.Sequential(
@@ -948,12 +947,8 @@ class YOLOv5WithClassification(nn.Module):
         # Feature extraction
         features = self.feature_extractor(x)
         
-        # Global pooling (both average and max)
-        avg_pooled = self.avgpool(features)
-        max_pooled = self.maxpool(features)
-        
-        # Concatenate pooled features along channel dimension
-        pooled = torch.cat([avg_pooled, max_pooled], dim=1)
+        # Global pooling (only average pooling now)
+        pooled = self.avgpool(features)
         
         # Flatten
         flattened = self.flatten(pooled)
@@ -992,7 +987,8 @@ class ChannelAttention(nn.Module):
     def __init__(self, in_planes, ratio=16):
         super(ChannelAttention, self).__init__()
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.max_pool = nn.AdaptiveMaxPool2d(1)
+        # Replace AdaptiveMaxPool2d with AdaptiveAvgPool2d to avoid CUDA deterministic algorithm errors
+        self.max_pool = nn.AdaptiveAvgPool2d(1)  # Changed from AdaptiveMaxPool2d
         self.f1 = nn.Conv2d(in_planes, in_planes // ratio, 1, bias=False)
         self.relu = nn.ReLU()
         self.f2 = nn.Conv2d(in_planes // ratio, in_planes, 1, bias=False)

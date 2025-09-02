@@ -421,14 +421,25 @@ class DetectionModel(BaseModel):
 
     def _initialize_biases(self, cf=None):
         # Initialize biases into Detect/Segment modules
-        m = self.model[-1]  # e.g. Detect(...)
-        for mi, s in zip(m.m, m.stride):
-            b = mi.bias.view(m.na, -1)
+        # Find the Detect layer in the model
+        detect_layer = None
+        for m in self.model:
+            if isinstance(m, Detect):
+                detect_layer = m
+                break
+        
+        if detect_layer is None:
+            LOGGER.warning("No Detect layer found for bias initialization")
+            return
+            
+        # Initialize biases for Detect layer
+        for mi, s in zip(detect_layer.m, detect_layer.stride):
+            b = mi.bias.view(detect_layer.na, -1)
             b.data[:, 4] += math.log(8 / (640 / s)**2)  # objectness
             if cf is None:
-                b.data[:, 5:5 + m.nc] += math.log(0.6 / (m.nc - 0.99999))
+                b.data[:, 5:5 + detect_layer.nc] += math.log(0.6 / (detect_layer.nc - 0.99999))
             else:
-                b.data[:, 5:5 + m.nc] += torch.log(cf / cf.sum())
+                b.data[:, 5:5 + detect_layer.nc] += torch.log(cf / cf.sum())
             mi.bias = nn.Parameter(b.view(-1), requires_grad=True)
 
 Model = DetectionModel  # retain YOLOv5 'Model' class for backwards compatibility

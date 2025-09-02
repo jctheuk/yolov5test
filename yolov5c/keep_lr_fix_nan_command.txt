@@ -1,0 +1,30 @@
+# 保持原始學習率修復NaN問題的訓練命令
+# 學習率保持 0.01 不變
+
+cd /work/jonchang3909/yolov5test/yolov5c/ && \
+sudo apt-get update && \
+sudo apt-get install libgl1 -y && \
+sudo pip install pandas && \
+sudo pip install seaborn && \
+python train.py \
+    --data ../Regurgitation-YOLODataset-Detection/data.yaml \
+    --cfg models/yolov5sc.yaml \
+    --hyp data/hyps/hyp.fix_nan_keep_lr.yaml \
+    --epochs 300 \
+    --batch-size 128 \
+    --img 416 \
+    --save-period 10 \
+    --name 300_epochs_keep_lr_fix_nan \
+    --cache \
+    --patience 0
+
+# 主要修復措施（保持學習率不變）：
+# 1. 學習率保持 0.01 不變 (如您要求)
+# 2. Batch size 使用 128 (如您要求)
+# 3. 分類權重從 0.2 降低到 0.005 (降低40倍)
+# 4. 梯度裁剪從 10.0 降低到 1.0 (降低10倍)
+# 5. 禁用所有數據擴增
+# 6. 增加標籤平滑到 0.3
+# 7. 延長warmup到10個epoch
+# 8. 增加權重衰減到 0.002
+# 9. 降低分類和檢測損失權重
