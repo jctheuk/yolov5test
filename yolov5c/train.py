@@ -76,54 +76,6 @@ WORLD_SIZE = int(os.getenv('WORLD_SIZE', 1))
 GIT_INFO = check_git_info()
 
 
-def create_classification_labels_from_paths(image_paths, num_classes=3, cls_names=None):
-    """
-    Improved classification label generation based on video ID patterns
-    Args:
-        image_paths: List of image file paths
-        num_classes: Number of classification classes
-        cls_names: List of classification class names
-    Returns:
-        torch.Tensor: One-hot encoded classification labels
-    """
-    batch_size = len(image_paths)
-    classification_labels = torch.zeros(batch_size, num_classes)
-    
-    # Default class names if not provided
-    if cls_names is None:
-        cls_names = ['PSAX', 'PLAX', 'A4C']
-    
-    # Group images by video ID
-    video_groups = {}
-    for i, img_path in enumerate(image_paths):
-        filename = Path(img_path).name
-        if '-' in filename:
-            video_id = filename.split('-')[0]
-            if video_id not in video_groups:
-                video_groups[video_id] = []
-            video_groups[video_id].append(i)
-    
-    # Assign consistent labels to videos
-    video_ids = list(video_groups.keys())
-    num_videos = len(video_ids)
-    
-    # Create balanced distribution
-    videos_per_class = num_videos // num_classes
-    remainder = num_videos % num_classes
-    
-    for i, video_id in enumerate(video_ids):
-        if i < videos_per_class * num_classes:
-            class_idx = i // videos_per_class
-        else:
-            # Distribute remainder evenly
-            class_idx = num_classes - 1 - (i - videos_per_class * num_classes)
-        
-        # Assign label to all images from this video
-        for img_idx in video_groups[video_id]:
-            classification_labels[img_idx, class_idx] = 1.0
-    
-    return classification_labels
-
 
 def plot_classification_metrics(cls_results, save_dir, epoch):
     """

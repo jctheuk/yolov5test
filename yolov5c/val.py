@@ -494,7 +494,13 @@ def run(
                     # Print per-class results
                     for i in range(num_classes):
                         class_name = cls_names[i] if i < len(cls_names) else f'class_{i}'
-                        LOGGER.info(f"{class_name:>22}{cls_total:>11}{class_counts[i]:>11}{precision_per_class[i]:>11.3g}{recall_per_class[i]:>11.3g}{cls_map50_per_class[i]:>11.3g}{cls_map_per_class[i]:>11.3g}")
+                        # Ensure we don't access out of bounds
+                        class_count = class_counts[i] if i < len(class_counts) else 0
+                        precision_val = precision_per_class[i] if i < len(precision_per_class) else 0
+                        recall_val = recall_per_class[i] if i < len(recall_per_class) else 0
+                        map50_val = cls_map50_per_class[i] if i < len(cls_map50_per_class) else 0
+                        map_val = cls_map_per_class[i] if i < len(cls_map_per_class) else 0
+                        LOGGER.info(f"{class_name:>22}{cls_total:>11}{class_count:>11}{precision_val:>11.3g}{recall_val:>11.3g}{map50_val:>11.3g}{map_val:>11.3g}")
                 
             except ImportError:
                 LOGGER.warning("sklearn not available, only accuracy will be computed")

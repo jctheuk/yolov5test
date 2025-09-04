@@ -899,31 +899,31 @@ class YOLOv5WithClassification(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.flatten = nn.Flatten()
         
-        # Feature extraction layers
+        # Feature extraction layers - handle 128 input channels
         self.feature_extractor = nn.Sequential(
-            nn.Conv2d(in_channels, in_channels // 2, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(in_channels // 2),
+            nn.Conv2d(in_channels, 64, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(64),
             nn.SiLU(inplace=True),
-            nn.Conv2d(in_channels // 2, in_channels // 4, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(in_channels // 4),
+            nn.Conv2d(64, 32, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(32),
             nn.SiLU(inplace=True),
         )
         
         # Calculate the total feature dimension after pooling
-        # We use only avg pooling now, so total features = in_channels // 4
-        total_features = in_channels // 4
+        # We use only avg pooling now, so total features = 32
+        total_features = 32
         
         # Classification layers - use LayerNorm instead of BatchNorm1d to avoid batch size issues
         self.classifier = nn.Sequential(
-            nn.Linear(total_features, in_channels // 4),
-            nn.LayerNorm(in_channels // 4),
+            nn.Linear(total_features, 32),
+            nn.LayerNorm(32),
             nn.SiLU(inplace=True),
             nn.Dropout(0.3),
-            nn.Linear(in_channels // 4, in_channels // 8),
-            nn.LayerNorm(in_channels // 8),
+            nn.Linear(32, 16),
+            nn.LayerNorm(16),
             nn.SiLU(inplace=True),
             nn.Dropout(0.2),
-            nn.Linear(in_channels // 8, num_classes)
+            nn.Linear(16, num_classes)
         )
         
         # Initialize weights

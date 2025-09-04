@@ -431,16 +431,26 @@ class DetectionModel(BaseModel):
         if detect_layer is None:
             LOGGER.warning("No Detect layer found for bias initialization")
             return
+        
+        # Ensure stride is available
+        if not hasattr(detect_layer, 'stride') or detect_layer.stride is None:
+            LOGGER.warning("Detect layer stride not available for bias initialization")
+            return
             
         # Initialize biases for Detect layer
-        for mi, s in zip(detect_layer.m, detect_layer.stride):
-            b = mi.bias.view(detect_layer.na, -1)
-            b.data[:, 4] += math.log(8 / (640 / s)**2)  # objectness
-            if cf is None:
-                b.data[:, 5:5 + detect_layer.nc] += math.log(0.6 / (detect_layer.nc - 0.99999))
-            else:
-                b.data[:, 5:5 + detect_layer.nc] += torch.log(cf / cf.sum())
-            mi.bias = nn.Parameter(b.view(-1), requires_grad=True)
+        try:
+            for mi, s in zip(detect_layer.m, detect_layer.stride):
+                if hasattr(mi, 'bias') and mi.bias is not None:
+                    b = mi.bias.view(detect_layer.na, -1)
+                    b.data[:, 4] += math.log(8 / (640 / s)**2)  # objectness
+                    if cf is None:
+                        b.data[:, 5:5 + detect_layer.nc] += math.log(0.6 / (detect_layer.nc - 0.99999))
+                    else:
+                        b.data[:, 5:5 + detect_layer.nc] += torch.log(cf / cf.sum())
+                    mi.bias = nn.Parameter(b.view(-1), requires_grad=True)
+        except Exception as e:
+            LOGGER.warning(f"Error during bias initialization: {e}")
+            LOGGER.warning("Continuing without bias initialization")
 
 Model = DetectionModel  # retain YOLOv5 'Model' class for backwards compatibility
 
@@ -569,11 +579,20 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
             c2 = ch[f] // args[0]**2
         elif m is YOLOv5WithClassification:
             # Handle the classification layer (if added)
-            # If args[0] is a placeholder like 'num_cls', replace it with actual num_cls if needed.
-            if args[0] == 'num_cls':
-                args[0] = d.get('num_cls', nc)
-            num_cls = int(args[0])
-            in_channels = int(c1)
+            # args should be [in_channels, num_classes] from the config
+            if len(args) >= 2:
+                in_channels = int(args[0])
+                num_cls = int(args[1])
+            else:
+                # Fallback: use input channels and config num_cls
+                in_channels = int(c1)
+                num_cls = d.get('num_cls', 3)
+            
+            # Ensure num_cls is correct (should be 3 for our dataset)
+            if num_cls != 3:
+                LOGGER.warning(f"Classification classes mismatch: config={num_cls}, expected=3, using 3")
+                num_cls = 3
+            
             args = [in_channels, num_cls]
             c2 = num_cls
         else:
