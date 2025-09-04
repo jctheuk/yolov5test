@@ -423,6 +423,20 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
         for i, (imgs, targets, paths, shapes, classification_labels) in pbar:  # batch -------------------------------------------------------------
             callbacks.run('on_train_batch_start')
             ni = i + nb * epoch  # number integrated batches (since train start)
+            
+            # Debug: Print batch information
+            if i == 0:  # Only print for first batch to avoid spam
+                print(f"[DEBUG] Batch {i} information:")
+                print(f"[DEBUG]   imgs shape: {imgs.shape}")
+                print(f"[DEBUG]   targets shape: {targets.shape}")
+                print(f"[DEBUG]   classification_labels type: {type(classification_labels)}")
+                if classification_labels is not None:
+                    print(f"[DEBUG]   classification_labels shape: {classification_labels.shape}")
+                    print(f"[DEBUG]   classification_labels dtype: {classification_labels.dtype}")
+                    print(f"[DEBUG]   classification_labels sample: {classification_labels[:3] if hasattr(classification_labels, '__len__') else classification_labels}")
+                else:
+                    print(f"[DEBUG]   classification_labels is None")
+            
             imgs = imgs.to(device, non_blocking=True).float() / 255  # uint8 to float32, 0-255 to 0.0-1.0
 
             # Warmup

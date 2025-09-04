@@ -147,21 +147,50 @@ class ComputeLoss:
 
         self.device = device
         
-        # Classification loss for dual-task
-        self.BCEcls_task = nn.CrossEntropyLoss(label_smoothing=h.get('label_smoothing', 0.1))
-        self.cls_task_loss_weight = h.get('cls_task', 0.3)
+        # Classification loss for dual-task - using Softmax + NLLLoss instead of CrossEntropy
+        self.softmax = nn.Softmax(dim=1)
+        self.nll_loss = nn.NLLLoss()
+        self.cls_task_loss_weight = h.get('cls_task', 1.0)  # Increased weight for classification
+        self.temperature = h.get('temperature', 1.0)  # Temperature for softmax sharpness
+        
+        print(f"[DEBUG] Using Softmax + NLLLoss for classification")
+        print(f"[DEBUG] Classification loss weight: {self.cls_task_loss_weight}")
+        print(f"[DEBUG] Softmax temperature: {self.temperature}")
+        
+        print(f"[DEBUG] Using Softmax + NLLLoss for classification")
+        print(f"[DEBUG] Classification loss weight: {self.cls_task_loss_weight}")
 
     def __call__(self, p, targets, cls_targets=None):  # predictions, targets, classification_targets
+        # Debug: Print function inputs
+        print(f"[DEBUG] ComputeLoss.__call__ inputs:")
+        print(f"[DEBUG]   p type: {type(p)}")
+        print(f"[DEBUG]   p is tuple: {isinstance(p, tuple)}")
+        if isinstance(p, tuple):
+            print(f"[DEBUG]   p length: {len(p)}")
+            print(f"[DEBUG]   p[0] type: {type(p[0])}")
+            print(f"[DEBUG]   p[1] type: {type(p[1])}")
+        
         # Handle dual outputs: p can be either detection outputs only or (detection_outputs, classification_output)
         if isinstance(p, tuple) and len(p) == 2:
             detection_outputs, classification_output = p
+            print(f"[DEBUG] Using dual outputs (detection + classification)")
         else:
             detection_outputs = p
             classification_output = None
+            print(f"[DEBUG] Using single output (detection only)")
 
         # Ensure detection_outputs is a list
         if not isinstance(detection_outputs, list):
             detection_outputs = [detection_outputs]
+
+        # Debug: Print targets information
+        print(f"[DEBUG] Targets shape: {targets.shape}")
+        print(f"[DEBUG] cls_targets type: {type(cls_targets)}")
+        if cls_targets is not None:
+            print(f"[DEBUG] cls_targets shape: {cls_targets.shape}")
+            print(f"[DEBUG] cls_targets dtype: {cls_targets.dtype}")
+            print(f"[DEBUG] cls_targets device: {cls_targets.device}")
+            print(f"[DEBUG] cls_targets sample values: {cls_targets[:5] if cls_targets.numel() > 0 else 'empty'}")
 
         lcls = torch.zeros(1, device=self.device)  # class loss
         lbox = torch.zeros(1, device=self.device)  # box loss
@@ -220,19 +249,78 @@ class ComputeLoss:
 
         # Classification task loss
         if classification_output is not None and cls_targets is not None:
+            # Debug: Print classification inputs
+            print(f"[DEBUG] Classification output shape: {classification_output.shape}")
+            print(f"[DEBUG] Classification targets shape: {cls_targets.shape}")
+            print(f"[DEBUG] Classification targets dtype: {cls_targets.dtype}")
+            print(f"[DEBUG] Classification targets range: {cls_targets.min()} to {cls_targets.max()}")
+            
             # Ensure cls_targets are long tensors for CrossEntropyLoss
             if cls_targets.dtype != torch.long:
+                print(f"[DEBUG] Converting targets from {cls_targets.dtype} to long")
                 cls_targets = cls_targets.long()
             
             # Handle one-hot encoded targets
             if cls_targets.dim() > 1 and cls_targets.shape[-1] > 1:
+                print(f"[DEBUG] Converting one-hot targets to indices")
                 cls_targets = cls_targets.argmax(dim=-1)
+                print(f"[DEBUG] After argmax, targets shape: {cls_targets.shape}")
             
             # Ensure targets are within valid range
             if cls_targets.max() >= classification_output.shape[-1]:
+                print(f"[DEBUG] WARNING: Targets max ({cls_targets.max()}) >= output classes ({classification_output.shape[-1]})")
                 cls_targets = torch.clamp(cls_targets, 0, classification_output.shape[-1] - 1)
+                print(f"[DEBUG] After clamp, targets range: {cls_targets.min()} to {cls_targets.max()}")
             
-            lcls_task = self.BCEcls_task(classification_output, cls_targets) * self.cls_task_loss_weight
+            # Calculate classification loss using Softmax + NLLLoss
+            try:
+                # Apply temperature-scaled softmax to get probabilities
+                scaled_logits = classification_output / self.temperature
+                probs = self.softmax(scaled_logits)
+                print(f"[DEBUG] Softmax probabilities range: {probs.min():.4f} to {probs.max():.4f}")
+                print(f"[DEBUG] Softmax probabilities sum per sample: {probs.sum(dim=1)[:5]}")
+                
+                # Convert one-hot targets to class indices for NLLLoss
+                if cls_targets.dim() > 1 and cls_targets.shape[-1] > 1:
+                    target_indices = cls_targets.argmax(dim=-1)
+                else:
+                    target_indices = cls_targets.long()
+                
+                # Take log of probabilities for NLLLoss
+                log_probs = torch.log(probs + 1e-8)  # Add small epsilon to avoid log(0)
+                
+                # Calculate NLLLoss
+                lcls_task = self.nll_loss(log_probs, target_indices) * self.cls_task_loss_weight
+                print(f"[DEBUG] Classification loss calculated successfully: {lcls_task.item():.6f}")
+                
+                # Additional debug info
+                with torch.no_grad():
+                    pred_classes = torch.argmax(probs, dim=1)
+                    correct = (pred_classes == target_indices).sum().item()
+                    accuracy = correct / target_indices.shape[0]
+                    print(f"[DEBUG] Classification accuracy: {accuracy:.4f} ({correct}/{target_indices.shape[0]})")
+                    print(f"[DEBUG] Predicted classes sample: {pred_classes[:5]}")
+                    print(f"[DEBUG] True classes sample: {target_indices[:5]}")
+                    
+                    # Check class distribution
+                    unique_preds, pred_counts = torch.unique(pred_classes, return_counts=True)
+                    unique_targets, target_counts = torch.unique(target_indices, return_counts=True)
+                    print(f"[DEBUG] Predicted class distribution: {dict(zip(unique_preds.tolist(), pred_counts.tolist()))}")
+                    print(f"[DEBUG] True class distribution: {dict(zip(unique_targets.tolist(), target_counts.tolist()))}")
+                    
+            except Exception as e:
+                print(f"[DEBUG] ERROR in classification loss calculation: {e}")
+                import traceback
+                traceback.print_exc()
+                lcls_task = torch.tensor(0.0, device=self.device)
+        else:
+            print(f"[DEBUG] Classification loss not calculated:")
+            print(f"[DEBUG]   classification_output is None: {classification_output is None}")
+            print(f"[DEBUG]   cls_targets is None: {cls_targets is None}")
+            if classification_output is not None:
+                print(f"[DEBUG]   classification_output shape: {classification_output.shape}")
+            if cls_targets is not None:
+                print(f"[DEBUG]   cls_targets shape: {cls_targets.shape}")
 
         # Total loss
         total_loss = (lbox + lobj + lcls + lcls_task) * bs

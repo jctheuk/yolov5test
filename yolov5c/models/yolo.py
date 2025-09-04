@@ -421,6 +421,9 @@ class DetectionModel(BaseModel):
 
     def _initialize_biases(self, cf=None):
         # Initialize biases into Detect/Segment modules
+        # https://arxiv.org/abs/1708.02002 section 3.3
+        # cf = torch.bincount(torch.tensor(np.concatenate(dataset.labels, 0)[:, 0]).long(), minlength=nc) + 1.
+        
         # Find the Detect layer in the model
         detect_layer = None
         for m in self.model:
@@ -441,13 +444,10 @@ class DetectionModel(BaseModel):
         try:
             for mi, s in zip(detect_layer.m, detect_layer.stride):
                 if hasattr(mi, 'bias') and mi.bias is not None:
-                    b = mi.bias.view(detect_layer.na, -1)
-                    b.data[:, 4] += math.log(8 / (640 / s)**2)  # objectness
-                    if cf is None:
-                        b.data[:, 5:5 + detect_layer.nc] += math.log(0.6 / (detect_layer.nc - 0.99999))
-                    else:
-                        b.data[:, 5:5 + detect_layer.nc] += torch.log(cf / cf.sum())
-                    mi.bias = nn.Parameter(b.view(-1), requires_grad=True)
+                    b = mi.bias.view(detect_layer.na, -1)  # conv.bias(255) to (3,85)
+                    b.data[:, 4] += math.log(8 / (640 / s) ** 2)  # obj (8 objects per 640 image)
+                    b.data[:, 5:5 + detect_layer.nc] += math.log(0.6 / (detect_layer.nc - 0.99999)) if cf is None else torch.log(cf / cf.sum())  # cls
+                    mi.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
         except Exception as e:
             LOGGER.warning(f"Error during bias initialization: {e}")
             LOGGER.warning("Continuing without bias initialization")

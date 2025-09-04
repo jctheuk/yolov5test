@@ -251,10 +251,11 @@ class ConfusionMatrix:
             true_labels = getattr(self, 'classification_true_labels', [])
             pred_labels = getattr(self, 'classification_pred_labels', [])
             
+            # Debug: Log what data we have
+            LOGGER.info(f"Confusion matrix plotting: {len(true_labels)} true labels, {len(pred_labels)} pred labels")
+            
             # Only generate classification confusion matrix if we have data
-            if len(true_labels) == 0 or len(pred_labels) == 0:
-                LOGGER.warning("No classification data available for confusion matrix. Use 'process_classification_batch' to collect data.")
-            else:
+            if len(true_labels) > 0 and len(pred_labels) > 0:
                 # Generate classification confusion matrix using our custom function
                 plot_classification_confusion_matrix(
                     true_labels, 
@@ -263,6 +264,9 @@ class ConfusionMatrix:
                     save_dir=save_dir, 
                     prefix='classification'
                 )
+                LOGGER.info("Classification confusion matrix generated successfully")
+            else:
+                LOGGER.warning("No classification data available for confusion matrix. Use 'process_classification_batch' to collect data.")
             
         except Exception as e:
             LOGGER.warning(f'WARNING ⚠️ Confusion matrix plot error: {e}')

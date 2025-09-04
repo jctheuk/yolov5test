@@ -349,7 +349,7 @@ def run(
                 else:
                     cls_targets = cls_targets[:pred_classes.shape[0]]
             
-            # Calculate correct predictions
+                        # Calculate correct predictions
             correct_cls = (pred_classes == cls_targets).sum().item()
             cls_correct += correct_cls
             cls_total += cls_targets.shape[0]
@@ -357,6 +357,14 @@ def run(
             # Collect for final metrics
             all_cls_outputs.append(classification_output.cpu())
             all_cls_targets.append(cls_targets.cpu())
+            
+            # Store classification data for confusion matrix (optional)
+            if plots and hasattr(confusion_matrix, 'process_classification_batch'):
+                if cls_targets.numel() > 0 and pred_classes.numel() > 0:
+                    confusion_matrix.process_classification_batch(cls_targets.cpu(), pred_classes.cpu())
+                    # Debug: Log that we're collecting data
+                    if batch_i == 0:  # Only log once per epoch
+                        LOGGER.info(f"Collecting classification data: batch {batch_i}, targets shape {cls_targets.shape}, preds shape {pred_classes.shape}")
 
         # Plot images
         if plots and batch_i < 3:
