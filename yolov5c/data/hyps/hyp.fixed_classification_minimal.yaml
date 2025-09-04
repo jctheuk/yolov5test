@@ -1,0 +1,46 @@
+# YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
+# Fixed hyperparameters for regurgitation detection and classification
+# Minimal changes version - only modified cls_task, cls, obj, box
+
+# Multi-task learning parameters - REDUCED CLASSIFICATION WEIGHT
+cls_task: 0.1  # Reduced from 0.517 to prevent NaN
+
+# Learning rate parameters (optimized)
+lr0: 0.01  # initial learning rate (restored from 0.001)
+lrf: 0.1  # final OneCycleLR learning rate
+momentum: 0.937  # SGD momentum/Adam beta1
+weight_decay: 0.0005  # optimizer weight decay
+
+# Warmup parameters
+warmup_epochs: 10.0  # warmup epochs (reduced for faster convergence)
+warmup_momentum: 0.8  # warmup initial momentum
+warmup_bias_lr: 0.1  # warmup initial bias lr
+
+# Loss weights (reduced for stability)
+box: 0.03  # box loss gain (reduced from 0.05)
+cls: 0.3  # cls loss gain (reduced from 0.5)
+cls_pw: 1.0  # cls BCELoss positive_weight
+obj: 0.7  # obj loss gain (reduced from 1.0)
+obj_pw: 1.0  # obj BCELoss positive_weight
+
+# IoU and anchor parameters (keeping unchanged as requested)
+iou_t: 0.20  # IoU training threshold (keeping unchanged)
+anchor_t: 4.0  # anchor-multiple threshold
+
+# Focal loss (for handling class imbalance)
+fl_gamma: 1.5  # focal loss gamma
+
+# Augmentation parameters (balanced for medical images)
+hsv_h: 0.015  # image HSV-Hue augmentation (fraction)
+hsv_s: 0.4  # image HSV-Saturation augmentation (fraction)
+hsv_v: 0.3  # image HSV-Value augmentation (fraction)
+degrees: 10.0  # image rotation (+/- deg) - increased for better generalization
+translate: 0.1  # image translation (+/- fraction)
+scale: 0.5  # image scale (+/- gain)
+shear: 0.0  # image shear (+/- deg) - disabled for medical images
+perspective: 0.0  # image perspective (+/- fraction) - disabled for medical images
+flipud: 0.0  # image flip up-down (probability) - disabled for medical images
+fliplr: 0.5  # image flip left-right (probability)
+mosaic: 0.0  # image mosaic (probability) - disabled for medical images
+mixup: 0.0  # image mixup (probability) - disabled for medical images
+copy_paste: 0.0  # segment copy-paste (probability) - disabled for medical images
