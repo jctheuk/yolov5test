@@ -150,7 +150,7 @@ class ComputeLoss:
         # Classification loss for dual-task - using Softmax + NLLLoss instead of CrossEntropy
         self.softmax = nn.Softmax(dim=1)
         self.nll_loss = nn.NLLLoss()
-        self.cls_task_loss_weight = h.get('cls_task', 1.0)  # Increased weight for classification
+        self.cls_task_loss_weight = h.get('cls_task', 0.3)  # Original weight
         self.temperature = h.get('temperature', 1.0)  # Temperature for softmax sharpness
         
         print(f"[DEBUG] Using Softmax + NLLLoss for classification")
@@ -174,6 +174,26 @@ class ComputeLoss:
         if isinstance(p, tuple) and len(p) == 2:
             detection_outputs, classification_output = p
             print(f"[DEBUG] Using dual outputs (detection + classification)")
+            
+            # Debug classification output details
+            if classification_output is not None:
+                print(f"[DEBUG] Classification output details:")
+                print(f"[DEBUG]   Shape: {classification_output.shape}")
+                print(f"[DEBUG]   Device: {classification_output.device}")
+                print(f"[DEBUG]   Dtype: {classification_output.dtype}")
+                print(f"[DEBUG]   Range: {classification_output.min():.4f} to {classification_output.max():.4f}")
+                print(f"[DEBUG]   Mean: {classification_output.mean():.4f}")
+                print(f"[DEBUG]   Std: {classification_output.std():.4f}")
+                
+                # Check for NaN or inf values
+                if torch.isnan(classification_output).any():
+                    print(f"[DEBUG] WARNING: NaN values found in classification output!")
+                if torch.isinf(classification_output).any():
+                    print(f"[DEBUG] WARNING: Inf values found in classification output!")
+                
+                # Check if output is all zeros or very small
+                if classification_output.abs().max() < 1e-6:
+                    print(f"[DEBUG] WARNING: Classification output is very small (max abs: {classification_output.abs().max():.2e})")
         else:
             detection_outputs = p
             classification_output = None
@@ -198,6 +218,20 @@ class ComputeLoss:
         lcls_task = torch.zeros(1, device=self.device)  # classification task loss
         
         tcls, tbox, indices, anchors = self.build_targets(detection_outputs, targets)  # targets
+        
+        # Debug targets
+        print(f"[DEBUG] Built targets:")
+        print(f"[DEBUG]   tcls: {len(tcls)} layers")
+        print(f"[DEBUG]   tbox: {len(tbox)} layers")
+        print(f"[DEBUG]   indices: {len(indices)} layers")
+        print(f"[DEBUG]   anchors: {len(anchors)} layers")
+        
+        # Check if we have any targets
+        total_targets = sum(len(idx[0]) for idx in indices)
+        print(f"[DEBUG]   Total targets: {total_targets}")
+        
+        if total_targets == 0:
+            print(f"[DEBUG] WARNING: No targets found! This will cause objectness loss to be 0.")
 
         # Detection losses
         for i, pi in enumerate(detection_outputs):  # layer index, layer predictions
@@ -237,6 +271,14 @@ class ComputeLoss:
 
             obji = self.BCEobj(pi[..., 4], tobj)
             lobj += obji * self.balance[i]  # obj loss
+            
+            # Debug objectness loss
+            if i == 0:  # Only print for first layer to avoid spam
+                print(f"[DEBUG] Layer {i} objectness loss:")
+                print(f"[DEBUG]   pi[..., 4] range: {pi[..., 4].min():.4f} to {pi[..., 4].max():.4f}")
+                print(f"[DEBUG]   tobj range: {tobj.min():.4f} to {tobj.max():.4f}")
+                print(f"[DEBUG]   obji: {obji.item():.6f}")
+                print(f"[DEBUG]   balance[i]: {self.balance[i]}")
             if self.autobalance:
                 self.balance[i] = self.balance[i] * 0.9999 + 0.0001 / obji.detach().item()
 
@@ -255,22 +297,22 @@ class ComputeLoss:
             print(f"[DEBUG] Classification targets dtype: {cls_targets.dtype}")
             print(f"[DEBUG] Classification targets range: {cls_targets.min()} to {cls_targets.max()}")
             
-            # Ensure cls_targets are long tensors for CrossEntropyLoss
-            if cls_targets.dtype != torch.long:
-                print(f"[DEBUG] Converting targets from {cls_targets.dtype} to long")
-                cls_targets = cls_targets.long()
-            
-            # Handle one-hot encoded targets
+            # Handle one-hot encoded targets - convert to class indices
             if cls_targets.dim() > 1 and cls_targets.shape[-1] > 1:
                 print(f"[DEBUG] Converting one-hot targets to indices")
-                cls_targets = cls_targets.argmax(dim=-1)
-                print(f"[DEBUG] After argmax, targets shape: {cls_targets.shape}")
+                # Convert one-hot to class indices
+                target_indices = cls_targets.argmax(dim=-1)
+                print(f"[DEBUG] After argmax, targets shape: {target_indices.shape}")
+                print(f"[DEBUG] After argmax, targets sample: {target_indices[:5]}")
+            else:
+                # Already class indices
+                target_indices = cls_targets.long()
             
             # Ensure targets are within valid range
-            if cls_targets.max() >= classification_output.shape[-1]:
-                print(f"[DEBUG] WARNING: Targets max ({cls_targets.max()}) >= output classes ({classification_output.shape[-1]})")
-                cls_targets = torch.clamp(cls_targets, 0, classification_output.shape[-1] - 1)
-                print(f"[DEBUG] After clamp, targets range: {cls_targets.min()} to {cls_targets.max()}")
+            if target_indices.max() >= classification_output.shape[-1]:
+                print(f"[DEBUG] WARNING: Targets max ({target_indices.max()}) >= output classes ({classification_output.shape[-1]})")
+                target_indices = torch.clamp(target_indices, 0, classification_output.shape[-1] - 1)
+                print(f"[DEBUG] After clamp, targets range: {target_indices.min()} to {target_indices.max()}")
             
             # Calculate classification loss using Softmax + NLLLoss
             try:
@@ -279,12 +321,6 @@ class ComputeLoss:
                 probs = self.softmax(scaled_logits)
                 print(f"[DEBUG] Softmax probabilities range: {probs.min():.4f} to {probs.max():.4f}")
                 print(f"[DEBUG] Softmax probabilities sum per sample: {probs.sum(dim=1)[:5]}")
-                
-                # Convert one-hot targets to class indices for NLLLoss
-                if cls_targets.dim() > 1 and cls_targets.shape[-1] > 1:
-                    target_indices = cls_targets.argmax(dim=-1)
-                else:
-                    target_indices = cls_targets.long()
                 
                 # Take log of probabilities for NLLLoss
                 log_probs = torch.log(probs + 1e-8)  # Add small epsilon to avoid log(0)
@@ -308,6 +344,14 @@ class ComputeLoss:
                     print(f"[DEBUG] Predicted class distribution: {dict(zip(unique_preds.tolist(), pred_counts.tolist()))}")
                     print(f"[DEBUG] True class distribution: {dict(zip(unique_targets.tolist(), target_counts.tolist()))}")
                     
+                    # Check if model is predicting all same class
+                    if len(unique_preds) == 1:
+                        print(f"[DEBUG] WARNING: Model is predicting only class {unique_preds[0]}")
+                    
+                    # Check if targets are balanced
+                    if len(unique_targets) < 3:
+                        print(f"[DEBUG] WARNING: Only {len(unique_targets)} classes in targets")
+                    
             except Exception as e:
                 print(f"[DEBUG] ERROR in classification loss calculation: {e}")
                 import traceback
@@ -324,6 +368,15 @@ class ComputeLoss:
 
         # Total loss
         total_loss = (lbox + lobj + lcls + lcls_task) * bs
+        
+        # Debug total loss components
+        print(f"[DEBUG] Loss components:")
+        print(f"[DEBUG]   lbox: {lbox.item():.6f}")
+        print(f"[DEBUG]   lobj: {lobj.item():.6f}")
+        print(f"[DEBUG]   lcls: {lcls.item():.6f}")
+        print(f"[DEBUG]   lcls_task: {lcls_task.item():.6f}")
+        print(f"[DEBUG]   total_loss: {total_loss.item():.6f}")
+        print(f"[DEBUG]   batch_size: {bs}")
         
         # Ensure all loss components are properly shaped tensors (not empty) and have consistent shapes
         def ensure_tensor_shape(tensor):

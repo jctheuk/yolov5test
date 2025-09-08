@@ -1,85 +1,102 @@
 import os
-import glob
+from pathlib import Path
 
 def check_image_label_pairs():
     """Check if each label file has a corresponding image file"""
     
-    # Define paths
-    base_path = "Regurgitation-YOLODataset-Detection"
-    datasets = ["train", "valid", "test"]
+    dataset_path = "Regurgitation-YOLODataset-Detection"
+    sets = ["train", "valid", "test"]
     
     total_labels = 0
     total_images = 0
-    missing_images = 0
-    missing_labels = 0
+    missing_images = []
+    missing_labels = []
     
-    for dataset in datasets:
-        print(f"\n=== Checking {dataset} dataset ===")
+    print("Checking image-label pairs in Regurgitation-YOLODataset-Detection...")
+    print("=" * 60)
+    
+    for set_name in sets:
+        labels_dir = Path(dataset_path) / set_name / "labels"
+        images_dir = Path(dataset_path) / set_name / "images"
+        
+        if not labels_dir.exists():
+            print(f"Labels directory not found: {labels_dir}")
+            continue
+            
+        if not images_dir.exists():
+            print(f"Images directory not found: {images_dir}")
+            continue
+        
+        print(f"\n{set_name.upper()} SET:")
+        print("-" * 30)
         
         # Get all label files
-        label_path = os.path.join(base_path, dataset, "labels", "*.txt")
-        label_files = glob.glob(label_path)
+        label_files = list(labels_dir.glob("*.txt"))
+        image_files = list(images_dir.glob("*.png"))
         
-        # Get all image files
-        image_path = os.path.join(base_path, dataset, "images", "*.png")
-        image_files = glob.glob(image_path)
+        set_labels = len(label_files)
+        set_images = len(image_files)
         
-        print(f"Found {len(label_files)} label files")
-        print(f"Found {len(image_files)} image files")
+        print(f"Label files: {set_labels}")
+        print(f"Image files: {set_images}")
         
         # Check for missing images
-        missing_count = 0
+        missing_in_set = []
         for label_file in label_files:
-            # Get the base name (without extension)
-            base_name = os.path.splitext(os.path.basename(label_file))[0]
-            expected_image = os.path.join(base_path, dataset, "images", f"{base_name}.png")
-            
-            if not os.path.exists(expected_image):
-                missing_count += 1
-                if missing_count <= 5:  # Show first 5 missing images
-                    print(f"  Missing image: {base_name}.png")
-        
-        if missing_count > 5:
-            print(f"  ... and {missing_count - 5} more missing images")
+            image_file = images_dir / (label_file.stem + ".png")
+            if not image_file.exists():
+                missing_in_set.append(label_file.name)
+                missing_images.append(f"{set_name}/{label_file.name}")
         
         # Check for missing labels
-        missing_label_count = 0
+        missing_labels_in_set = []
         for image_file in image_files:
-            # Get the base name (without extension)
-            base_name = os.path.splitext(os.path.basename(image_file))[0]
-            expected_label = os.path.join(base_path, dataset, "labels", f"{base_name}.txt")
-            
-            if not os.path.exists(expected_label):
-                missing_label_count += 1
-                if missing_label_count <= 5:  # Show first 5 missing labels
-                    print(f"  Missing label: {base_name}.txt")
+            label_file = labels_dir / (image_file.stem + ".txt")
+            if not label_file.exists():
+                missing_labels_in_set.append(image_file.name)
+                missing_labels.append(f"{set_name}/{image_file.name}")
         
-        if missing_label_count > 5:
-            print(f"  ... and {missing_label_count - 5} more missing labels")
+        if missing_in_set:
+            print(f"Missing images for {len(missing_in_set)} labels:")
+            for missing in missing_in_set[:5]:  # Show first 5
+                print(f"  - {missing}")
+            if len(missing_in_set) > 5:
+                print(f"  ... and {len(missing_in_set) - 5} more")
         
-        # Update totals
-        total_labels += len(label_files)
-        total_images += len(image_files)
-        missing_images += missing_count
-        missing_labels += missing_label_count
+        if missing_labels_in_set:
+            print(f"Missing labels for {len(missing_labels_in_set)} images:")
+            for missing in missing_labels_in_set[:5]:  # Show first 5
+                print(f"  - {missing}")
+            if len(missing_labels_in_set) > 5:
+                print(f"  ... and {len(missing_labels_in_set) - 5} more")
         
-        # Summary for this dataset
-        if missing_count == 0 and missing_label_count == 0:
-            print(f"✓ {dataset}: All files are paired correctly")
-        else:
-            print(f"✗ {dataset}: {missing_count} missing images, {missing_label_count} missing labels")
+        if not missing_in_set and not missing_labels_in_set:
+            print("✓ All label files have corresponding image files")
+        
+        total_labels += set_labels
+        total_images += set_images
     
-    # Overall summary
-    print(f"\n=== OVERALL SUMMARY ===")
+    print("\n" + "=" * 60)
+    print("SUMMARY:")
     print(f"Total label files: {total_labels}")
     print(f"Total image files: {total_images}")
-    print(f"Missing images: {missing_images}")
-    print(f"Missing labels: {missing_labels}")
+    print(f"Missing images: {len(missing_images)}")
+    print(f"Missing labels: {len(missing_labels)}")
     
-    if missing_images == 0 and missing_labels == 0:
-        print("✓ All datasets are complete - every label has an image and every image has a label")
+    if missing_images:
+        print(f"\nFirst 10 missing images:")
+        for missing in missing_images[:10]:
+            print(f"  - {missing}")
+    
+    if missing_labels:
+        print(f"\nFirst 10 missing labels:")
+        for missing in missing_labels[:10]:
+            print(f"  - {missing}")
+    
+    if not missing_images and not missing_labels:
+        print("\n✓ Perfect! All label files have corresponding image files")
     else:
-        print("✗ Some files are missing - dataset may be incomplete")
+        print(f"\n⚠ Found {len(missing_images)} missing images and {len(missing_labels)} missing labels")
 
 if __name__ == "__main__":
     check_image_label_pairs()

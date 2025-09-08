@@ -13,4 +13,4 @@ names: ['AR', 'MR', 'PR', 'TR']  # detection class names
 
 # Classification configuration
 num_cls: 3  # number of classification classes
-cls_names: ['A4C', 'PLAX', 'PSAX']  # classification class names
+cls_names: ['A4C', 'PSAX', 'PLAX']  # classification class names

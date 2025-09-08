@@ -1,0 +1,47 @@
+# YOLOv5WithClassification 診斷修正配置
+# 基於診斷結果的修正版本
+
+# 修正分類任務權重
+cls_task: 0.3          # 從 0.1 增加到 0.3
+
+# 保持原始學習率（診斷顯示學習率不是問題）
+lr0: 0.01
+lrf: 0.1
+momentum: 0.937
+weight_decay: 0.0005
+warmup_epochs: 20      # 增加預熱期
+warmup_momentum: 0.8
+warmup_bias_lr: 0.1
+
+# 調整損失權重平衡
+box: 0.05              # 恢復原始 box 權重
+cls: 0.2               # 降低檢測分類權重
+cls_pw: 1.0
+obj: 0.7               # 保持 objectness 權重
+obj_pw: 1.0
+
+# 檢測相關參數
+iou_t: 0.2
+anchor_t: 4.0
+fl_gamma: 1.5
+
+# 數據擴增 - 醫學圖像優化
+hsv_h: 0.015
+hsv_s: 0.4
+hsv_v: 0.3
+degrees: 10.0
+translate: 0.1
+scale: 0.5
+shear: 0.0
+perspective: 0.0
+flipud: 0.0
+fliplr: 0.0            # 關閉水平翻轉（醫學圖像不適合）
+mosaic: 0.0            # 保持關閉
+mixup: 0.0             # 保持關閉
+copy_paste: 0.0        # 保持關閉
+
+# 添加梯度裁剪
+grad_clip: 1.0
+
+# 添加標籤平滑
+label_smoothing: 0.1
