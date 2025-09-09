@@ -464,55 +464,5 @@ def plot_classification_confusion_matrix(true_labels, pred_labels, names=(), sav
         return False
 
 
-def compute_classification_map(pred_probs, true_labels, num_classes, iou_thresholds=None):
-    """
-    Compute mAP50 and mAP0.5-0.95 for classification tasks.
-    
-    Args:
-        pred_probs: Predicted probabilities (N, num_classes)
-        true_labels: True labels (N,)
-        num_classes: Number of classes
-        iou_thresholds: IoU thresholds for mAP calculation (default: [0.5, 0.55, ..., 0.95])
-    
-    Returns:
-        map50: mAP at IoU threshold 0.5
-        map: mAP averaged over IoU thresholds 0.5-0.95
-    """
-    if iou_thresholds is None:
-        iou_thresholds = np.linspace(0.5, 0.95, 10)  # [0.5, 0.55, ..., 0.95]
-    
-    # Convert true labels to one-hot encoding
-    true_one_hot = np.zeros((len(true_labels), num_classes))
-    true_one_hot[np.arange(len(true_labels)), true_labels] = 1
-    
-    # Calculate AP for each class and each IoU threshold
-    aps = np.zeros((num_classes, len(iou_thresholds)))
-    
-    for class_idx in range(num_classes):
-        for iou_idx, iou_thresh in enumerate(iou_thresholds):
-            # Get predictions and ground truth for this class
-            class_preds = pred_probs[:, class_idx]
-            class_gt = true_one_hot[:, class_idx]
-            
-            # Sort predictions by confidence
-            sorted_indices = np.argsort(class_preds)[::-1]
-            sorted_preds = class_preds[sorted_indices]
-            sorted_gt = class_gt[sorted_indices]
-            
-            # Calculate precision and recall
-            tp = np.cumsum(sorted_gt)
-            fp = np.cumsum(1 - sorted_gt)
-            
-            # Avoid division by zero
-            precision = tp / (tp + fp + 1e-8)
-            recall = tp / (np.sum(class_gt) + 1e-8)
-            
-            # Calculate AP using the same method as detection
-            ap, _, _ = compute_ap(recall, precision)
-            aps[class_idx, iou_idx] = ap
-    
-    # Calculate mAP50 and mAP0.5-0.95
-    map50 = np.mean(aps[:, 0])  # mAP at IoU threshold 0.5
-    map = np.mean(aps)  # mAP averaged over all IoU thresholds
-    
-    return map50, map
+# Removed compute_classification_map function - mAP is not appropriate for classification tasks
+# Classification tasks should use accuracy, precision, recall, and F1-score instead

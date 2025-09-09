@@ -42,7 +42,7 @@ from utils.dataloaders import create_dataloader
 from utils.general import (LOGGER, TQDM_BAR_FORMAT, Profile, check_dataset, check_img_size, check_requirements,
                            check_yaml, coco80_to_coco91_class, colorstr, increment_path, non_max_suppression,
                            print_args, scale_boxes, xywh2xyxy, xyxy2xywh)
-from utils.metrics import ConfusionMatrix, ap_per_class, box_iou, compute_classification_map, compute_ap
+from utils.metrics import ConfusionMatrix, ap_per_class, box_iou, compute_ap
 from utils.plots import output_to_target, plot_images, plot_val_study
 from utils.torch_utils import select_device, smart_inference_mode
 
@@ -440,23 +440,19 @@ def run(
                     true_classes, pred_classes, average='weighted', zero_division=0
                 )
                 
-                # Calculate mAP50 and mAP0.5-0.95 for classification
-                cls_map50, cls_map = compute_classification_map(pred_probs, true_classes, num_classes=pred_probs.shape[1])
-                
+                # Classification results without mAP (mAP is not appropriate for classification)
                 cls_results = {
                     'accuracy': cls_accuracy,
                     'precision': precision,
                     'recall': recall,
                     'f1_score': f1_score,
-                    'map50': cls_map50,
-                    'map': cls_map,
                     'total_samples': cls_total
                 }
                 
                 # Print detailed classification results table
                 LOGGER.info('\nClassification Results:')
-                LOGGER.info(f"{'Class':>22}{'Images':>11}{'Instances':>11}{'P':>11}{'R':>11}{'mAP50':>11}{'mAP50-95':>11}")
-                LOGGER.info(f"{'all':>22}{cls_total:>11}{cls_total:>11}{precision:>11.3g}{recall:>11.3g}{cls_map50:>11.3g}{cls_map:>11.3g}")
+                LOGGER.info(f"{'Class':>22}{'Images':>11}{'Instances':>11}{'P':>11}{'R':>11}{'F1':>11}{'Acc':>11}")
+                LOGGER.info(f"{'all':>22}{cls_total:>11}{cls_total:>11}{precision:>11.3g}{recall:>11.3g}{f1_score:>11.3g}{cls_accuracy:>11.3g}")
                 
                 # Print per-class results
                 num_classes = pred_probs.shape[1] if pred_probs is not None else 0
@@ -467,31 +463,7 @@ def run(
                         true_classes, pred_classes, average=None, zero_division=0
                     )
                     
-                    # Calculate per-class mAP
-                    cls_map50_per_class = []
-                    cls_map_per_class = []
-                    
-                    for class_idx in range(num_classes):
-                        # Get predictions and ground truth for this class
-                        class_preds = pred_probs[:, class_idx]
-                        class_gt = (true_classes == class_idx).astype(int)
-                        
-                        # Calculate AP for this class
-                        sorted_indices = np.argsort(class_preds)[::-1]
-                        sorted_gt = class_gt[sorted_indices]
-                        
-                        tp = np.cumsum(sorted_gt)
-                        fp = np.cumsum(1 - sorted_gt)
-                        
-                        precision_curve = tp / (tp + fp + 1e-8)
-                        recall_curve = tp / (np.sum(class_gt) + 1e-8)
-                        
-                        ap50, _, _ = compute_ap(recall_curve, precision_curve)
-                        cls_map50_per_class.append(ap50)
-                        
-                        # For mAP0.5-0.95, we'll use the same AP50 for now (simplified)
-                        # In a full implementation, you'd calculate AP at multiple thresholds
-                        cls_map_per_class.append(ap50)
+                    # Per-class metrics are already calculated above
                     
                     # Count instances per class
                     class_counts = np.bincount(true_classes, minlength=num_classes)
@@ -506,9 +478,11 @@ def run(
                         class_count = class_counts[i] if i < len(class_counts) else 0
                         precision_val = precision_per_class[i] if i < len(precision_per_class) else 0
                         recall_val = recall_per_class[i] if i < len(recall_per_class) else 0
-                        map50_val = cls_map50_per_class[i] if i < len(cls_map50_per_class) else 0
-                        map_val = cls_map_per_class[i] if i < len(cls_map_per_class) else 0
-                        LOGGER.info(f"{class_name:>22}{cls_total:>11}{class_count:>11}{precision_val:>11.3g}{recall_val:>11.3g}{map50_val:>11.3g}{map_val:>11.3g}")
+                        # Calculate F1 score for this class
+                        class_f1 = 2 * (precision_val * recall_val) / (precision_val + recall_val + 1e-8)
+                        # Calculate accuracy for this class (correct predictions / total predictions for this class)
+                        class_accuracy = np.sum((true_classes == i) & (pred_classes == i)) / (class_count + 1e-8)
+                        LOGGER.info(f"{class_name:>22}{cls_total:>11}{class_count:>11}{precision_val:>11.3g}{recall_val:>11.3g}{class_f1:>11.3g}{class_accuracy:>11.3g}")
                 
             except ImportError:
                 LOGGER.warning("sklearn not available, only accuracy will be computed")

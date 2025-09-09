@@ -40,7 +40,7 @@ scale: 0.5  # image scale (+/- gain)
 shear: 0.0  # image shear (+/- deg) - disabled for medical images
 perspective: 0.0  # image perspective (+/- fraction) - disabled for medical images
 flipud: 0.0  # image flip up-down (probability) - disabled for medical images
-fliplr: 0.5  # image flip left-right (probability)
+fliplr: 0.0  # image flip left-right (probability)
 mosaic: 0.0  # image mosaic (probability) - disabled for medical images
 mixup: 0.0  # image mixup (probability) - disabled for medical images
 copy_paste: 0.0  # segment copy-paste (probability) - disabled for medical images
