@@ -1,68 +1,86 @@
+#!/usr/bin/env python3
+"""
+Show a PSAX image from the validation set
+"""
+
 import cv2
-import numpy as np
-import matplotlib.pyplot as plt
+import os
+import glob
 
-# Load the PSAX image
-image_path = 'Regurgitation-YOLODataset-Detection/train/images/ZmZnwqlqbMKawp0=-unnamed_1_5.mp4-51.png'
-label_path = 'Regurgitation-YOLODataset-Detection/train/labels/ZmZnwqlqbMKawp0=-unnamed_1_5.mp4-51.txt'
+def show_psax_image():
+    # Find PSAX images in validation set
+    labels_dir = "Regurgitation-YOLODataset-Detection/valid/labels"
+    images_dir = "Regurgitation-YOLODataset-Detection/valid/images"
+    
+    psax_files = []
+    
+    # Find PSAX label files
+    for label_file in glob.glob(os.path.join(labels_dir, "*.txt")):
+        try:
+            with open(label_file, 'r') as f:
+                lines = f.readlines()
+            
+            if len(lines) >= 2:
+                classification_line = lines[1].strip()
+                parts = classification_line.split()
+                
+                if len(parts) == 3:
+                    a4c, psax, plax = map(int, parts)
+                    
+                    if psax == 1:  # This is a PSAX image
+                        # Get corresponding image file
+                        label_name = os.path.basename(label_file)
+                        image_name = label_name.replace('.txt', '.png')
+                        image_path = os.path.join(images_dir, image_name)
+                        
+                        if os.path.exists(image_path):
+                            psax_files.append((label_name, image_path))
+                            
+        except Exception as e:
+            print(f"Error processing {label_file}: {e}")
+    
+    if not psax_files:
+        print("No PSAX images found!")
+        return
+    
+    # Show the first PSAX image
+    label_name, image_path = psax_files[0]
+    print(f"Showing PSAX image: {label_name}")
+    print(f"Image path: {image_path}")
+    
+    # Read and display the image
+    image = cv2.imread(image_path)
+    if image is None:
+        print(f"Could not load image: {image_path}")
+        return
+    
+    # Resize image for display (make it smaller)
+    height, width = image.shape[:2]
+    if width > 800:
+        scale = 800 / width
+        new_width = int(width * scale)
+        new_height = int(height * scale)
+        image = cv2.resize(image, (new_width, new_height))
+    
+    # Display the image
+    cv2.imshow('PSAX Image', image)
+    print("Press any key to close the image window...")
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    
+    # Also show the label content
+    label_path = os.path.join(labels_dir, label_name)
+    with open(label_path, 'r') as f:
+        content = f.read()
+    
+    print(f"\nLabel content for {label_name}:")
+    print(content)
+    
+    # Show image info
+    print(f"\nImage info:")
+    print(f"  Original size: {width}x{height}")
+    print(f"  Display size: {image.shape[1]}x{image.shape[0]}")
+    print(f"  File size: {os.path.getsize(image_path)} bytes")
 
-# Read image
-img = cv2.imread(image_path)
-img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-# Read label
-with open(label_path, 'r') as f:
-    lines = f.readlines()
-
-# Parse detection label (first line)
-detection_line = lines[0].strip().split()
-class_id = int(detection_line[0])
-x_center = float(detection_line[1])
-y_center = float(detection_line[2])
-width = float(detection_line[3])
-height = float(detection_line[4])
-
-# Parse classification label (second line)
-classification_line = lines[1].strip().split()
-cls_label = [int(x) for x in classification_line]
-
-# Convert normalized coordinates to pixel coordinates
-img_height, img_width = img.shape[:2]
-x1 = int((x_center - width/2) * img_width)
-y1 = int((y_center - height/2) * img_height)
-x2 = int((x_center + width/2) * img_width)
-y2 = int((y_center + height/2) * img_height)
-
-# Define class names
-detection_classes = ['AR', 'MR', 'PR', 'TR']
-classification_classes = ['A4C', 'PLAX', 'PSAX']
-
-# Get class names
-det_class = detection_classes[class_id] if class_id < len(detection_classes) else f'Class_{class_id}'
-cls_class = classification_classes[cls_label.index(1)] if 1 in cls_label else 'Unknown'
-
-print(f"Detection: {det_class} (class {class_id})")
-print(f"Classification: {cls_class}")
-print(f"Bounding box: ({x1}, {y1}) to ({x2}, {y2})")
-
-# Draw bounding box
-cv2.rectangle(img_rgb, (x1, y1), (x2, y2), (255, 0, 0), 2)
-
-# Add text labels
-cv2.putText(img_rgb, f'Detection: {det_class}', (x1, y1-10), 
-            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
-cv2.putText(img_rgb, f'View: {cls_class}', (x1, y2+25), 
-            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-
-# Display image
-plt.figure(figsize=(12, 8))
-plt.imshow(img_rgb)
-plt.title(f'PSAX (Parasternal Short-Axis) Ultrasound Image\nDetection: {det_class}, View: {cls_class}')
-plt.axis('off')
-
-# Save the image
-plt.savefig('psax_annotated.png', dpi=150, bbox_inches='tight')
-print("Annotated image saved as 'psax_annotated.png'")
-
-# Show the image
-plt.show()
+if __name__ == "__main__":
+    show_psax_image()

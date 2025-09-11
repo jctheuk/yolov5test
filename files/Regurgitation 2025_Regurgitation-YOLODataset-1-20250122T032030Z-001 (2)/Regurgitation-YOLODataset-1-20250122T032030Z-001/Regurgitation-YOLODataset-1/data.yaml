@@ -1,0 +1,8 @@
+names:
+- AR
+- MR
+- PR
+- TR
+nc: 4
+train: /u8093464/Regurgitation-YOLODataset-1/train/images/train
+val: /u8093464/Regurgitation-YOLODataset-1/valid/images/valid

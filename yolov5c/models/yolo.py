@@ -445,15 +445,15 @@ class DetectionModel(BaseModel):
             for mi, s in zip(detect_layer.m, detect_layer.stride):
                 if hasattr(mi, 'bias') and mi.bias is not None:
                     b = mi.bias.view(detect_layer.na, -1)  # conv.bias(255) to (3,85)
-                    # Improved objectness bias initialization - use smaller initial value to avoid extreme predictions
-                    b.data[:, 4] += math.log(0.5 / (640 / s) ** 2)  # obj (0.5 objects per 640 image instead of 8)
-                    # Improved classification bias initialization
-                    b.data[:, 5:5 + detect_layer.nc] += math.log(0.8 / (detect_layer.nc - 0.99999)) if cf is None else torch.log(cf / cf.sum())  # cls
+                    # Standard YOLOv5 objectness bias initialization (matching original)
+                    b.data[:, 4] += math.log(8 / (640 / s) ** 2)  # obj (8 objects per 640 image)
+                    # Standard YOLOv5 classification bias initialization (matching original)
+                    b.data[:, 5:5 + detect_layer.nc] += math.log(0.6 / (detect_layer.nc - 0.99999)) if cf is None else torch.log(cf / cf.sum())  # cls
                     mi.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
                     
                     # Debug: Print bias initialization values
-                    LOGGER.info(f"Initialized objectness bias (improved): {b.data[:, 4].mean():.4f}")
-                    LOGGER.info(f"Initialized classification bias (improved): {b.data[:, 5:5 + detect_layer.nc].mean():.4f}")
+                    LOGGER.info(f"Initialized objectness bias (standard YOLOv5): {b.data[:, 4].mean():.4f}")
+                    LOGGER.info(f"Initialized classification bias (standard YOLOv5): {b.data[:, 5:5 + detect_layer.nc].mean():.4f}")
         except Exception as e:
             LOGGER.warning(f"Error during bias initialization: {e}")
             LOGGER.warning("Continuing without bias initialization")
