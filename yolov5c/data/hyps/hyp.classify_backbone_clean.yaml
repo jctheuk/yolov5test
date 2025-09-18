@@ -1,0 +1,48 @@
+# YOLOv5SC Classification Backbone Hyperparameters (CLEAN VERSION)
+# Only includes parameters that are actually used by yolov5c
+
+# Optimizer parameters (optimized for batch 128, epochs 300)
+lr0: 0.002          # initial learning rate (increased for larger batch)
+lrf: 0.01           # final OneCycleLR learning rate (lr0 * lrf)
+momentum: 0.937     # SGD momentum/Adam beta1
+weight_decay: 0.0005 # optimizer weight decay 5e-4
+warmup_epochs: 5.0  # warmup epochs (increased for larger batch)
+warmup_momentum: 0.8 # warmup initial momentum
+warmup_bias_lr: 0.1 # warmup initial bias lr
+
+# Loss function parameters (ACTUALLY USED)
+box: 0.05           # box loss gain (detection)
+cls: 0.5            # cls loss gain (detection)
+cls_pw: 1.0         # cls BCELoss positive_weight
+obj: 1.0            # obj loss gain (scale to pixels)
+obj_pw: 1.0         # obj BCELoss positive_weight
+iou_t: 0.20         # IoU training threshold
+anchor_t: 4.0       # anchor-multiple threshold
+fl_gamma: 0.0       # focal loss gamma (DISABLED - no focal loss)
+
+# Classification specific parameters (ACTUALLY USED)
+cls_task: 0.3       # classification task loss weight (used in ComputeLoss)
+label_smoothing: 0.1 # label smoothing epsilon
+
+# Data augmentation parameters (ACTUALLY USED)
+hsv_h: 0.015        # image HSV-Hue augmentation (fraction)
+hsv_s: 0.7          # image HSV-Saturation augmentation (fraction)
+hsv_v: 0.4          # image HSV-Value augmentation (fraction)
+degrees: 0.0        # image rotation (+/- deg) - DISABLED for medical images
+translate: 0.1      # image translation (+/- fraction) - REDUCED for medical images
+scale: 0.5          # image scale (+/- gain) - REDUCED for medical images
+shear: 0.0          # image shear (+/- deg) - DISABLED for medical images
+perspective: 0.0    # image perspective (+/- fraction), range 0-0.001 - DISABLED
+flipud: 0.0         # image flip up-down (probability) - DISABLED for medical images
+fliplr: 0.5         # image flip left-right (probability) - REDUCED for medical images
+mosaic: 1.0         # image mosaic (probability) - ENABLED
+mixup: 0.0          # image mixup (probability) - DISABLED for medical images
+copy_paste: 0.0     # segment copy-paste (probability) - DISABLED
+
+# Training parameters (ACTUALLY USED)
+patience: 0         # EarlyStopping patience (epochs) - DISABLED for full training
+freeze: 0           # Freeze layers: backbone=10, first3=0 1 2
+multi_scale: False  # vary img-size +/- 50%
+overlap_mask: True  # masks should overlap during training
+mask_ratio: 4       # mask downsample ratio
+dropout: 0.0        # use dropout regularization

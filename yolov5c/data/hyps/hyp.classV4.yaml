@@ -1,0 +1,54 @@
+# YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
+# ClassV4 hyperparameters - Optimized for stable training with fixed Focal Loss
+# Based on successful detection performance (9.24% mAP50) and stable classification
+
+# Multi-task learning parameters - BALANCED FOR STABILITY
+cls_task: 0.2  # Increased from 0.15 since Focal Loss is now stable
+
+# Learning rate parameters - MODERATE FOR STABILITY
+lr0: 0.005  # Moderate learning rate for stable training
+lrf: 0.01  # final OneCycleLR learning rate (lr0 * lrf)
+momentum: 0.937  # SGD momentum/Adam beta1
+weight_decay: 0.0005  # optimizer weight decay 5e-4
+
+# Warmup parameters - EXTENDED FOR STABILITY
+warmup_epochs: 8.0  # Extended warmup for stable start
+warmup_momentum: 0.8  # warmup initial momentum
+warmup_bias_lr: 0.1  # warmup initial bias lr
+
+# Loss weights - BALANCED FOR MULTI-TASK LEARNING
+box: 0.04  # Slightly increased from 0.03 for better detection
+cls: 0.4  # Increased from 0.3 for better classification
+cls_pw: 1.0  # cls BCELoss positive_weight
+obj: 0.8  # Increased from 0.7 for better objectness
+obj_pw: 1.0  # obj BCELoss positive_weight
+
+# IoU and anchor parameters - KEEP ORIGINAL YOLOv5 VALUES
+iou_t: 0.20  # IoU training threshold
+anchor_t: 4.0  # anchor-multiple threshold
+
+# Focal loss - OPTIMIZED FOR STABLE TRAINING
+fl_gamma: 0.0  # focal loss gamma (efficientDet default gamma=1.5) - DISABLED for detection
+# Classification parameters (STANDARD CROSSENTROPY - NO FOCAL LOSS)
+label_smoothing: 0.1 # label smoothing epsilon
+
+# Regularization parameters - MODERATE FOR STABILITY
+max_grad_norm: 0.5 # Moderate gradient clipping
+
+# Temperature for softmax sharpness
+temperature: 1.0  # Standard temperature for softmax
+
+# Augmentation parameters - DISABLED FOR MEDICAL IMAGES
+hsv_h: 0.0
+hsv_s: 0.0
+hsv_v: 0.0
+degrees: 0.0
+translate: 0.0
+scale: 0.0
+shear: 0.0
+perspective: 0.0
+flipud: 0.0
+fliplr: 0.0
+mosaic: 0.0
+mixup: 0.0
+copy_paste: 0.0

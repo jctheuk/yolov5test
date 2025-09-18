@@ -272,8 +272,65 @@ class ConfusionMatrix:
             LOGGER.warning(f'WARNING ⚠️ Confusion matrix plot error: {e}')
 
     def print(self):
+        """Print confusion matrix in text format"""
+        # Print detection confusion matrix
+        print('\nDetection Confusion Matrix:')
+        print(' '.join([''] + [f'{i:>8}' for i in range(self.nc + 1)]))
         for i in range(self.nc + 1):
-            print(' '.join(map(str, self.matrix[i])))
+            row = [f'{i:>8}'] + [f'{int(self.matrix[i, j]):>8}' for j in range(self.nc + 1)]
+            print(' '.join(row))
+        
+        # Print normalized detection confusion matrix
+        print('\nNormalized Detection Confusion Matrix:')
+        matrix_norm = self.matrix.astype('float') / (self.matrix.sum(axis=1)[:, np.newaxis] + 1e-8)
+        matrix_norm[np.isnan(matrix_norm)] = 0
+        print(' '.join([''] + [f'{i:>8}' for i in range(self.nc + 1)]))
+        for i in range(self.nc + 1):
+            row = [f'{i:>8}'] + [f'{matrix_norm[i, j]:>8.3f}' for j in range(self.nc + 1)]
+            print(' '.join(row))
+        
+        # Also print classification confusion matrix if available
+        if hasattr(self, 'classification_true_labels') and hasattr(self, 'classification_pred_labels'):
+            true_labels = self.classification_true_labels
+            pred_labels = self.classification_pred_labels
+            
+            if len(true_labels) > 0 and len(pred_labels) > 0:
+                print('\nClassification Confusion Matrix:')
+                self.print_classification_confusion_matrix(true_labels, pred_labels)
+    
+    def print_classification_confusion_matrix(self, true_labels, pred_labels):
+        """Print classification confusion matrix in text format"""
+        try:
+            from sklearn.metrics import confusion_matrix
+            import numpy as np
+            
+            # Get unique classes
+            unique_classes = sorted(list(set(true_labels + pred_labels)))
+            n_classes = len(unique_classes)
+            
+            # Create confusion matrix
+            cm = confusion_matrix(true_labels, pred_labels, labels=unique_classes)
+            
+            # Print header
+            print(' '.join([''] + [f'{i:>8}' for i in unique_classes]))
+            
+            # Print matrix rows
+            for i, true_class in enumerate(unique_classes):
+                row = [f'{true_class:>8}'] + [f'{int(cm[i, j]):>8}' for j in range(n_classes)]
+                print(' '.join(row))
+            
+            # Print normalized version
+            print('\nNormalized Classification Confusion Matrix:')
+            cm_norm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+            cm_norm[np.isnan(cm_norm)] = 0
+            
+            print(' '.join([''] + [f'{i:>8}' for i in unique_classes]))
+            for i, true_class in enumerate(unique_classes):
+                row = [f'{true_class:>8}'] + [f'{cm_norm[i, j]:>8.3f}' for j in range(n_classes)]
+                print(' '.join(row))
+                
+        except Exception as e:
+            print(f'Error printing classification confusion matrix: {e}')
 
 
 def bbox_iou(box1, box2, xywh=True, GIoU=False, DIoU=False, CIoU=False, eps=1e-7):

@@ -1,49 +1,48 @@
-# YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
-# Fixed hyperparameters for multi-task learning (detection + classification)
-# Optimized to fix classification performance issues
+# YOLOv5WithClassification 修復版超參數
+# 解決 NaN 錯誤和過擬合問題
 
-# Multi-task learning parameters - REDUCED CLASSIFICATION WEIGHT
-cls_task: 0.517  # Adjusted for 75% detection : 25% classification distribution
+# 學習率設置 (降低以避免 NaN)
+lr0: 0.001  # 初始學習率 (從 0.01 降低)
+lrf: 0.01   # 最終學習率 (從 0.1 降低)
+momentum: 0.937
+weight_decay: 0.0005
+warmup_epochs: 3.0
+warmup_momentum: 0.8
+warmup_bias_lr: 0.1
 
-# Learning rate parameters - KEEPING ORIGINAL VALUES
-lr0: 0.001  # Keeping original learning rate as requested
-lrf: 0.01  # Keeping original final learning rate
-momentum: 0.937  # SGD momentum/Adam beta1
-weight_decay: 0.0005  # optimizer weight decay
+# 損失函數權重
+box: 0.05
+cls: 0.5
+cls_pw: 1.0
+obj: 1.0
+obj_pw: 1.0
+iou_t: 0.20
+anchor_t: 4.0
+fl_gamma: 0.0
 
-# Warmup parameters - INCREASED FOR STABILITY
-warmup_epochs: 10.0  # Increased from 5.0 for better stability
-warmup_momentum: 0.8  # warmup initial momentum
-warmup_bias_lr: 0.1  # warmup initial bias lr
+# 分類任務設置 (降低權重以減少過擬合)
+cls_task: 0.1  # 從 0.3 降低到 0.1
+cls_focal_gamma: 1.5  # 從 2.0 降低到 1.5
+cls_focal_alpha: [0.33, 0.33, 0.34]
 
-# Loss weights - KEEP DETECTION, ADJUST CLASSIFICATION FOR 75:25
-box: 0.05  # Keep original box loss weight
-cls: 0.5  # Keep original detection classification weight
-cls_pw: 1.0  # cls BCELoss positive_weight
-obj: 1.0  # Keep original objectness weight
-obj_pw: 1.0  # obj BCELoss positive_weight
+# 正則化設置
+dropout: 0.3  # 增加 dropout
+label_smoothing: 0.1
 
-# IoU and anchor parameters
-iou_t: 0.20  # IoU training threshold
-anchor_t: 4.0  # anchor-multiple threshold
+# 數據增強 (減少以避免過擬合)
+hsv_h: 0.015
+hsv_s: 0.7
+hsv_v: 0.4
+degrees: 0.0
+translate: 0.1
+scale: 0.5
+shear: 0.0
+perspective: 0.0
+flipud: 0.0
+fliplr: 0.5
+mosaic: 1.0
+mixup: 0.0
+copy_paste: 0.0
 
-# Focal loss - REDUCED FOR STABILITY
-fl_gamma: 1.0  # Reduced from 1.5 for more stable training
-
-# Augmentation parameters - MINIMAL FOR MEDICAL IMAGES
-hsv_h: 0.0  # Disabled HSV-Hue augmentation for medical images
-hsv_s: 0.0  # Disabled HSV-Saturation augmentation for medical images
-hsv_v: 0.0  # Disabled HSV-Value augmentation for medical images
-degrees: 0.0  # Disabled rotation for medical images
-translate: 0.0  # Disabled translation for medical images
-scale: 0.0  # Disabled scaling for medical images
-shear: 0.0  # Disabled shear for medical images
-perspective: 0.0  # Disabled perspective for medical images
-flipud: 0.0  # Disabled flip up-down for medical images
-fliplr: 0.0  # Disabled flip left-right for medical images
-mosaic: 0.0  # Disabled mosaic for medical images
-mixup: 0.0  # Disabled mixup for medical images
-copy_paste: 0.0  # Disabled copy-paste for medical images
-
-# Additional stability parameters
-label_smoothing: 0.05  # Reduced label smoothing for better convergence
+# 其他設置
+temperature: 1.0

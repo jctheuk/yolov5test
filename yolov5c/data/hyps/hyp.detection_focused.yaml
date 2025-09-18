@@ -1,0 +1,63 @@
+# YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
+# Detection-focused hyperparameters to maintain detection performance
+# Balanced classification but prioritized detection
+
+# Multi-task learning parameters - DETECTION FOCUSED
+cls_task: 0.05  # REDUCED classification task weight
+
+# Learning rate parameters - STANDARD
+lr0: 0.01
+lrf: 0.1
+momentum: 0.937
+weight_decay: 0.0005
+
+# Warmup parameters
+warmup_epochs: 10.0
+warmup_momentum: 0.8
+warmup_bias_lr: 0.1
+
+# Loss weights - INCREASED DETECTION WEIGHTS
+box: 0.1  # INCREASED box loss gain
+cls: 0.8  # INCREASED cls loss gain
+cls_pw: 1.0
+obj: 1.5  # INCREASED obj loss gain
+obj_pw: 1.0
+
+# IoU and anchor parameters
+iou_t: 0.20
+anchor_t: 4.0
+
+# Focal loss - ENABLED for better detection
+fl_gamma: 1.5
+cls_focal_gamma: 1.0
+cls_focal_alpha: [1.0, 1.0, 1.0]
+
+# Regularization parameters - MINIMAL
+dropout: 0.1
+label_smoothing: 0.05
+max_grad_norm: 1.0
+
+# Temperature for softmax sharpness
+temperature: 1.0
+
+# Augmentation parameters - DISABLED FOR MEDICAL IMAGES
+hsv_h: 0.0
+hsv_s: 0.0
+hsv_v: 0.0
+degrees: 0.0
+translate: 0.0
+scale: 0.0
+shear: 0.0
+perspective: 0.0
+flipud: 0.0
+fliplr: 0.0
+mosaic: 0.0
+mixup: 0.0
+copy_paste: 0.0
+
+
+
+
+
+
+

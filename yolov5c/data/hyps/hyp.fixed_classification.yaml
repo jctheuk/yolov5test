@@ -3,7 +3,6 @@
 # Optimized after fixing classification label issues
 
 # Multi-task learning parameters (adjusted for fixed classification)
-classification_weight: 0.2  # Reduced weight since classification was missing
 cls_task: 0.2  # Reduced classification task weight
 
 # Learning rate parameters (optimized)

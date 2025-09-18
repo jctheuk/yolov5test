@@ -1,0 +1,50 @@
+# YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
+# ClassV1 hyperparameters for regurgitation detection and classification
+# Based on hyp.fixed_classification_minimal.yaml with NO AUGMENTATION for medical images
+
+# Multi-task learning parameters - OPTIMIZED FOR CLASSIFICATION
+cls_task: 0.2  # Increased for better classification focus
+
+# Learning rate parameters (optimized)
+lr0: 0.01  # initial learning rate (restored from 0.001)
+lrf: 0.1  # final OneCycleLR learning rate
+momentum: 0.937  # SGD momentum/Adam beta1
+weight_decay: 0.0005  # optimizer weight decay
+
+# Warmup parameters
+warmup_epochs: 10.0  # warmup epochs (reduced for faster convergence)
+warmup_momentum: 0.8  # warmup initial momentum
+warmup_bias_lr: 0.1  # warmup initial bias lr
+
+# Loss weights (optimized for detection + classification)
+box: 0.03  # box loss gain (reduced from 0.05)
+cls: 0.3  # cls loss gain (detection classification - keeping original)
+cls_pw: 1.0  # cls BCELoss positive_weight
+obj: 0.7  # obj loss gain (reduced from 1.0)
+obj_pw: 1.0  # obj BCELoss positive_weight
+
+# IoU and anchor parameters (keeping unchanged as requested)
+iou_t: 0.20  # IoU training threshold (keeping unchanged)
+anchor_t: 4.0  # anchor-multiple threshold
+
+# Focal loss (for handling detection class imbalance)
+fl_gamma: 1.5  # focal loss gamma - for detection classes
+
+# Classification parameters (STANDARD CROSSENTROPY - NO FOCAL LOSS)
+label_smoothing: 0.1 # label smoothing epsilon
+
+# Augmentation parameters - ALL DISABLED for medical images
+# Medical images require preservation of original features for accurate diagnosis
+hsv_h: 0.0  # image HSV-Hue augmentation (fraction) - DISABLED
+hsv_s: 0.0  # image HSV-Saturation augmentation (fraction) - DISABLED
+hsv_v: 0.0  # image HSV-Value augmentation (fraction) - DISABLED
+degrees: 0.0  # image rotation (+/- deg) - DISABLED for medical images
+translate: 0.0  # image translation (+/- fraction) - DISABLED
+scale: 0.0  # image scale (+/- gain) - DISABLED
+shear: 0.0  # image shear (+/- deg) - DISABLED for medical images
+perspective: 0.0  # image perspective (+/- fraction) - DISABLED for medical images
+flipud: 0.0  # image flip up-down (probability) - DISABLED for medical images
+fliplr: 0.0  # image flip left-right (probability) - DISABLED for medical images
+mosaic: 0.0  # image mosaic (probability) - DISABLED for medical images
+mixup: 0.0  # image mixup (probability) - DISABLED for medical images
+copy_paste: 0.0  # segment copy-paste (probability) - DISABLED for medical images

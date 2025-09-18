@@ -1,0 +1,56 @@
+# YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
+# Balanced Dataset hyperparameters - Optimized for regurgitationBalanced dataset
+# No Focal Loss needed since dataset is balanced (0.958 balance ratio)
+
+# Multi-task learning parameters - OPTIMIZED FOR BALANCED DATASET
+cls_task: 0.15  # Slightly higher classification weight for balanced dataset
+
+# Learning rate parameters - STANDARD FOR BALANCED TRAINING
+lr0: 0.01  # initial learning rate
+lrf: 0.1  # final OneCycleLR learning rate
+momentum: 0.937  # SGD momentum/Adam beta1
+weight_decay: 0.0005  # optimizer weight decay
+
+# Warmup parameters - ADEQUATE FOR BALANCED DATASET
+warmup_epochs: 8.0  # Slightly reduced warmup for balanced dataset
+warmup_momentum: 0.8  # warmup initial momentum
+warmup_bias_lr: 0.1  # warmup initial bias lr
+
+# Loss weights - BALANCED FOR JOINT TASK LEARNING
+box: 0.05  # box loss gain
+cls: 0.5  # cls loss gain
+cls_pw: 1.0  # cls BCELoss positive_weight
+obj: 1.0  # obj loss gain
+obj_pw: 1.0  # obj BCELoss positive_weight
+
+# IoU and anchor parameters - STANDARD YOLOv5 VALUES
+iou_t: 0.20  # IoU training threshold
+anchor_t: 4.0  # anchor-multiple threshold
+
+# Focal loss - DISABLED FOR BALANCED DATASET
+fl_gamma: 0.0  # Disabled - not needed for balanced dataset
+cls_focal_gamma: 0.0  # Disabled - using standard cross-entropy
+cls_focal_alpha: [1.0, 1.0, 1.0]  # Equal weights for all classes
+
+# Regularization parameters - MINIMAL FOR HIGH PERFORMANCE
+dropout: 0.1  # Minimal dropout
+label_smoothing: 0.05  # Minimal label smoothing for balanced dataset
+max_grad_norm: 1.0  # Standard gradient clipping
+
+# Temperature for softmax sharpness
+temperature: 1.0  # Standard temperature for softmax
+
+# Augmentation parameters - DISABLED FOR MEDICAL IMAGES
+hsv_h: 0.0  # DISABLED - preserve medical image characteristics
+hsv_s: 0.0  # DISABLED - preserve medical image characteristics
+hsv_v: 0.0  # DISABLED - preserve medical image characteristics
+degrees: 0.0  # DISABLED - preserve medical image characteristics
+translate: 0.0  # DISABLED - preserve medical image characteristics
+scale: 0.0  # DISABLED - preserve medical image characteristics
+shear: 0.0  # DISABLED - preserve medical image characteristics
+perspective: 0.0  # DISABLED - preserve medical image characteristics
+flipud: 0.0  # DISABLED - preserve medical image characteristics
+fliplr: 0.0  # DISABLED - preserve medical image characteristics
+mosaic: 0.0  # DISABLED - preserve medical image characteristics
+mixup: 0.0  # DISABLED - preserve medical image characteristics
+copy_paste: 0.0  # DISABLED - preserve medical image characteristics

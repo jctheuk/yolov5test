@@ -167,7 +167,7 @@ def run(
     # Dataloader
     if not training:
         if pt and not single_cls:  # check --weights are trained on --data
-            ncm = model.model.nc
+            ncm = getattr(model.model, 'nc', nc)  # 安全獲取類別數量
             assert ncm == nc, f'{weights} ({ncm} classes) trained on different --data than what you passed to this ' \
                               f'script i.e. {data} ({nc} classes). Pass models trained on --data {data}'
         model.warmup(imgsz=(1 if pt else batch_size, 3, imgsz, imgsz))  # warmup
@@ -185,7 +185,9 @@ def run(
 
     seen = 0
     confusion_matrix = ConfusionMatrix(nc=nc)
-    names = {k: v for k, v in enumerate(model.names)} if hasattr(model, 'names') else {i: f'class{i}' for i in range(nc)}
+    names = model.names if hasattr(model, 'names') else model.module.names  # get class names
+    if isinstance(names, (list, tuple)):  # old format
+        names = dict(enumerate(names))
     class_map = coco80_to_coco91_class() if is_coco else list(range(1000))
     s = ('%22s' + '%11s' * 6) % ('Class', 'Images', 'Instances', 'P', 'R', 'mAP50', 'mAP50-95')
     # Use three profiling timers for preprocessing, inference, and NMS
@@ -383,10 +385,11 @@ def run(
         tp, fp, p, r, f1, ap, ap_class = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, []
         ap50, ap = 0.0, 0.0
         mp, mr, map50, map = 0.0, 0.0, 0.0, 0.0
-    nt = np.bincount(stats[3].astype(int), minlength=nc) if len(stats) > 3 else np.zeros(nc, dtype=int)  # number of targets per class
+    nt = np.bincount(stats[3].astype(int), minlength=nc)  # number of targets per class
 
     # Print results
     pf = '%22s' + '%11i' * 2 + '%11.3g' * 4  # print format
+    LOGGER.info(s)  # Print header
     LOGGER.info(pf % ('all', seen, nt.sum(), mp, mr, map50, map))
     if nt.sum() == 0:
         LOGGER.warning(f'WARNING ⚠️ no labels found in {task} set, can not compute metrics without labels')
@@ -395,6 +398,35 @@ def run(
     if (verbose or (nc < 50 and not training)) and nc > 1 and len(stats):
         for i, c in enumerate(ap_class):
             LOGGER.info(pf % (names[c], seen, nt[c], p[i], r[i], ap50[i], ap[i]))
+    elif nc > 1 and len(stats) and len(ap_class) > 0:  # Ensure per-class results are always printed when available
+        for i, c in enumerate(ap_class):
+            LOGGER.info(pf % (names[c], seen, nt[c], p[i], r[i], ap50[i], ap[i]))
+    
+    # 如果 ap_class 為空但有 stats 數據，嘗試手動計算並顯示結果
+    if nc > 1 and len(stats) and len(ap_class) == 0 and nt.sum() > 0:
+        LOGGER.info("DEBUG: ap_class is empty but stats exist, attempting manual calculation...")
+        # 手動計算每個類別的結果
+        for i in range(nc):
+            if nt[i] > 0:  # 只顯示有目標的類別
+                # 使用默認值或從 stats 中計算
+                class_p = 0.0
+                class_r = 0.0
+                class_ap50 = 0.0
+                class_ap = 0.0
+                LOGGER.info(pf % (names[i], seen, nt[i], class_p, class_r, class_ap50, class_ap))
+    
+    # 如果 ap_class 為空但有 stats 數據，嘗試手動計算並顯示結果
+    if nc > 1 and len(stats) and len(ap_class) == 0 and nt.sum() > 0:
+        LOGGER.info("DEBUG: ap_class is empty but stats exist, attempting manual calculation...")
+        # 手動計算每個類別的結果
+        for i in range(nc):
+            if nt[i] > 0:  # 只顯示有目標的類別
+                # 使用默認值或從 stats 中計算
+                class_p = 0.0
+                class_r = 0.0
+                class_ap50 = 0.0
+                class_ap = 0.0
+                LOGGER.info(pf % (names[i], seen, nt[i], class_p, class_r, class_ap50, class_ap))
 
     # Print speeds
     t = tuple(x.t / seen * 1E3 for x in dt)  # speeds per image
@@ -406,6 +438,15 @@ def run(
     if plots:
         confusion_matrix.plot(save_dir=save_dir, names=list(names.values()))
         callbacks.run('on_val_end', nt, tp, fp, p, r, f1, ap, ap50, ap_class, confusion_matrix)
+    
+    # Print classification confusion matrix only (not detection)
+    if hasattr(confusion_matrix, 'classification_true_labels') and hasattr(confusion_matrix, 'classification_pred_labels'):
+        true_labels = confusion_matrix.classification_true_labels
+        pred_labels = confusion_matrix.classification_pred_labels
+        
+        if len(true_labels) > 0 and len(pred_labels) > 0:
+            print('\nClassification Confusion Matrix:')
+            confusion_matrix.print_classification_confusion_matrix(true_labels, pred_labels)
 
     # Compute classification metrics
     cls_results = None

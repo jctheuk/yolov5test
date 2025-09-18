@@ -3,7 +3,6 @@
 # Keeping IoU threshold unchanged but optimizing other parameters
 
 # Multi-task learning parameters
-classification_weight: 0.3  # Weight for classification task vs detection task
 cls_task: 0.3  # Weight for classification task loss in dual loss computation
 
 # Learning rate parameters (improved)

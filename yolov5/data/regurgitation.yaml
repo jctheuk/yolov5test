@@ -1,0 +1,10 @@
+# YOLOv5 Regurgitation dataset config
+# Train/val/test sets
+
+train: C:/Users/darks/Desktop/yolov5/Regurgitation-YOLODataset-1new/train/images
+val: C:/Users/darks/Desktop/yolov5/Regurgitation-YOLODataset-1new/valid/images
+test: C:/Users/darks/Desktop/yolov5/Regurgitation-YOLODataset-1new/test/images
+
+# Classes
+nc: 4  # number of classes
+names: ['AR', 'MR', 'PR', 'TR']  # class names

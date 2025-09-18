@@ -3,7 +3,6 @@
 # Optimized for regurgitation detection and echocardiogram view classification
 
 # Multi-task learning parameters
-classification_weight: 0.3  # Weight for classification task vs detection task (increased from 0.1)
 cls_task: 0.3  # Weight for classification task loss in dual loss computation
 
 # Learning rate parameters
