@@ -45,6 +45,9 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))  # add ROOT to PATH
 ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 
+# Import val module from yolov5c directory
+import sys
+sys.path.append('yolov5c')
 import val as validate  # for end-of-epoch mAP
 from models.experimental import attempt_load
 #add new imports
@@ -240,11 +243,36 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
         ckpt = torch.load(weights, map_location='cpu')  # load checkpoint to CPU to avoid CUDA memory leak
         model = Model(cfg or ckpt['model'].yaml, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
         model.hyp = hyp
-        exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []  # exclude keys
-        csd = ckpt['model'].float().state_dict()  # checkpoint state_dict as FP32
-        csd = intersect_dicts(csd, model.state_dict(), exclude=exclude)  # intersect
-        model.load_state_dict(csd, strict=False)  # load
-        LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')  # report
+        
+        # Special handling for yolov5s-cls.pt weights
+        if 'cls' in weights.lower():
+            LOGGER.info(f'🔄 Detected classification weights: {weights}')
+            LOGGER.info(f'🛡️  Using safe weight loading for classification model...')
+            
+            # Get source and target state dicts
+            source_state_dict = ckpt['model'].float().state_dict()
+            target_state_dict = model.state_dict()
+            
+            # Find compatible weights (mainly backbone layers)
+            compatible_weights = {}
+            for key, value in source_state_dict.items():
+                if key in target_state_dict and value.shape == target_state_dict[key].shape:
+                    compatible_weights[key] = value
+            
+            # Load compatible weights with strict=False
+            missing_keys, unexpected_keys = model.load_state_dict(compatible_weights, strict=False)
+            LOGGER.info(f'✅ Loaded {len(compatible_weights)}/{len(source_state_dict)} compatible weights from {weights}')
+            if missing_keys:
+                LOGGER.info(f'⚠️  {len(missing_keys)} keys missing (using random initialization)')
+            if unexpected_keys:
+                LOGGER.info(f'⚠️  {len(unexpected_keys)} unexpected keys ignored')
+        else:
+            # Standard weight loading for detection models
+            exclude = ['anchor'] if (cfg or hyp.get('anchors')) and not resume else []  # exclude keys
+            csd = ckpt['model'].float().state_dict()  # checkpoint state_dict as FP32
+            csd = intersect_dicts(csd, model.state_dict(), exclude=exclude)  # intersect
+            model.load_state_dict(csd, strict=False)  # load
+            LOGGER.info(f'Transferred {len(csd)}/{len(model.state_dict())} items from {weights}')  # report
     else:
         model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
     amp = check_amp(model)  # check AMP
@@ -468,6 +496,17 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                         # Forward pass
                         model_output = model(imgs)
                         
+                        # Debug: Print model output information (only for first batch)
+                        if i == 0:
+                            print(f"[DEBUG]   Model output type: {type(model_output)}")
+                            if isinstance(model_output, tuple):
+                                print(f"[DEBUG]   Model output length: {len(model_output)}")
+                                if len(model_output) >= 2:
+                                    print(f"[DEBUG]   Detection output shape: {model_output[0].shape if hasattr(model_output[0], 'shape') else 'N/A'}")
+                                    print(f"[DEBUG]   Classification output shape: {model_output[1].shape if hasattr(model_output[1], 'shape') else 'N/A'}")
+                            else:
+                                print(f"[DEBUG]   Model output shape: {model_output.shape if hasattr(model_output, 'shape') else 'N/A'}")
+                        
                         # Parse model output consistently
                         from utils.general import parse_model_output, validate_detection_outputs
                         detections, class_outputs = parse_model_output(model_output)
@@ -534,9 +573,61 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                                 batch_size = class_outputs.shape[0]
                                 class_outputs = class_outputs.view(batch_size, -1)
                         
+                        # Print detailed model predictions and labels for debugging
+                        if i < 3:  # Only for first 3 batches to avoid spam
+                            print(f"\n[DEBUG] ===== BATCH {i} DETAILED ANALYSIS =====")
+                            print(f"[DEBUG] Model Output Analysis:")
+                            if isinstance(model_output, tuple) and len(model_output) >= 2:
+                                det_output, cls_output = model_output
+                                print(f"[DEBUG]   Detection output shape: {det_output.shape if hasattr(det_output, 'shape') else 'N/A'}")
+                                print(f"[DEBUG]   Classification output shape: {cls_output.shape if hasattr(cls_output, 'shape') else 'N/A'}")
+                                
+                                # Print raw classification logits
+                                if cls_output is not None:
+                                    print(f"[DEBUG]   Raw classification logits (first 3 samples):")
+                                    for j in range(min(3, cls_output.shape[0])):
+                                        logits = cls_output[j].cpu().detach().numpy()
+                                        print(f"[DEBUG]     Sample {j}: {logits}")
+                                    
+                                    # Print softmax probabilities
+                                    probs = torch.softmax(cls_output, dim=1)
+                                    print(f"[DEBUG]   Softmax probabilities (first 3 samples):")
+                                    for j in range(min(3, probs.shape[0])):
+                                        prob = probs[j].cpu().detach().numpy()
+                                        print(f"[DEBUG]     Sample {j}: {prob}")
+                            else:
+                                print(f"[DEBUG]   Single output shape: {model_output.shape if hasattr(model_output, 'shape') else 'N/A'}")
+                            
+                            print(f"[DEBUG] Ground Truth Labels:")
+                            if classification_labels is not None:
+                                print(f"[DEBUG]   Labels shape: {classification_labels.shape}")
+                                print(f"[DEBUG]   Labels dtype: {classification_labels.dtype}")
+                                print(f"[DEBUG]   First 5 labels: {classification_labels[:5].cpu().numpy() if hasattr(classification_labels, 'cpu') else classification_labels[:5]}")
+                                print(f"[DEBUG]   Unique labels in batch: {torch.unique(classification_labels).cpu().numpy() if hasattr(classification_labels, 'cpu') else torch.unique(classification_labels)}")
+                            else:
+                                print(f"[DEBUG]   No classification labels provided")
+                            print(f"[DEBUG] ===========================================\n")
+
                         # Compute dual loss (detection + classification)
                         targets = targets.to(device)
-                        total_loss, loss_items = compute_loss(model_output, targets, classification_labels)
+                        
+                        # Get image paths for this batch
+                        batch_start_idx = i * batch_size
+                        batch_end_idx = min((i + 1) * batch_size, len(dataset))
+                        image_paths = dataset.im_files[batch_start_idx:batch_end_idx] if hasattr(dataset, 'im_files') else None
+                        
+                        # Get class names
+                        class_names = ['PSAX', 'PLAX', 'A4C']  # Based on your dataset
+                        
+                        total_loss, loss_items = compute_loss(model_output, targets, classification_labels, 
+                                                             image_paths=image_paths, class_names=class_names)
+
+                        # Skip batch if classification loss is unavailable
+                        if total_loss is None:
+                            # Optional: you can still compute/debug predictions, but skip training updates
+                            if RANK in {-1, 0}:
+                                print(f"[DEBUG] total_loss is None at epoch {epoch}, batch {i} — skipping this batch")
+                            continue
                         
                         # Calculate classification accuracy
                         if isinstance(model_output, tuple) and len(model_output) == 2:
@@ -559,6 +650,9 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                             total_loss *= 4
                     
                 # Enhanced NaN detection before backward pass
+                if total_loss is None:
+                    print(f"[DEBUG] total_loss is None at epoch {epoch}, batch {i} — skipping backward for this batch")
+                    continue
                 if torch.isnan(total_loss) or torch.isinf(total_loss):
                     print(f"[DEBUG] NaN/Inf detected in total_loss at epoch {epoch}, batch {i}")
                     print(f"[DEBUG] total_loss: {total_loss}")
@@ -574,6 +668,8 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                             continue
                 
                 # Backward pass with enhanced error handling
+                print("[CHECK] total_loss.requires_grad:", bool(getattr(total_loss, 'requires_grad', False)),
+                      "grad_fn:", getattr(total_loss, 'grad_fn', None))
                 try:
                     scaler.scale(total_loss).backward()
                 except RuntimeError as e:
@@ -581,7 +677,13 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                         print(f"[DEBUG] NaN error during backward pass: {e}")
                         print(f"[DEBUG] Resetting optimizer and scaler...")
                         optimizer.zero_grad()
-                        scaler.update()
+                        # Don't call scaler.update() if no inf checks were recorded
+                        try:
+                            scaler.update()
+                        except AssertionError as ae:
+                            print(f"[DEBUG] Scaler update failed: {ae}")
+                            # Reset scaler state
+                            scaler._per_optimizer_states = {}
                         continue
                     else:
                         raise e
@@ -780,7 +882,7 @@ def parse_opt(known=False):
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     parser.add_argument('--quad', action='store_true', help='quad dataloader')
     parser.add_argument('--cos-lr', action='store_true', help='cosine LR scheduler')
-    parser.add_argument('--label-smoothing', type=float, default=0.0, help='Label smoothing epsilon')
+    parser.add_argument('--label-smoothing', type=float, default=0.1, help='Label smoothing epsilon')
     parser.add_argument('--patience', type=int, default=100, help='EarlyStopping patience (epochs without improvement)')
     parser.add_argument('--freeze', nargs='+', type=int, default=[0], help='Freeze layers: backbone=10, first3=0 1 2')
     parser.add_argument('--save-period', type=int, default=-1, help='Save checkpoint every x epochs (disabled if < 1)')

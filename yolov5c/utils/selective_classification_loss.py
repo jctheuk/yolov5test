@@ -220,8 +220,9 @@ class SelectiveClassificationLoss:
             else:
                 print(f"[DEBUG] Epoch {self.current_epoch}: Classification weight={cls_weight:.3f} (disabled)")
 
-        # Total loss
-        total_loss = (lbox + lobj + lcls + lcls_task) * len(targets)
+        # Total loss (following YOLOv5 original: use batch size from tobj, not len(targets))
+        bs = tobj.shape[0]  # batch size
+        total_loss = (lbox + lobj + lcls + lcls_task) * bs
         
         # Check for NaN/Inf
         if torch.isnan(total_loss) or torch.isinf(total_loss):
@@ -245,7 +246,7 @@ class SelectiveClassificationLoss:
         lcls_final = ensure_tensor_shape(lcls.detach()).view(1)
         lcls_task_final = ensure_tensor_shape(lcls_task.detach()).view(1)
         
-        return total_loss, [lbox_final, lobj_final, lcls_final, lcls_task_final]
+        return total_loss, torch.cat((lbox_final, lobj_final, lcls_final, lcls_task_final)).detach()
 
     def build_targets(self, p, targets):
         """Build targets for compute_loss(), input targets(image,class,x,y,w,h)"""
