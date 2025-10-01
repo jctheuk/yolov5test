@@ -1,0 +1,17 @@
+# Test PSAX Bias Fix with Class Weights
+
+# PowerShell command to test the fix:
+python train_classification_task.py --data regurgitationV1/data.yaml --epochs 20 --batch-size 128 --device auto --weights yolov5s.pt --hyp psax_bias_fix_hyp.yaml --optimizer Adam --name psax_bias_fix_test --patience 0
+
+# Key changes:
+# 1. Uses class weights: [1.026, 1.524, 0.730] (A4C, PSAX, PLAX)
+# 2. PSAX gets 1.524x weight (higher priority)
+# 3. PLAX gets 0.730x weight (lower priority)
+# 4. This should prevent PSAX bias from becoming negative
+
+# Expected results:
+# - PSAX recall should improve from 9% to 15-25%
+# - Classification head bias should stay near zero for all classes
+# - Overall accuracy should improve to 50-60%
+
+# If this works, the PSAX bias bug is fixed!

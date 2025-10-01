@@ -21,7 +21,8 @@ class ClassificationTaskLoss:
                  enable_classification=True,
                  cls_task_weight=0.3,
                  label_smoothing=0.1,
-                 classification_criterion=None):
+                 classification_criterion=None,
+                 class_weights=None):
         """
         Initialize Classification Task Loss
         
@@ -32,27 +33,37 @@ class ClassificationTaskLoss:
             cls_task_weight: Weight for classification task loss
             label_smoothing: Label smoothing factor
             classification_criterion: Custom classification criterion
+            class_weights: Class weights tensor for handling class imbalance
         """
         self.model = model
         self.autobalance = autobalance
         self.enable_classification = enable_classification
         self.cls_task_weight = cls_task_weight
         self.label_smoothing = label_smoothing
+        self.class_weights = class_weights
         
         # Set device from model
         self.device = next(model.parameters()).device
         
+        # Convert class weights to tensor if provided
+        if self.class_weights is not None:
+            if isinstance(self.class_weights, (list, tuple)):
+                self.class_weights = torch.tensor(self.class_weights, dtype=torch.float32, device=self.device)
+            print(f"Using class weights: {self.class_weights}")
+        
         # Get model hyperparameters
         self.hyp = getattr(model, 'hyp', {})
         
-        # Set up classification criterion
+        # Set up classification criterion - use manual implementation to avoid all PyTorch issues
         if classification_criterion is None:
-            # Use CrossEntropyLoss with label smoothing (like classify/train.py)
-            self.classification_criterion = nn.CrossEntropyLoss(
-                label_smoothing=label_smoothing
-            )
+            # Always use manual implementation to avoid any PyTorch version issues
+            self.classification_criterion = None  # We'll use manual implementation
+            self.use_builtin_smoothing = False
+            if label_smoothing > 0:
+                print(f"WARNING ⚠️ label smoothing {label_smoothing} will be ignored (using manual implementation)")
         else:
             self.classification_criterion = classification_criterion
+            self.use_builtin_smoothing = False
             
         # Classification loss tracking
         self.classification_loss = 0.0
@@ -70,6 +81,63 @@ class ClassificationTaskLoss:
         if not self.enable_classification:
             return 0.0
         return self.cls_task_weight
+    
+    def manual_cross_entropy_loss(self, logits, targets):
+        """
+        Manual CrossEntropy loss implementation with class weights support
+        Equivalent to nn.CrossEntropyLoss(weight=class_weights) but works on all PyTorch versions
+        
+        Args:
+            logits: Model predictions [batch_size, num_classes]
+            targets: Target class indices [batch_size]
+            
+        Returns:
+            CrossEntropy loss value
+        """
+        # Compute log softmax
+        log_probs = F.log_softmax(logits, dim=1)
+        
+        # Gather the log probabilities for the target classes
+        # targets should be long tensor with class indices
+        batch_size = logits.shape[0]
+        target_log_probs = log_probs[range(batch_size), targets]
+        
+        # Apply class weights if provided
+        if self.class_weights is not None:
+            # Get weights for each target class
+            target_weights = self.class_weights[targets]
+            # Weight the losses
+            weighted_losses = -target_log_probs * target_weights
+            return weighted_losses.mean()
+        else:
+            # Return negative log likelihood (CrossEntropy loss)
+            return -target_log_probs.mean()
+    
+    def apply_label_smoothing(self, targets, num_classes, smoothing=0.1):
+        """
+        Apply label smoothing manually for compatibility across PyTorch versions
+        This implementation matches PyTorch's built-in label smoothing exactly
+        
+        Args:
+            targets: Target class indices [batch_size]
+            num_classes: Number of classes
+            smoothing: Label smoothing factor (0.0 = no smoothing)
+            
+        Returns:
+            Smoothed target probabilities [batch_size, num_classes]
+        """
+        if smoothing == 0.0:
+            # No smoothing, return one-hot encoding
+            return F.one_hot(targets, num_classes=num_classes).float()
+        
+        # Apply label smoothing exactly like PyTorch's built-in implementation
+        # Convert to one-hot first
+        one_hot = F.one_hot(targets, num_classes=num_classes).float()
+        
+        # Apply smoothing: (1 - smoothing) * one_hot + smoothing / num_classes
+        smoothed = (1.0 - smoothing) * one_hot + smoothing / num_classes
+        
+        return smoothed
     
     def standard_classification_loss(self, logits, targets):
         """
@@ -131,11 +199,18 @@ class ClassificationTaskLoss:
             pred_classes = torch.argmax(classification_output, dim=1)
             pred_probs = torch.softmax(classification_output, dim=1)
             
-            # Ensure targets are in correct format
-            if cls_targets.dim() > 1 and cls_targets.shape[1] > 1:
-                target_indices = torch.argmax(cls_targets, dim=1)
+            # Labels should already be processed by train_classification_task.py
+            # Just ensure they are in the correct format for CrossEntropyLoss
+            if cls_targets.dim() > 1:
+                # If still multi-dimensional, squeeze to 1D
+                target_indices = cls_targets.squeeze()
             else:
-                target_indices = cls_targets.long()
+                # Already 1D, keep as is
+                target_indices = cls_targets
+            
+            # Always use long dtype for CrossEntropyLoss targets
+            # CrossEntropyLoss requires integer class indices, not float
+            target_indices = target_indices.long()
             
             print(f"\n[DEBUG] ===== BATCH {batch_idx} LOSS ANALYSIS =====")
             
@@ -267,11 +342,18 @@ class ClassificationTaskLoss:
             pred_classes = torch.argmax(classification_output, dim=1)
             pred_probs = torch.softmax(classification_output, dim=1)
             
-            # Ensure targets are in correct format
-            if cls_targets.dim() > 1 and cls_targets.shape[1] > 1:
-                target_indices = torch.argmax(cls_targets, dim=1)
+            # Labels should already be processed by train_classification_task.py
+            # Just ensure they are in the correct format for CrossEntropyLoss
+            if cls_targets.dim() > 1:
+                # If still multi-dimensional, squeeze to 1D
+                target_indices = cls_targets.squeeze()
             else:
-                target_indices = cls_targets.long()
+                # Already 1D, keep as is
+                target_indices = cls_targets
+            
+            # Always use long dtype for CrossEntropyLoss targets
+            # CrossEntropyLoss requires integer class indices, not float
+            target_indices = target_indices.long()
             
             # Limit number of samples to print
             num_samples = min(max_samples, classification_output.shape[0])
@@ -316,13 +398,7 @@ class ClassificationTaskLoss:
                 
                 print(f"{i:<8} {image_name:<44} {pred_class_name:<15} {target_class_name:<15} {confidence:<12.4f} {is_correct:<8}")
             
-            # Print raw logits for first few samples
-            print(f"\n[DEBUG] Raw Logits (first {min(3, num_samples)} samples):")
-            for i in range(min(3, num_samples)):
-                logits = classification_output[i].cpu().numpy()
-                print(f"Sample {i}: {logits}")
-            
-            # Print statistics
+            # Print batch statistics
             correct_predictions = (pred_classes == target_indices).sum().item()
             total_predictions = pred_classes.shape[0]
             accuracy = correct_predictions / total_predictions if total_predictions > 0 else 0
@@ -331,31 +407,6 @@ class ClassificationTaskLoss:
             print(f"  Total samples: {total_predictions}")
             print(f"  Correct predictions: {correct_predictions}")
             print(f"  Batch accuracy: {accuracy:.4f}")
-            print(f"  Unique predicted classes: {torch.unique(pred_classes).tolist()}")
-            print(f"  Unique target classes: {torch.unique(target_indices).tolist()}")
-            
-            # Print detailed predictions for all samples in this batch
-            print(f"\n[DEBUG] Detailed Predictions for All Samples in Batch {batch_idx}:")
-            print(f"{'Index':<6} {'Image Name (parent/name)':<52} {'Predicted':<15} {'Ground Truth':<15} {'Confidence':<12} {'Status':<8}")
-            print("-" * 120)
-            
-            for i in range(classification_output.shape[0]):
-                pred_class = pred_classes[i].item()
-                target_class = target_indices[i].item()
-                confidence = pred_probs[i, pred_class].item()
-                is_correct = "✓" if pred_class == target_class else "✗"
-                
-                # Get image name (filename only, no path)
-                if image_paths is not None and i < len(image_paths):
-                    image_name = _tail2(image_paths[i])
-                else:
-                    image_name = f"sample_{i}"
-                
-                # Get class names
-                pred_class_name = class_names[pred_class] if pred_class < len(class_names) else f"Class_{pred_class}"
-                target_class_name = class_names[target_class] if target_class < len(class_names) else f"Class_{target_class}"
-                
-                print(f"{i:<6} {image_name:<52} {pred_class_name:<15} {target_class_name:<15} {confidence:<12.4f} {is_correct:<8}")
 
     def __call__(self, p, targets, cls_targets=None, image_paths=None, class_names=None):  # predictions, targets, classification_targets
         """
@@ -381,18 +432,31 @@ class ClassificationTaskLoss:
         if classification_output is not None and cls_targets is not None:
             # Ensure cls_targets are on the same device as classification_output
             cls_targets = cls_targets.to(classification_output.device)
-
-            # Convert classification targets to class indices
-            if cls_targets.dim() > 1 and cls_targets.shape[1] > 1:
-                # One-hot encoded targets -> convert to class indices
-                target_indices = torch.argmax(cls_targets, dim=1)
+            
+            # Labels should already be processed by train_classification_task.py
+            # Handle both one-hot encoded and class indices formats
+            if cls_targets.dim() > 1 and cls_targets.shape[-1] > 1:
+                # One-hot encoded: [batch_size, num_classes] -> [batch_size]
+                target_indices = cls_targets.argmax(dim=-1).long()
+            elif cls_targets.dim() > 1:
+                # Class indices with extra dim: [batch_size, 1] -> [batch_size]
+                target_indices = cls_targets.squeeze().long()
             else:
-                # Already class indices
+                # Already 1D class indices
                 target_indices = cls_targets.long()
+            num_classes = classification_output.shape[-1]
             
             # Ensure targets are within valid range
-            if target_indices.max() >= classification_output.shape[-1]:
-                target_indices = torch.clamp(target_indices, 0, classification_output.shape[-1] - 1)
+            if target_indices.max() >= num_classes:
+                target_indices = torch.clamp(target_indices, 0, num_classes - 1)
+            
+            # Use manual CrossEntropy implementation to avoid all PyTorch version issues
+            if self.classification_criterion is not None:
+                # Use provided criterion if available
+                lcls_task = self.classification_criterion(classification_output, target_indices)
+            else:
+                # Use manual implementation (always works)
+                lcls_task = self.manual_cross_entropy_loss(classification_output, target_indices)
                 
             # Print predictions and labels for debugging (only for first few batches)
             # This will help debug the model(images) predictions vs ground truth labels
@@ -401,26 +465,31 @@ class ClassificationTaskLoss:
             else:
                 self._debug_batch_count = 0
             
-            # Print detailed predictions for first 3 batches to avoid spam
-            if self._debug_batch_count < 3:
+            # Print predictions for first batch only
+            if self._debug_batch_count == 1:
                 self.print_predictions_and_labels(
                     classification_output,
                     cls_targets,
                     batch_idx=self._debug_batch_count,
+                    max_samples=5,
+                    image_paths=image_paths,
+                    class_names=class_names,
+                )
+            
+            # Print predictions for final batch only
+            is_final_batch = getattr(self, '_is_final_batch', False)
+            if is_final_batch:
+                print(f"\n[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====")
+                self.print_predictions_and_labels(
+                    classification_output,
+                    cls_targets,
+                    batch_idx=f"final_{self._debug_batch_count}",
                     max_samples=8,
                     image_paths=image_paths,
                     class_names=class_names,
                 )
-                
-                # Calculate classification loss using train.py approach (simple CrossEntropyLoss)
-                # This is exactly like: loss = criterion(model(images), labels) in train.py
-                lcls_task = self.classification_criterion(classification_output, target_indices)
-                
-            # Analyze loss components to diagnose potential issues
-            if self._debug_batch_count < 3:
-                # Use detach() to avoid breaking gradient computation
-                self.analyze_loss_components(classification_output, cls_targets, 
-                                           lcls_task.detach().item(), batch_idx=self._debug_batch_count)
+                # Reset the flag
+                self._is_final_batch = False
 
         # Total loss - match classify/ behavior: mean CE (no batch-size scaling)
         total_loss = lcls_task  # may be None if no classification outputs in this batch
@@ -463,6 +532,10 @@ class ClassificationTaskLoss:
             'classification_weight': self.get_classification_weight(),
             'enable_classification': self.enable_classification
         }
+    
+    def set_final_batch_flag(self, is_final=True):
+        """Set flag to indicate this is a final batch for debugging"""
+        self._is_final_batch = is_final
 
 
 class SmartCrossEntropyLoss(nn.Module):

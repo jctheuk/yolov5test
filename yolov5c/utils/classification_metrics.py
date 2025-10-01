@@ -24,15 +24,35 @@ def compute_classification_metrics(predictions, targets, class_names=None):
     if isinstance(targets, torch.Tensor):
         targets = targets.cpu().numpy()
     
-    # Convert logits to probabilities if needed
+    # Apply standardized one-hot encoding handling to targets
+    if isinstance(targets, np.ndarray):
+        if targets.ndim > 1:
+            if targets.shape[-1] > 1:
+                # One-hot encoded: [batch_size, num_classes] -> [batch_size]
+                targets = np.argmax(targets, axis=-1)
+            elif targets.shape[-1] == 1:
+                # Class indices with extra dim: [batch_size, 1] -> [batch_size]
+                targets = targets.squeeze(-1)
+        else:
+            # 1D array: check if it's one-hot or class indices
+            if targets.shape[0] > 1 and np.sum(targets) == 1:
+                # One-hot encoding in 1D: [num_classes] -> scalar, but expand to match batch size
+                class_idx = np.argmax(targets)
+                targets = np.full(predictions.shape[0], class_idx)
+    
+    # Convert logits to probabilities if needed - STANDARDIZED LOGIC
     if predictions.shape[1] > 1:
-        # Apply softmax to get probabilities
+        # Multi-class classification: Apply softmax to get probabilities
         exp_preds = np.exp(predictions - np.max(predictions, axis=1, keepdims=True))
         probabilities = exp_preds / np.sum(exp_preds, axis=1, keepdims=True)
         pred_labels = np.argmax(probabilities, axis=1)
-    else:
-        # Binary classification
+    elif predictions.shape[1] == 1:
+        # Binary classification: Apply sigmoid
         probabilities = 1 / (1 + np.exp(-predictions))
+        pred_labels = (probabilities > 0.5).astype(int)
+    else:
+        # Single value per sample: assume already probabilities
+        probabilities = predictions
         pred_labels = (probabilities > 0.5).astype(int)
     
     # Compute metrics

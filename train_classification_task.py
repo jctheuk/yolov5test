@@ -182,6 +182,455 @@ def plot_classification_metrics(cls_results, save_dir, epoch):
     plt.close()
 
 
+def debug_model_state(model, epoch, batch, stage="unknown"):
+    """
+    Debug function to check model state for NaN/Inf issues
+    Like original classify/ but with detailed debugging
+    """
+    print(f"[DEBUG] ===== MODEL STATE CHECK: {stage} =====")
+    print(f"[DEBUG] Epoch: {epoch}, Batch: {batch}")
+    
+    # Check model parameters
+    nan_params = []
+    inf_params = []
+    for name, param in model.named_parameters():
+        if torch.isnan(param).any():
+            nan_params.append(name)
+        if torch.isinf(param).any():
+            inf_params.append(name)
+    
+    if nan_params:
+        print(f"[DEBUG] NaN parameters: {nan_params}")
+    if inf_params:
+        print(f"[DEBUG] Inf parameters: {inf_params}")
+    
+    # Check gradients
+    nan_grads = []
+    inf_grads = []
+    for name, param in model.named_parameters():
+        if param.grad is not None:
+            if torch.isnan(param.grad).any():
+                nan_grads.append(name)
+            if torch.isinf(param.grad).any():
+                inf_grads.append(name)
+    
+    if nan_grads:
+        print(f"[DEBUG] NaN gradients: {nan_grads}")
+    if inf_grads:
+        print(f"[DEBUG] Inf gradients: {inf_grads}")
+    
+    # Check BatchNorm layers specifically
+    bn_issues = []
+    for name, module in model.named_modules():
+        if isinstance(module, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d, torch.nn.BatchNorm3d)):
+            if torch.isnan(module.running_mean).any() or torch.isnan(module.running_var).any():
+                bn_issues.append(f"{name} (running stats)")
+            if torch.isinf(module.running_mean).any() or torch.isinf(module.running_var).any():
+                bn_issues.append(f"{name} (running stats inf)")
+    
+    if bn_issues:
+        print(f"[DEBUG] BatchNorm issues: {bn_issues}")
+    
+    print(f"[DEBUG] ======================================")
+    return len(nan_params) + len(inf_params) + len(nan_grads) + len(inf_grads) + len(bn_issues) > 0
+
+
+def debug_batchnorm_layers(model, epoch, batch, stage="unknown"):
+    """
+    Detailed BatchNorm debugging function
+    """
+    print(f"[DEBUG] ===== BATCHNORM DEBUG: {stage} =====")
+    print(f"[DEBUG] Epoch: {epoch}, Batch: {batch}")
+    
+    problematic_layers = []
+    
+    for name, module in model.named_modules():
+        if isinstance(module, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d, torch.nn.BatchNorm3d)):
+            print(f"[DEBUG] BatchNorm layer: {name}")
+            
+            # Check for NaN/Inf in parameters
+            weight_has_nan = torch.isnan(module.weight).any() or torch.isinf(module.weight).any()
+            bias_has_nan = torch.isnan(module.bias).any() or torch.isinf(module.bias).any()
+            running_mean_has_nan = torch.isnan(module.running_mean).any() or torch.isinf(module.running_mean).any()
+            running_var_has_nan = torch.isnan(module.running_var).any() or torch.isinf(module.running_var).any()
+            
+            if weight_has_nan or bias_has_nan or running_mean_has_nan or running_var_has_nan:
+                problematic_layers.append(name)
+                print(f"[DEBUG]   ⚠️  PROBLEMATIC LAYER DETECTED!")
+            
+            print(f"[DEBUG]   Weight stats: min={module.weight.min():.6f}, max={module.weight.max():.6f}, mean={module.weight.mean():.6f}")
+            print(f"[DEBUG]   Bias stats: min={module.bias.min():.6f}, max={module.bias.max():.6f}, mean={module.bias.mean():.6f}")
+            print(f"[DEBUG]   Running mean stats: min={module.running_mean.min():.6f}, max={module.running_mean.max():.6f}, mean={module.running_mean.mean():.6f}")
+            print(f"[DEBUG]   Running var stats: min={module.running_var.min():.6f}, max={module.running_var.max():.6f}, mean={module.running_var.mean():.6f}")
+            print(f"[DEBUG]   Epsilon: {module.eps}")
+            print(f"[DEBUG]   Momentum: {module.momentum}")
+            print(f"[DEBUG]   Training mode: {module.training}")
+            
+            # Check for potential issues
+            if module.running_var.min() < 0:
+                print(f"[DEBUG]   ⚠️  WARNING: Negative running variance detected!")
+            if module.running_var.min() < module.eps:
+                print(f"[DEBUG]   ⚠️  WARNING: Running variance too small (less than epsilon)!")
+            if abs(module.weight.max()) > 10 or abs(module.weight.min()) > 10:
+                print(f"[DEBUG]   ⚠️  WARNING: Extreme weight values detected!")
+            if abs(module.bias.max()) > 10 or abs(module.bias.min()) > 10:
+                print(f"[DEBUG]   ⚠️  WARNING: Extreme bias values detected!")
+    
+    if problematic_layers:
+        print(f"[DEBUG] ⚠️  PROBLEMATIC BATCHNORM LAYERS: {problematic_layers}")
+    else:
+        print(f"[DEBUG] ✅ All BatchNorm layers appear normal")
+    
+    print(f"[DEBUG] ======================================")
+    return problematic_layers
+
+
+def diagnose_batchnorm_nan_causes(model, epoch, batch, imgs, total_loss):
+    """
+    Diagnose common causes of BatchNorm NaN issues
+    """
+    print(f"[DEBUG] ===== BATCHNORM NaN DIAGNOSIS =====")
+    print(f"[DEBUG] Epoch: {epoch}, Batch: {batch}")
+    
+    # 1. Check input data
+    print(f"[DEBUG] 1. Input Data Analysis:")
+    print(f"[DEBUG]   Images shape: {imgs.shape}")
+    print(f"[DEBUG]   Images range: [{imgs.min():.6f}, {imgs.max():.6f}]")
+    print(f"[DEBUG]   Images mean: {imgs.mean():.6f}, std: {imgs.std():.6f}")
+    
+    if torch.isnan(imgs).any():
+        print(f"[DEBUG]   ❌ NaN detected in input images!")
+    if torch.isinf(imgs).any():
+        print(f"[DEBUG]   ❌ Inf detected in input images!")
+    if imgs.min() < -10 or imgs.max() > 10:
+        print(f"[DEBUG]   ⚠️  Extreme input values detected!")
+    
+    # 2. Check loss values
+    print(f"[DEBUG] 2. Loss Analysis:")
+    print(f"[DEBUG]   Total loss: {total_loss}")
+    if torch.isnan(total_loss):
+        print(f"[DEBUG]   ❌ NaN in total loss!")
+    if torch.isinf(total_loss):
+        print(f"[DEBUG]   ❌ Inf in total loss!")
+    
+    # 3. Check model parameters
+    print(f"[DEBUG] 3. Model Parameters Analysis:")
+    nan_count = 0
+    inf_count = 0
+    extreme_count = 0
+    
+    for name, param in model.named_parameters():
+        if torch.isnan(param).any():
+            nan_count += 1
+            print(f"[DEBUG]   ❌ NaN in parameter: {name}")
+        if torch.isinf(param).any():
+            inf_count += 1
+            print(f"[DEBUG]   ❌ Inf in parameter: {name}")
+        if param.abs().max() > 100:
+            extreme_count += 1
+            print(f"[DEBUG]   ⚠️  Extreme values in parameter: {name} (max: {param.abs().max():.2f})")
+    
+    print(f"[DEBUG]   Summary: {nan_count} NaN params, {inf_count} Inf params, {extreme_count} extreme params")
+    
+    # 4. Check BatchNorm specific issues
+    print(f"[DEBUG] 4. BatchNorm Specific Issues:")
+    bn_issues = []
+    
+    for name, module in model.named_modules():
+        if isinstance(module, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d, torch.nn.BatchNorm3d)):
+            # Check running variance issues
+            if module.running_var.min() <= 0:
+                bn_issues.append(f"{name}: negative/zero running variance")
+            if module.running_var.min() < module.eps:
+                bn_issues.append(f"{name}: running variance < epsilon")
+            if torch.isnan(module.running_var).any():
+                bn_issues.append(f"{name}: NaN in running variance")
+            if torch.isinf(module.running_var).any():
+                bn_issues.append(f"{name}: Inf in running variance")
+            
+            # Check weight/bias issues
+            if torch.isnan(module.weight).any():
+                bn_issues.append(f"{name}: NaN in weight")
+            if torch.isinf(module.weight).any():
+                bn_issues.append(f"{name}: Inf in weight")
+            if torch.isnan(module.bias).any():
+                bn_issues.append(f"{name}: NaN in bias")
+            if torch.isinf(module.bias).any():
+                bn_issues.append(f"{name}: Inf in bias")
+    
+    if bn_issues:
+        print(f"[DEBUG]   ❌ BatchNorm issues found:")
+        for issue in bn_issues:
+            print(f"[DEBUG]     - {issue}")
+    else:
+        print(f"[DEBUG]   ✅ No obvious BatchNorm issues detected")
+    
+    # 5. Check learning rate and optimizer state
+    print(f"[DEBUG] 5. Training Configuration:")
+    # This would need access to optimizer, but we can check if it's available
+    print(f"[DEBUG]   Model training mode: {model.training}")
+    
+    print(f"[DEBUG] ======================================")
+    return len(bn_issues) > 0 or nan_count > 0 or inf_count > 0
+
+
+def debug_amp_issues(model, epoch, batch, total_loss, scaler):
+    """
+    Debug potential AMP (Automatic Mixed Precision) issues
+    """
+    print(f"[DEBUG] ===== AMP DEBUG =====")
+    print(f"[DEBUG] Epoch: {epoch}, Batch: {batch}")
+    
+    # Check scaler state
+    print(f"[DEBUG] Scaler state:")
+    print(f"[DEBUG]   Enabled: {scaler.is_enabled()}")
+    print(f"[DEBUG]   Scale: {scaler.get_scale()}")
+    print(f"[DEBUG]   Growth factor: {scaler.get_growth_factor()}")
+    print(f"[DEBUG]   Backoff factor: {scaler.get_backoff_factor()}")
+    print(f"[DEBUG]   Growth interval: {scaler.get_growth_interval()}")
+    
+    # Check if loss is in the right precision
+    print(f"[DEBUG] Loss precision:")
+    print(f"[DEBUG]   Loss dtype: {total_loss.dtype}")
+    print(f"[DEBUG]   Loss device: {total_loss.device}")
+    
+    # Check model precision
+    print(f"[DEBUG] Model precision check:")
+    fp16_params = 0
+    fp32_params = 0
+    for name, param in model.named_parameters():
+        if param.dtype == torch.float16:
+            fp16_params += 1
+        elif param.dtype == torch.float32:
+            fp32_params += 1
+    
+    print(f"[DEBUG]   FP16 parameters: {fp16_params}")
+    print(f"[DEBUG]   FP32 parameters: {fp32_params}")
+    
+    # Check for potential overflow
+    if scaler.get_scale() < 1.0:
+        print(f"[DEBUG]   ⚠️  WARNING: Scaler scale is very small ({scaler.get_scale()})")
+        print(f"[DEBUG]   This might indicate frequent overflow issues")
+    
+    print(f"[DEBUG] ====================")
+
+
+def debug_gradient_flow(model, epoch, batch, stage="unknown"):
+    """
+    Debug gradient flow to identify where NaN occurs in backward pass
+    """
+    print(f"[DEBUG] ===== GRADIENT FLOW DEBUG: {stage} =====")
+    print(f"[DEBUG] Epoch: {epoch}, Batch: {batch}")
+    
+    # Check gradients for each parameter
+    nan_grads = []
+    inf_grads = []
+    extreme_grads = []
+    
+    for name, param in model.named_parameters():
+        if param.grad is not None:
+            grad = param.grad
+            
+            # Check for NaN/Inf
+            if torch.isnan(grad).any():
+                nan_grads.append((name, grad.shape, grad.numel()))
+            if torch.isinf(grad).any():
+                inf_grads.append((name, grad.shape, grad.numel()))
+            
+            # Check for extreme values
+            grad_max = grad.abs().max().item()
+            if grad_max > 100:
+                extreme_grads.append((name, grad.shape, grad_max))
+    
+    if nan_grads:
+        print(f"[DEBUG] ❌ NaN gradients found:")
+        for name, shape, numel in nan_grads:
+            print(f"[DEBUG]   - {name}: shape={shape}, elements={numel}")
+    
+    if inf_grads:
+        print(f"[DEBUG] ❌ Inf gradients found:")
+        for name, shape, numel in inf_grads:
+            print(f"[DEBUG]   - {name}: shape={shape}, elements={numel}")
+    
+    if extreme_grads:
+        print(f"[DEBUG] ⚠️  Extreme gradients found:")
+        for name, shape, max_val in extreme_grads:
+            print(f"[DEBUG]   - {name}: shape={shape}, max_abs={max_val:.2f}")
+    
+    if not nan_grads and not inf_grads and not extreme_grads:
+        print(f"[DEBUG] ✅ All gradients appear normal")
+    
+    # Check BatchNorm layers specifically
+    print(f"[DEBUG] BatchNorm gradient analysis:")
+    bn_nan_count = 0
+    for name, module in model.named_modules():
+        if isinstance(module, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d, torch.nn.BatchNorm3d)):
+            if module.weight.grad is not None:
+                if torch.isnan(module.weight.grad).any():
+                    print(f"[DEBUG]   ❌ NaN in {name}.weight.grad")
+                    bn_nan_count += 1
+                if torch.isinf(module.weight.grad).any():
+                    print(f"[DEBUG]   ❌ Inf in {name}.weight.grad")
+                    bn_nan_count += 1
+            
+            if module.bias.grad is not None:
+                if torch.isnan(module.bias.grad).any():
+                    print(f"[DEBUG]   ❌ NaN in {name}.bias.grad")
+                    bn_nan_count += 1
+                if torch.isinf(module.bias.grad).any():
+                    print(f"[DEBUG]   ❌ Inf in {name}.bias.grad")
+                    bn_nan_count += 1
+    
+    if bn_nan_count == 0:
+        print(f"[DEBUG]   ✅ All BatchNorm gradients appear normal")
+    
+    print(f"[DEBUG] ======================================")
+    return len(nan_grads) + len(inf_grads) > 0
+
+
+def debug_forward_pass_intermediate(model, imgs, epoch, batch):
+    """
+    Debug intermediate outputs during forward pass to identify where NaN first appears
+    """
+    print(f"[DEBUG] ===== FORWARD PASS INTERMEDIATE DEBUG =====")
+    print(f"[DEBUG] Epoch: {epoch}, Batch: {batch}")
+    
+    # Hook to capture intermediate outputs
+    intermediate_outputs = {}
+    
+    def hook_fn(name):
+        def hook(module, input, output):
+            if isinstance(output, torch.Tensor):
+                if torch.isnan(output).any():
+                    intermediate_outputs[name] = "NaN detected"
+                elif torch.isinf(output).any():
+                    intermediate_outputs[name] = "Inf detected"
+                else:
+                    intermediate_outputs[name] = f"Normal: min={output.min():.6f}, max={output.max():.6f}, mean={output.mean():.6f}"
+        return hook
+    
+    # Register hooks on BatchNorm layers
+    hooks = []
+    for name, module in model.named_modules():
+        if isinstance(module, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d, torch.nn.BatchNorm3d)):
+            hook = module.register_forward_hook(hook_fn(name))
+            hooks.append(hook)
+    
+    # Run forward pass
+    try:
+        with torch.no_grad():
+            _ = model(imgs)
+    except Exception as e:
+        print(f"[DEBUG] Forward pass failed: {e}")
+    
+    # Report results
+    if intermediate_outputs:
+        print(f"[DEBUG] Intermediate outputs:")
+        for name, status in intermediate_outputs.items():
+            print(f"[DEBUG]   {name}: {status}")
+    else:
+        print(f"[DEBUG] No BatchNorm layers found or forward pass failed")
+    
+    # Remove hooks
+    for hook in hooks:
+        hook.remove()
+    
+    print(f"[DEBUG] ==========================================")
+    return intermediate_outputs
+
+
+def debug_batchnorm_backward_inputs(model, epoch, batch):
+    """
+    Debug BatchNorm backward inputs to identify what causes CudnnBatchNormBackward0 to return NaN
+    """
+    print(f"[DEBUG] ===== BATCHNORM BACKWARD INPUTS DEBUG =====")
+    print(f"[DEBUG] Epoch: {epoch}, Batch: {batch}")
+    
+    # Hook to capture inputs to BatchNorm backward pass
+    backward_inputs = {}
+    
+    def backward_hook_fn(name):
+        def hook(module, grad_input, grad_output):
+            if grad_input is not None:
+                for i, inp in enumerate(grad_input):
+                    if isinstance(inp, torch.Tensor):
+                        if torch.isnan(inp).any():
+                            backward_inputs[f"{name}_input_{i}"] = "NaN detected"
+                        elif torch.isinf(inp).any():
+                            backward_inputs[f"{name}_input_{i}"] = "Inf detected"
+                        else:
+                            backward_inputs[f"{name}_input_{i}"] = f"Normal: min={inp.min():.6f}, max={inp.max():.6f}, mean={inp.mean():.6f}"
+            
+            if grad_output is not None:
+                for i, out in enumerate(grad_output):
+                    if isinstance(out, torch.Tensor):
+                        if torch.isnan(out).any():
+                            backward_inputs[f"{name}_output_{i}"] = "NaN detected"
+                        elif torch.isinf(out).any():
+                            backward_inputs[f"{name}_output_{i}"] = "Inf detected"
+                        else:
+                            backward_inputs[f"{name}_output_{i}"] = f"Normal: min={out.min():.6f}, max={out.max():.6f}, mean={out.mean():.6f}"
+        return hook
+    
+    # Register backward hooks on BatchNorm layers
+    hooks = []
+    for name, module in model.named_modules():
+        if isinstance(module, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d, torch.nn.BatchNorm3d)):
+            hook = module.register_backward_hook(backward_hook_fn(name))
+            hooks.append(hook)
+    
+    print(f"[DEBUG] Registered backward hooks on {len(hooks)} BatchNorm layers")
+    print(f"[DEBUG] ==========================================")
+    
+    return hooks, backward_inputs
+
+
+def debug_classifier_layers(model, epoch, batch):
+    """
+    Debug classifier layers specifically to identify weight explosion
+    """
+    print(f"[DEBUG] ===== CLASSIFIER LAYERS DEBUG =====")
+    print(f"[DEBUG] Epoch: {epoch}, Batch: {batch}")
+    
+    # Find classifier layers
+    classifier_layers = []
+    for name, module in model.named_modules():
+        if 'classifier' in name.lower() or 'fc' in name.lower() or 'linear' in name.lower():
+            classifier_layers.append((name, module))
+    
+    print(f"[DEBUG] Found {len(classifier_layers)} classifier layers:")
+    
+    for name, module in classifier_layers:
+        print(f"[DEBUG] Layer: {name}")
+        print(f"[DEBUG]   Type: {type(module).__name__}")
+        
+        if hasattr(module, 'weight') and module.weight is not None:
+            weight = module.weight
+            print(f"[DEBUG]   Weight shape: {weight.shape}")
+            print(f"[DEBUG]   Weight stats: min={weight.min():.6f}, max={weight.max():.6f}, mean={weight.mean():.6f}")
+            
+            if torch.isnan(weight).any():
+                print(f"[DEBUG]   ❌ NaN detected in weight!")
+            if torch.isinf(weight).any():
+                print(f"[DEBUG]   ❌ Inf detected in weight!")
+            if weight.abs().max() > 1000:
+                print(f"[DEBUG]   ⚠️  Extreme weight values detected!")
+        
+        if hasattr(module, 'bias') and module.bias is not None:
+            bias = module.bias
+            print(f"[DEBUG]   Bias shape: {bias.shape}")
+            print(f"[DEBUG]   Bias stats: min={bias.min():.6f}, max={bias.max():.6f}, mean={bias.mean():.6f}")
+            
+            if torch.isnan(bias).any():
+                print(f"[DEBUG]   ❌ NaN detected in bias!")
+            if torch.isinf(bias).any():
+                print(f"[DEBUG]   ❌ Inf detected in bias!")
+            if bias.abs().max() > 1000:
+                print(f"[DEBUG]   ⚠️  Extreme bias values detected!")
+    
+    print(f"[DEBUG] ======================================")
+
+
 def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictionary
     save_dir, epochs, batch_size, weights, single_cls, evolve, data, cfg, resume, noval, nosave, workers, freeze = \
         Path(opt.save_dir), opt.epochs, opt.batch_size, opt.weights, opt.single_cls, opt.evolve, opt.data, opt.cfg, \
@@ -232,7 +681,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     
     # Get classification info
     num_cls = data_dict.get('num_cls', 3)  # number of classification classes
-    cls_names = data_dict.get('cls_names', ['PSAX', 'PLAX', 'A4C'])  # classification class names
+    cls_names = data_dict.get('cls_names', ['A4C', 'PSAX', 'PLAX'])  # classification class names (CORRECTED ORDER)
 
     # Model
     check_suffix(weights, '.pt')  # check weights
@@ -244,8 +693,22 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
         model = Model(cfg or ckpt['model'].yaml, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
         model.hyp = hyp
         
-        # Special handling for yolov5s-cls.pt weights
-        if 'cls' in weights.lower():
+        # Special handling for trainable models (our fixed models)
+        if 'trainable' in weights.lower() or 'fixed' in weights.lower():
+            LOGGER.info(f'Detected trainable model: {weights}')
+            LOGGER.info(f'Loading trainable model with all parameters unfrozen...')
+            
+            # Load the model state dict directly
+            model_state = ckpt['model'].float().state_dict()
+            model.load_state_dict(model_state, strict=False)
+            
+            # Ensure all parameters are trainable
+            for name, param in model.named_parameters():
+                param.requires_grad = True
+            
+            LOGGER.info(f'Loaded trainable model with {len(model_state)} parameters')
+            LOGGER.info(f'All parameters set to trainable (requires_grad=True)')
+        elif 'cls' in weights.lower():
             LOGGER.info(f'🔄 Detected classification weights: {weights}')
             LOGGER.info(f'🛡️  Using safe weight loading for classification model...')
             
@@ -276,6 +739,19 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     else:
         model = Model(cfg, ch=3, nc=nc, anchors=hyp.get('anchors')).to(device)  # create
     amp = check_amp(model)  # check AMP
+    # Verify all parameters are trainable
+    trainable_count = sum(1 for p in model.parameters() if p.requires_grad)
+    total_count = sum(1 for p in model.parameters())
+    LOGGER.info(f'Parameter status: {trainable_count}/{total_count} trainable')
+    
+    if trainable_count == 0:
+        LOGGER.error('ERROR: No trainable parameters found! Model will not learn.')
+        raise RuntimeError('Model has no trainable parameters')
+    elif trainable_count < total_count:
+        LOGGER.warning(f'WARNING: Only {trainable_count}/{total_count} parameters are trainable')
+    else:
+        LOGGER.info(f'SUCCESS: All {total_count} parameters are trainable')
+
     
 
     
@@ -301,6 +777,13 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     nbs = 64  # nominal batch size
     accumulate = max(round(nbs / batch_size), 1)  # accumulate loss before optimizing
     hyp['weight_decay'] *= batch_size * accumulate / nbs  # scale weight_decay
+    
+    # Debug: Check if AMP might be causing issues
+    if amp:
+        print(f"[DEBUG] AMP is enabled - this might be causing BatchNorm NaN issues")
+        print(f"[DEBUG] Consider disabling AMP if BatchNorm NaN persists")
+        print(f"[DEBUG] To disable AMP, set --amp=False in training command")
+    
     optimizer = smart_optimizer(model, opt.optimizer, hyp['lr0'], hyp['momentum'], hyp['weight_decay'])
 
     # Scheduler
@@ -408,11 +891,17 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     stopper, stop = EarlyStopping(patience=opt.patience), False
     # Attach hyperparameters to the model
     model.hyp = hyp
+    # Get class weights from hyperparameters to fix PSAX bias bug
+    class_weights = hyp.get('class_weights', None)
+    if class_weights is not None:
+        LOGGER.info(f'Using class weights to fix PSAX bias bug: {class_weights}')
+    
     compute_loss = ClassificationTaskLoss(
         model=model,
         enable_classification=True,
         cls_task_weight=hyp.get('cls_task', 0.3),  # Use cls_task from hyp or default 0.3
-        label_smoothing=hyp.get('label_smoothing', 0.1)
+        label_smoothing=hyp.get('label_smoothing', 0.1),
+        class_weights=class_weights  # Add class weights support
     )  # init classification task loss (only classification, no detection losses)
     callbacks.run('on_train_start')
     LOGGER.info(f'Image sizes {imgsz} train, {imgsz} val\n'
@@ -429,6 +918,13 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     for epoch in range(start_epoch, epochs):  # epoch ------------------------------------------------------------------
         callbacks.run('on_train_epoch_start')
         model.train()
+        
+        # Debug: Check model state at the beginning of each epoch (DISABLED)
+        # if epoch % 10 == 0:  # Check every 10 epochs to avoid spam
+        #     print(f"[DEBUG] ===== EPOCH {epoch} START - MODEL STATE CHECK =====")
+        #     debug_model_state(model, epoch, 0, "epoch_start")
+        #     debug_classifier_layers(model, epoch, 0)
+        #     print(f"[DEBUG] =================================================\n")
 
         # Update image weights (optional, single-GPU only)
         if opt.image_weights:
@@ -528,22 +1024,32 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                                         tensor_list = []
                                         for cls in classification_labels:
                                             if isinstance(cls, (list, tuple)):
-                                                tensor_list.append(torch.tensor(cls, dtype=torch.float32))
+                                                tensor_list.append(torch.tensor(cls, dtype=torch.long))
                                             else:
-                                                tensor_list.append(torch.tensor([cls], dtype=torch.float32))
+                                                tensor_list.append(torch.tensor([cls], dtype=torch.long))
                                         classification_labels = torch.stack(tensor_list)
                                     else:
                                         # Convert simple list/tuple to tensor
-                                        classification_labels = torch.tensor(classification_labels, dtype=torch.float32)
+                                        classification_labels = torch.tensor(classification_labels, dtype=torch.long)
                                 else:
-                                    classification_labels = torch.zeros(imgs.shape[0], dtype=torch.float32, device=device)
+                                    classification_labels = torch.zeros(imgs.shape[0], dtype=torch.long, device=device)
                             else:
                                 classification_labels = classification_labels.to(device)
                             
-                            # Handle one-hot encoded labels
-                            if classification_labels.dim() > 1 and classification_labels.shape[-1] > 1:
-                                # Convert one-hot to class indices
-                                classification_labels = classification_labels.argmax(dim=-1)
+                            # Handle one-hot encoded labels - STANDARDIZED LOGIC
+                            if classification_labels.dim() > 1:
+                                if classification_labels.shape[-1] > 1:
+                                    # One-hot encoded: [batch_size, num_classes] -> [batch_size]
+                                    classification_labels = classification_labels.argmax(dim=-1)
+                                elif classification_labels.shape[-1] == 1:
+                                    # Class indices with extra dim: [batch_size, 1] -> [batch_size]
+                                    classification_labels = classification_labels.squeeze(-1)
+                            else:
+                                # 1D tensor: check if it's one-hot or class indices
+                                if classification_labels.shape[0] > 1 and classification_labels.sum() == 1:
+                                    # One-hot encoding in 1D: [num_classes] -> scalar, but expand to match batch size
+                                    class_idx = classification_labels.argmax(dim=0)
+                                    classification_labels = class_idx.expand(imgs.shape[0])
                             
                             # Ensure labels are long tensors
                             if classification_labels.dtype != torch.long:
@@ -573,40 +1079,47 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                                 batch_size = class_outputs.shape[0]
                                 class_outputs = class_outputs.view(batch_size, -1)
                         
-                        # Print detailed model predictions and labels for debugging
-                        if i < 3:  # Only for first 3 batches to avoid spam
-                            print(f"\n[DEBUG] ===== BATCH {i} DETAILED ANALYSIS =====")
-                            print(f"[DEBUG] Model Output Analysis:")
-                            if isinstance(model_output, tuple) and len(model_output) >= 2:
-                                det_output, cls_output = model_output
-                                print(f"[DEBUG]   Detection output shape: {det_output.shape if hasattr(det_output, 'shape') else 'N/A'}")
-                                print(f"[DEBUG]   Classification output shape: {cls_output.shape if hasattr(cls_output, 'shape') else 'N/A'}")
-                                
-                                # Print raw classification logits
-                                if cls_output is not None:
-                                    print(f"[DEBUG]   Raw classification logits (first 3 samples):")
-                                    for j in range(min(3, cls_output.shape[0])):
-                                        logits = cls_output[j].cpu().detach().numpy()
-                                        print(f"[DEBUG]     Sample {j}: {logits}")
-                                    
-                                    # Print softmax probabilities
-                                    probs = torch.softmax(cls_output, dim=1)
-                                    print(f"[DEBUG]   Softmax probabilities (first 3 samples):")
-                                    for j in range(min(3, probs.shape[0])):
-                                        prob = probs[j].cpu().detach().numpy()
-                                        print(f"[DEBUG]     Sample {j}: {prob}")
-                            else:
-                                print(f"[DEBUG]   Single output shape: {model_output.shape if hasattr(model_output, 'shape') else 'N/A'}")
-                            
-                            print(f"[DEBUG] Ground Truth Labels:")
-                            if classification_labels is not None:
-                                print(f"[DEBUG]   Labels shape: {classification_labels.shape}")
-                                print(f"[DEBUG]   Labels dtype: {classification_labels.dtype}")
-                                print(f"[DEBUG]   First 5 labels: {classification_labels[:5].cpu().numpy() if hasattr(classification_labels, 'cpu') else classification_labels[:5]}")
-                                print(f"[DEBUG]   Unique labels in batch: {torch.unique(classification_labels).cpu().numpy() if hasattr(classification_labels, 'cpu') else torch.unique(classification_labels)}")
-                            else:
-                                print(f"[DEBUG]   No classification labels provided")
-                            print(f"[DEBUG] ===========================================\n")
+                        # Debug: Verify classification_labels mapping to cls_names on first batch
+                        if i == 0 and RANK in {-1, 0}:
+                            try:
+                                unique_labels = classification_labels.detach().to('cpu', non_blocking=True).unique().tolist()
+                            except Exception:
+                                unique_labels = []
+                            # Build mapping index -> name
+                            idx_to_name = {}
+                            out_of_range_indices = []
+                            for idx in unique_labels:
+                                if isinstance(idx, torch.Tensor):
+                                    idx = int(idx.item())
+                                else:
+                                    idx = int(idx)
+                                if 0 <= idx < len(cls_names):
+                                    idx_to_name[idx] = cls_names[idx]
+                                else:
+                                    out_of_range_indices.append(idx)
+                            print(f"[DEBUG] Classification class names (order): {cls_names}")
+                            print(f"[DEBUG] Unique classification label indices in batch 0: {unique_labels}")
+                            print(f"[DEBUG] Index -> name mapping (from data.yaml): {idx_to_name}")
+                            if out_of_range_indices:
+                                print(f"[DEBUG] ❌ Out-of-range label indices detected: {out_of_range_indices}; num_cls={len(cls_names)}")
+                            # Show first few samples
+                            sample_n = min(8, classification_labels.shape[0])
+                            try:
+                                sample_idxs = classification_labels[:sample_n].detach().to('cpu', non_blocking=True).tolist()
+                            except Exception:
+                                sample_idxs = []
+                            sample_names = [cls_names[x] if isinstance(x, int) and 0 <= x < len(cls_names) else 'OUT_OF_RANGE' for x in sample_idxs]
+                            print(f"[DEBUG] First {sample_n} classification labels (idx): {sample_idxs}")
+                            print(f"[DEBUG] First {sample_n} classification labels (name): {sample_names}")
+                        
+                        # Keep prediction and ground truth output for first batch only
+                        # (Other debug info disabled for cleaner logs)
+                        
+                        # Print detailed model predictions and labels for FINAL few batches (DISABLED for cleaner logs)
+                        # Check if we're in the last 3 batches of the epoch
+                        is_final_batch = (i >= nb - 3)  # Last 3 batches
+                        # if is_final_batch:
+                        #     print(f"\n[DEBUG] ===== FINAL BATCH {i} (Epoch {epoch}) DETAILED ANALYSIS =====")
 
                         # Compute dual loss (detection + classification)
                         targets = targets.to(device)
@@ -616,8 +1129,12 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                         batch_end_idx = min((i + 1) * batch_size, len(dataset))
                         image_paths = dataset.im_files[batch_start_idx:batch_end_idx] if hasattr(dataset, 'im_files') else None
                         
-                        # Get class names
-                        class_names = ['PSAX', 'PLAX', 'A4C']  # Based on your dataset
+                        # Get class names (MUST match data.yaml order!)
+                        class_names = cls_names  # Use cls_names from data.yaml to ensure consistency
+                        
+                        # Set final batch flag in loss function for final batch debugging
+                        if is_final_batch:
+                            compute_loss.set_final_batch_flag(True)
                         
                         total_loss, loss_items = compute_loss(model_output, targets, classification_labels, 
                                                              image_paths=image_paths, class_names=class_names)
@@ -667,40 +1184,134 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                             print(f"[DEBUG] Skipping this batch...")
                             continue
                 
-                # Backward pass with enhanced error handling
-                print("[CHECK] total_loss.requires_grad:", bool(getattr(total_loss, 'requires_grad', False)),
-                      "grad_fn:", getattr(total_loss, 'grad_fn', None))
+                # Backward pass - like original classify/train.py with detailed debugging
+                # print("[CHECK] total_loss.requires_grad:", bool(getattr(total_loss, 'requires_grad', False)),
+                #       "grad_fn:", getattr(total_loss, 'grad_fn', None))
+                
+                # Debug: Check for NaN in loss before backward pass (like original classify/)
+                if torch.isnan(total_loss) or torch.isinf(total_loss):
+                    print(f"[DEBUG] ===== NaN/Inf DETECTED IN LOSS =====")
+                    print(f"[DEBUG] Epoch: {epoch}, Batch: {i}")
+                    print(f"[DEBUG] total_loss: {total_loss}")
+                    print(f"[DEBUG] loss_items: {loss_items}")
+                    print(f"[DEBUG] Model parameters check:")
+                    for name, param in model.named_parameters():
+                        if torch.isnan(param).any() or torch.isinf(param).any():
+                            print(f"[DEBUG]   NaN/Inf in parameter: {name}")
+                            print(f"[DEBUG]   Parameter shape: {param.shape}")
+                            print(f"[DEBUG]   Parameter stats: min={param.min():.6f}, max={param.max():.6f}, mean={param.mean():.6f}")
+                    print(f"[DEBUG] ======================================")
+                    # Continue like original classify/ - don't skip, let it fail for debugging
+                
+                # Simple backward pass like original classify/train.py
                 try:
+                    # Debug: Check gradients before backward pass (DISABLED for cleaner logs)
+                    # print(f"[DEBUG] ===== PRE-BACKWARD GRADIENT CHECK =====")
+                    # print(f"[DEBUG] Epoch: {epoch}, Batch: {i}")
+                    # print(f"[DEBUG] total_loss: {total_loss}")
+                    # print(f"[DEBUG] total_loss.requires_grad: {total_loss.requires_grad}")
+                    # print(f"[DEBUG] total_loss.grad_fn: {total_loss.grad_fn}")
+                    
+                    # Register backward hooks to track BatchNorm backward inputs (DISABLED for cleaner logs)
+                    # if i == 0:  # Only for first batch to avoid spam
+                    #     print(f"[DEBUG] Registering BatchNorm backward hooks for detailed tracking...")
+                    #     hooks, backward_inputs = debug_batchnorm_backward_inputs(model, epoch, i)
+                    
                     scaler.scale(total_loss).backward()
+                    
+                    # Report backward hook results (DISABLED for cleaner logs)
+                    # if i == 0 and 'backward_inputs' in locals():
+                    #     print(f"[DEBUG] ===== BATCHNORM BACKWARD RESULTS =====")
+                    #     if backward_inputs:
+                    #         for key, value in backward_inputs.items():
+                    #             print(f"[DEBUG] {key}: {value}")
+                    #     else:
+                    #         print(f"[DEBUG] No backward hook data captured")
+                    #     print(f"[DEBUG] ======================================")
+                    #     
+                    #     # Remove hooks
+                    #     for hook in hooks:
+                    #         hook.remove()
+                    
                 except RuntimeError as e:
-                    if "nan" in str(e).lower():
-                        print(f"[DEBUG] NaN error during backward pass: {e}")
-                        print(f"[DEBUG] Resetting optimizer and scaler...")
-                        optimizer.zero_grad()
-                        # Don't call scaler.update() if no inf checks were recorded
-                        try:
-                            scaler.update()
-                        except AssertionError as ae:
-                            print(f"[DEBUG] Scaler update failed: {ae}")
-                            # Reset scaler state
-                            scaler._per_optimizer_states = {}
-                        continue
+                    if "CudnnBatchNormBackward" in str(e) or "nan" in str(e).lower():
+                        print(f"\n[DEBUG] ===== BATCHNORM ERROR DETECTED =====")
+                        print(f"[DEBUG] Error: {e}")
+                        print(f"[DEBUG] Epoch: {epoch}, Batch: {i}")
+                        print(f"[DEBUG] total_loss: {total_loss}")
+                        print(f"[DEBUG] loss_items: {loss_items}")
+                        
+                        # Check model state before detailed debugging (DISABLED for cleaner logs)
+                        # print(f"[DEBUG] Checking model state before detailed debugging...")
+                        # debug_model_state(model, epoch, i, "error_detected")
+                        
+                        # Detailed BatchNorm debugging (DISABLED for cleaner logs)
+                        # print(f"[DEBUG] Detailed BatchNorm analysis...")
+                        # debug_batchnorm_layers(model, epoch, i, "error_detected")
+                        
+                        # Comprehensive diagnosis (DISABLED for cleaner logs)
+                        # print(f"[DEBUG] Running comprehensive diagnosis...")
+                        # diagnose_batchnorm_nan_causes(model, epoch, i, imgs, total_loss)
+                        
+                        # AMP debugging (DISABLED for cleaner logs)
+                        # print(f"[DEBUG] Checking AMP issues...")
+                        # debug_amp_issues(model, epoch, i, total_loss, scaler)
+                        
+                        # Gradient flow debugging (DISABLED for cleaner logs)
+                        # print(f"[DEBUG] Checking gradient flow...")
+                        # debug_gradient_flow(model, epoch, i, "error_detected")
+                        
+                        # Forward pass intermediate debugging (DISABLED for cleaner logs)
+                        # print(f"[DEBUG] Checking forward pass intermediate outputs...")
+                        # debug_forward_pass_intermediate(model, imgs, epoch, i)
+                        
+                        # Classifier layers debugging (DISABLED for cleaner logs)
+                        # print(f"[DEBUG] Checking classifier layers...")
+                        # debug_classifier_layers(model, epoch, i)
+                        
+                        print(f"[DEBUG] ======================================\n")
+                        # Re-raise the error like original classify/ would do
+                        raise e
                     else:
                         raise e
+                
+                # Debug: Check model state after backward pass (DISABLED)
+                # debug_model_state(model, epoch, i, "after_backward")
+                
+                # Debug: Check BatchNorm layers after backward pass (DISABLED)
+                # debug_batchnorm_layers(model, epoch, i, "after_backward")
 
-                # Optimize - https://pytorch.org/docs/master/notes/amp_examples.html
+                # Optimize - like original classify/train.py with detailed gradient debugging
                 if ni - last_opt_step >= accumulate:
                     scaler.unscale_(optimizer)  # unscale gradients
                     
-                    # Enhanced gradient clipping to prevent NaN
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)  # reduced from 10.0
+                    # Debug: Check gradients for NaN/Inf (like original classify/)
+                    has_nan_grad = False
+                    for name, param in model.named_parameters():
+                        if param.grad is not None:
+                            if torch.isnan(param.grad).any() or torch.isinf(param.grad).any():
+                                print(f"[DEBUG] ===== NaN/Inf DETECTED IN GRADIENTS =====")
+                                print(f"[DEBUG] Epoch: {epoch}, Batch: {i}")
+                                print(f"[DEBUG] Parameter: {name}")
+                                print(f"[DEBUG] Parameter shape: {param.shape}")
+                                print(f"[DEBUG] Parameter stats: min={param.min():.6f}, max={param.max():.6f}, mean={param.mean():.6f}")
+                                print(f"[DEBUG] Gradient stats: min={param.grad.min():.6f}, max={param.grad.max():.6f}, mean={param.grad.mean():.6f}")
+                                print(f"[DEBUG] Gradient norm: {param.grad.norm():.6f}")
+                                print(f"[DEBUG] ==========================================")
+                                has_nan_grad = True
+                                break
                     
+                    # Continue like original classify/ - don't skip, let it fail for debugging
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10.0)  # clip gradients
                     scaler.step(optimizer)  # optimizer.step
                     scaler.update()
                     optimizer.zero_grad()
                     if ema:
                         ema.update(model)
                     last_opt_step = ni
+                    
+                    # Debug: Check model state after optimization (DISABLED)
+                    # debug_model_state(model, epoch, i, "after_optimization")
 
                 # Log
                 if RANK in {-1, 0}:
@@ -735,6 +1346,14 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                         return
                 # end batch ------------------------------------------------------------------------------------------------
 
+        # Print final batch summary for this epoch (DISABLED for cleaner logs)
+        # if RANK in {-1, 0}:
+        #     print(f"\n[DEBUG] ===== EPOCH {epoch} FINAL BATCH SUMMARY =====")
+        #     print(f"[DEBUG] Total batches in epoch: {nb}")
+        #     print(f"[DEBUG] Final 3 batches analyzed: {max(0, nb-3)} to {nb-1}")
+        #     print(f"[DEBUG] Epoch training completed")
+        #     print(f"[DEBUG] ==========================================\n")
+
         # Scheduler
         lr = [x['lr'] for x in optimizer.param_groups]  # for loggers
         scheduler.step()
@@ -757,11 +1376,22 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                                                 callbacks=callbacks,
                                                 compute_loss=compute_loss)
 
-            # Update best mAP
-            fi = fitness(np.array(results).reshape(1, -1))  # weighted combination of [P, R, mAP@.5, mAP@.5-.95]
+            # Update best fitness - use classification accuracy for classification task
+            if cls_results is not None and 'accuracy' in cls_results:
+                # Use classification accuracy as fitness for classification task
+                fi = cls_results['accuracy']
+                LOGGER.info(f"Using classification accuracy as fitness: {fi:.4f}")
+            else:
+                # Fallback to detection metrics if no classification results
+                fi = fitness(np.array(results).reshape(1, -1))  # weighted combination of [P, R, mAP@.5, mAP@.5-.95]
+                LOGGER.info(f"Using detection metrics as fitness: {fi:.4f}")
+            
             stop = stopper(epoch=epoch, fitness=fi)  # early stop check
             if fi > best_fitness:
                 best_fitness = fi
+                LOGGER.info(f"New best fitness: {best_fitness:.4f} (epoch {epoch})")
+            else:
+                LOGGER.info(f"Current fitness: {fi:.4f}, Best fitness: {best_fitness:.4f}")
             
             # Handle classification results if available
             if cls_results is not None:
@@ -806,6 +1436,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                 torch.save(ckpt, last)
                 if best_fitness == fi:
                     torch.save(ckpt, best)
+                    LOGGER.info(f"Saved best model (fitness: {best_fitness:.4f}) to {best}")
                 if opt.save_period > 0 and epoch % opt.save_period == 0:
                     torch.save(ckpt, w / f'epoch{epoch}.pt')
                 del ckpt

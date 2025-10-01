@@ -1,127 +1,118 @@
-#!/usr/bin/env python3
 """
-Check for potential class mapping issues
+Check if there's a class mapping issue between training and validation
+
+The PSAX class has 21.9% representation but only 9% recall.
+This suggests a potential mapping bug between class indices and class names.
 """
+import yaml
+from pathlib import Path
 
-import os
-import glob
+def check_class_mapping():
+    print("=" * 60)
+    print("CHECKING CLASS MAPPING")
+    print("=" * 60)
+    
+    # Load data.yaml
+    with open('regurgitationV1/data.yaml', 'r') as f:
+        data_config = yaml.safe_load(f)
+    
+    print("\nFrom data.yaml:")
+    print(f"  cls_names: {data_config.get('cls_names', 'NOT FOUND')}")
+    print(f"  num_cls: {data_config.get('num_cls', 'NOT FOUND')}")
+    
+    # Expected mapping
+    expected_mapping = {
+        0: 'A4C',
+        1: 'PSAX',
+        2: 'PLAX'
+    }
+    
+    print("\nExpected class index mapping:")
+    for idx, name in expected_mapping.items():
+        print(f"  {idx} -> {name}")
+    
+    # Check if data.yaml matches
+    cls_names = data_config.get('cls_names', [])
+    print("\nActual mapping from data.yaml:")
+    for idx, name in enumerate(cls_names):
+        print(f"  {idx} -> {name}")
+        if expected_mapping[idx] != name:
+            print(f"    ERROR: Mismatch! Expected {expected_mapping[idx]}, got {name}")
+    
+    # Check some label files to verify the mapping
+    print("\n" + "=" * 60)
+    print("VERIFYING LABEL FILES")
+    print("=" * 60)
+    
+    label_dir = Path("regurgitationV1/train/labels")
+    
+    # Find files with PSAX labels (one-hot: [0, 1, 0])
+    psax_files = []
+    for label_file in list(label_dir.glob("*.txt"))[:200]:
+        with open(label_file, 'r') as f:
+            lines = f.read().strip().split('\n')
+        
+        for line in lines:
+            parts = line.strip().split()
+            if len(parts) == 3:
+                try:
+                    one_hot = [float(x) for x in parts]
+                    if one_hot == [0.0, 1.0, 0.0]:  # PSAX
+                        psax_files.append(label_file.name)
+                        break
+                except:
+                    pass
+    
+    print(f"\nFound {len(psax_files)} files with PSAX labels in first 200 files")
+    if psax_files:
+        print(f"\nSample PSAX files:")
+        for f in psax_files[:5]:
+            print(f"  - {f}")
+    
+    # Check if filename contains any pattern
+    print("\nChecking filename patterns for PSAX...")
+    for f in psax_files[:10]:
+        if 'psax' in f.lower():
+            print(f"  {f} - Contains 'psax' in filename")
+        elif 'a4c' in f.lower():
+            print(f"  {f} - WARNING: Contains 'a4c' but labeled as PSAX!")
+        elif 'plax' in f.lower():
+            print(f"  {f} - WARNING: Contains 'plax' but labeled as PSAX!")
 
-def check_mapping_issue():
-    """Check if there's a class mapping issue"""
+def check_train_vs_validation_mapping():
+    """Check if training and validation use same class mapping"""
+    print("\n" + "=" * 60)
+    print("CHECKING TRAIN VS VALIDATION MAPPING")
+    print("=" * 60)
     
-    labels_dir = "Regurgitation-YOLODataset-Detection/valid/labels"
+    # The issue might be that training and validation use different class order
+    # Let's check if there's any code that reorders classes
     
-    print("=" * 80)
-    print("CHECKING FOR CLASS MAPPING ISSUES")
-    print("=" * 80)
+    print("\nPotential issues to check:")
+    print("  1. Does val.py use different class order than train.py?")
+    print("  2. Is there a hardcoded class order somewhere?")
+    print("  3. Does the model output match the data.yaml order?")
     
-    # Current mapping from data.yaml
-    print("Current mapping in data.yaml:")
-    print("  cls_names: ['A4C', 'PSAX', 'PLAX']")
-    print("  This means: 0=A4C, 1=PSAX, 2=PLAX")
-    print()
-    
-    # Check some specific files
-    test_files = [
-        "a2lrwqduZsKc-unnamed_1_1.mp4-31.txt",  # PSAX
-        "aGdjwqtqa8Kb-unnamed_1_1.mp4-62.txt",  # A4C
-        "a2ZnwqdsaMKZ-unnamed_1_1.mp4-2.txt"    # PLAX
-    ]
-    
-    print("Checking specific files:")
-    for filename in test_files:
-        filepath = os.path.join(labels_dir, filename)
-        if os.path.exists(filepath):
-            with open(filepath, 'r') as f:
-                content = f.read().strip()
-            
-            lines = content.split('\n')
-            if len(lines) >= 2:
-                detection_line = lines[0]
-                classification_line = lines[1]
-                
-                print(f"\n{filename}:")
-                print(f"  Detection: {detection_line}")
-                print(f"  Classification: {classification_line}")
-                
-                # Parse classification
-                parts = classification_line.split()
-                if len(parts) == 3:
-                    a4c, psax, plax = map(int, parts)
-                    if a4c == 1:
-                        print(f"  → Labeled as: A4C (index 0)")
-                    elif psax == 1:
-                        print(f"  → Labeled as: PSAX (index 1)")
-                    elif plax == 1:
-                        print(f"  → Labeled as: PLAX (index 2)")
-                    else:
-                        print(f"  → ERROR: No valid classification!")
-        else:
-            print(f"\n{filename}: File not found")
-    
-    print("\n" + "=" * 80)
-    print("ANALYSIS")
-    print("=" * 80)
-    
-    # Count each class
-    a4c_count = 0
-    psax_count = 0
-    plax_count = 0
-    total = 0
-    
-    for label_file in glob.glob(os.path.join(labels_dir, "*.txt")):
-        try:
-            with open(label_file, 'r') as f:
-                lines = f.readlines()
-            
-            if len(lines) >= 2:
-                classification_line = lines[1].strip()
-                parts = classification_line.split()
-                
-                if len(parts) == 3:
-                    a4c, psax, plax = map(int, parts)
-                    total += 1
-                    
-                    if a4c == 1:
-                        a4c_count += 1
-                    elif psax == 1:
-                        psax_count += 1
-                    elif plax == 1:
-                        plax_count += 1
-                        
-        except Exception as e:
-            print(f"Error processing {label_file}: {e}")
-    
-    print(f"Validation set distribution:")
-    print(f"  A4C (index 0): {a4c_count} samples ({a4c_count/total*100:.1f}%)")
-    print(f"  PSAX (index 1): {psax_count} samples ({psax_count/total*100:.1f}%)")
-    print(f"  PLAX (index 2): {plax_count} samples ({plax_count/total*100:.1f}%)")
-    print(f"  Total: {total} samples")
-    
-    print("\n" + "=" * 80)
-    print("POTENTIAL ISSUES")
-    print("=" * 80)
-    
-    # Check if the mapping might be wrong
-    if a4c_count < 30:  # A4C is very rare
-        print("⚠️  A4C samples are very rare - this could indicate:")
-        print("   1. A4C is genuinely rare in the dataset")
-        print("   2. A4C might be mislabeled as another class")
-        print("   3. The class mapping might be wrong")
-    
-    if psax_count > 70:  # PSAX is very common
-        print("⚠️  PSAX samples are very common - this could indicate:")
-        print("   1. PSAX is genuinely common in the dataset")
-        print("   2. Some A4C/PLAX might be mislabeled as PSAX")
-        print("   3. The class mapping might be wrong")
-    
-    print("\n" + "=" * 80)
-    print("RECOMMENDATIONS")
-    print("=" * 80)
-    print("1. Manually check a few images from each class to verify mapping")
-    print("2. If mapping is wrong, update data.yaml cls_names")
-    print("3. If mapping is correct, the issue is class imbalance")
-    print("4. Consider collecting more A4C samples")
+    # Check if there's a mismatch in how classes are interpreted
+    print("\nFrom your validation output:")
+    print("  Class 0 (A4C):  44.1% recall")
+    print("  Class 1 (PSAX):  9.1% recall [TERRIBLE!]")
+    print("  Class 2 (PLAX): 51.7% recall")
+    print("\nThis suggests class 1 is being:")
+    print("  - Either mispredicted systematically")
+    print("  - Or there's a label/prediction mapping bug")
 
 if __name__ == "__main__":
-    check_mapping_issue()
+    check_class_mapping()
+    check_train_vs_validation_mapping()
+    
+    print("\n" + "=" * 60)
+    print("CONCLUSION")
+    print("=" * 60)
+    print("\nWith 21.9% PSAX in training data but only 9% recall,")
+    print("there MUST be a code bug affecting PSAX specifically.")
+    print("\nPossible bugs:")
+    print("  1. Class mapping mismatch between train and validation")
+    print("  2. Loss function bias against class 1")
+    print("  3. Model initialization bias")
+    print("  4. Gradient clipping affecting class 1 differently")

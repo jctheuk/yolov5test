@@ -1,0 +1,46 @@
+# Fixed hyperparameters for joint detection+classification training
+# Properly balanced for both tasks
+
+# Learning rate - CONSERVATIVE for joint training
+lr0: 0.003               # Moderate increase from 0.001 (joint training needs careful LR)
+lrf: 0.03                # Moderate final LR
+
+# Optimizer settings
+momentum: 0.937
+weight_decay: 0.0005
+
+# Learning rate scheduling
+warmup_epochs: 5.0       # Longer warmup for joint training
+warmup_momentum: 0.8
+warmup_bias_lr: 0.1
+
+# PROPERLY BALANCED LOSS WEIGHTS for joint training
+box: 0.1                 # Moderate detection weight
+cls: 0.3                 # Reduced detection classification weight
+obj: 0.5                 # Reduced object detection weight
+cls_pw: 1.0
+obj_pw: 1.0
+
+# Classification task weight - CRITICAL!
+cls_task: 0.5            # Balanced weight for classification task
+label_smoothing: 0.05    # Reduced for joint training
+
+# IoU and anchor settings
+iou_t: 0.2
+anchor_t: 4.0
+fl_gamma: 0.0
+
+# MINIMAL data augmentation for joint training
+hsv_h: 0.01              # Reduced
+hsv_s: 0.3               # Reduced
+hsv_v: 0.2               # Reduced
+degrees: 5.0             # Keep same
+translate: 0.05          # Reduced
+scale: 0.0               # Disabled
+shear: 0.0               # Disabled
+perspective: 0.0
+flipud: 0.0
+fliplr: 0.3              # Reduced
+mosaic: 0.0              # Disabled
+mixup: 0.0               # Disabled
+copy_paste: 0.0

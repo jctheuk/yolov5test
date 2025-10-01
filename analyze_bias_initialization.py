@@ -1,102 +1,160 @@
-#!/usr/bin/env python3
 """
-分析標準 YOLOv5 偏置初始化是否會導致 NaN
-Analyze if standard YOLOv5 bias initialization will cause NaN
+Analyze where the bias gets its value in the actual training flow
+
+Your config shows:
+- cfg: models/yolov5sc_classify_backbone.yaml (has classification head)
+- weights: yolov5s.pt (no classification head)
+
+The question: What's the classification head bias after this initialization?
 """
 
-import math
 import torch
+import torch.nn as nn
+from pathlib import Path
+import sys
+import yaml
+sys.path.append('yolov5c')
 
-def analyze_bias_initialization():
-    """
-    分析標準 YOLOv5 偏置初始化的數值穩定性
-    """
-    print("=== 標準 YOLOv5 偏置初始化分析 ===")
-    
-    # 典型的 stride 值
-    strides = [8, 16, 32]  # P3, P4, P5
-    nc = 4  # 類別數
-    
-    print("\n1. Objectness bias 計算:")
-    for s in strides:
-        obj_bias = math.log(8 / (640 / s) ** 2)
-        print(f"   Stride {s}: log(8 / (640/{s})²) = log(8 / {640/s}²) = log(8 / {(640/s)**2}) = {obj_bias:.4f}")
-    
-    print("\n2. Classification bias 計算:")
-    for s in strides:
-        cls_bias = math.log(0.6 / (nc - 0.99999))
-        print(f"   NC {nc}: log(0.6 / ({nc} - 0.99999)) = log(0.6 / {nc - 0.99999}) = {cls_bias:.4f}")
-    
-    print("\n3. 檢查是否會產生 NaN 或 inf:")
-    for s in strides:
-        obj_bias = math.log(8 / (640 / s) ** 2)
-        cls_bias = math.log(0.6 / (nc - 0.99999))
-        
-        print(f"   Stride {s}:")
-        print(f"     Objectness bias: {obj_bias} (isnan: {math.isnan(obj_bias)}, isinf: {math.isinf(obj_bias)})")
-        print(f"     Classification bias: {cls_bias} (isnan: {math.isnan(cls_bias)}, isinf: {math.isinf(cls_bias)})")
-    
-    print("\n4. 檢查極端情況:")
-    # 檢查如果 stride 為 0 或負數
-    try:
-        bad_bias = math.log(8 / (640 / 0) ** 2)
-        print(f"   Stride 0: {bad_bias}")
-    except:
-        print("   Stride 0: 會產生除零錯誤")
-    
-    # 檢查如果 nc 為 1
-    try:
-        bad_cls = math.log(0.6 / (1 - 0.99999))
-        print(f"   NC=1: {bad_cls}")
-    except:
-        print("   NC=1: 會產生除零錯誤")
-    
-    print("\n5. 數值範圍分析:")
-    print("   Objectness bias 範圍:")
-    for s in strides:
-        obj_bias = math.log(8 / (640 / s) ** 2)
-        print(f"     Stride {s}: {obj_bias:.4f}")
-    
-    print("   Classification bias:")
-    cls_bias = math.log(0.6 / (nc - 0.99999))
-    print(f"     NC {nc}: {cls_bias:.4f}")
-    
-    print("\n6. 結論:")
-    print("   ✅ 標準 YOLOv5 偏置初始化是數值穩定的")
-    print("   ✅ 不會產生 NaN 或 inf 值")
-    print("   ✅ 所有偏置值都是有限的負數")
-    print("   ✅ 只有在極端情況下（stride=0 或 nc=1）才會出現問題")
-    print("   ✅ 在正常使用情況下是安全的")
+from models.yolo import Model
+from utils.general import intersect_dicts
 
-def test_torch_implementation():
-    """
-    測試 PyTorch 實現的數值穩定性
-    """
-    print("\n=== PyTorch 實現測試 ===")
+def test_actual_flow():
+    """Test the exact flow from train_classification_task.py"""
+    print("=" * 60)
+    print("TESTING ACTUAL INITIALIZATION FLOW")
+    print("=" * 60)
     
-    # 創建測試張量
-    device = torch.device('cpu')
-    strides = torch.tensor([8, 16, 32], device=device)
-    nc = 4
+    # Your actual configuration
+    cfg = 'yolov5c/models/yolov5sc_classify_backbone.yaml'
+    weights = 'yolov5s.pt'
     
-    print("\n1. PyTorch objectness bias 計算:")
-    for s in strides:
-        obj_bias = torch.log(torch.tensor(8.0) / (torch.tensor(640.0) / s) ** 2)
-        print(f"   Stride {s.item()}: {obj_bias.item():.4f}")
+    # Load data.yaml
+    with open('regurgitationV1/data.yaml', 'r') as f:
+        data_dict = yaml.safe_load(f)
+    nc = data_dict['nc']
     
-    print("\n2. PyTorch classification bias 計算:")
-    cls_bias = torch.log(torch.tensor(0.6) / (torch.tensor(nc) - 0.99999))
-    print(f"   NC {nc}: {cls_bias.item():.4f}")
+    print(f"\nConfiguration:")
+    print(f"  cfg: {cfg}")
+    print(f"  weights: {weights}")
+    print(f"  nc (detection classes): {nc}")
     
-    print("\n3. 檢查 PyTorch 中的 NaN 和 inf:")
-    for s in strides:
-        obj_bias = torch.log(torch.tensor(8.0) / (torch.tensor(640.0) / s) ** 2)
-        cls_bias = torch.log(torch.tensor(0.6) / (torch.tensor(nc) - 0.99999))
+    # Step 1: Load checkpoint
+    print(f"\nStep 1: Loading checkpoint...")
+    ckpt = torch.load(weights, map_location='cpu')
+    
+    # Step 2: Create model (line 693)
+    print(f"\nStep 2: Creating model from cfg...")
+    model = Model(cfg, ch=3, nc=nc, anchors=None)
+    
+    # Find classification head
+    classification_head = None
+    classification_head_name = None
+    for name, module in model.named_modules():
+        if isinstance(module, nn.Linear) and module.weight.shape[0] == 3:
+            classification_head = module
+            classification_head_name = name
+            break
+    
+    if classification_head is None:
+        print(f"  ERROR: No classification head found!")
+        return
+    
+    print(f"\nClassification head found: {classification_head_name}")
+    print(f"  After model creation:")
+    print(f"    Bias (PyTorch default): {classification_head.bias.data}")
+    initial_bias = classification_head.bias.data.clone()
+    
+    # Step 3: Load weights from checkpoint (lines 735-737)
+    print(f"\nStep 3: Loading weights from {weights}...")
+    
+    # Get state dict
+    csd = ckpt['model'].float().state_dict()
+    
+    # Intersect with model state dict
+    exclude = ['anchor']
+    csd = intersect_dicts(csd, model.state_dict(), exclude=exclude)
+    
+    # Check what's in csd for classification head
+    classification_keys = [k for k in csd.keys() if classification_head_name in k]
+    print(f"  Classification head keys in checkpoint: {classification_keys}")
+    
+    if not classification_keys:
+        print(f"  ✅ No classification head in yolov5s.pt")
+        print(f"  Classification head will keep its PyTorch default bias")
+    
+    # Load state dict
+    print(f"\nStep 4: Loading state dict (strict=False)...")
+    missing, unexpected = model.load_state_dict(csd, strict=False)
+    
+    print(f"  Missing keys: {len(missing)} (includes classification head)")
+    print(f"  Unexpected keys: {len(unexpected)}")
+    
+    # Check bias after loading
+    print(f"\n  After load_state_dict:")
+    print(f"    Bias: {classification_head.bias.data}")
+    
+    # Compare
+    if torch.allclose(classification_head.bias.data, initial_bias, atol=1e-6):
+        print(f"  ✅ Bias UNCHANGED (PyTorch default preserved)")
+        print(f"\n  CONCLUSION: Bias starts as small random values, NOT [0,0,0]")
+    else:
+        print(f"  WARNING: Bias changed during weight loading!")
+        print(f"    Before: {initial_bias}")
+        print(f"    After: {classification_head.bias.data}")
+
+def check_if_checkpoint_has_classification():
+    """Check what's actually in your trained checkpoint"""
+    print("\n" + "=" * 60)
+    print("CHECKING YOUR TRAINED CHECKPOINT")
+    print("=" * 60)
+    
+    checkpoint_path = "yolov5c/runs/classifybackbone13/weights/last.pt"
+    if not Path(checkpoint_path).exists():
+        print(f"Checkpoint not found: {checkpoint_path}")
+        return
+    
+    print(f"\nLoading {checkpoint_path}...")
+    ckpt = torch.load(checkpoint_path, map_location='cpu')
+    
+    print(f"Checkpoint keys: {ckpt.keys()}")
+    
+    if 'model' in ckpt:
+        # Check if it's a state_dict or model object
+        if hasattr(ckpt['model'], 'state_dict'):
+            state_dict = ckpt['model'].state_dict()
+        else:
+            state_dict = ckpt['model']
         
-        print(f"   Stride {s.item()}:")
-        print(f"     Objectness bias: {obj_bias.item():.4f} (isnan: {torch.isnan(obj_bias).item()}, isinf: {torch.isinf(obj_bias).item()})")
-        print(f"     Classification bias: {cls_bias.item():.4f} (isnan: {torch.isnan(cls_bias).item()}, isinf: {torch.isinf(cls_bias).item()})")
+        # Find classification head bias in checkpoint
+        for key in state_dict.keys():
+            if 'linear' in key.lower() and 'bias' in key.lower():
+                print(f"\nFound in checkpoint: {key}")
+                print(f"  Value: {state_dict[key]}")
+                
+                if key.endswith('bias') and state_dict[key].shape[0] == 3:
+                    print(f"\n  This is the classification head bias!")
+                    print(f"  Values: {state_dict[key]}")
+                    
+                    if torch.allclose(state_dict[key], torch.zeros(3), atol=1e-4):
+                        print(f"  ⚠️  Bias is ZERO or near-zero in the checkpoint!")
+                        print(f"     This suggests it was initialized to zero")
+                    else:
+                        print(f"  Bias has non-zero values (expected after training)")
 
 if __name__ == "__main__":
-    analyze_bias_initialization()
-    test_torch_implementation()
+    test_actual_flow()
+    check_if_checkpoint_has_classification()
+    
+    print("\n" + "=" * 60)
+    print("FINAL ANSWER")
+    print("=" * 60)
+    print("\nThe classification head bias initialization flow:")
+    print("  1. Model created from yolov5sc_classify_backbone.yaml")
+    print("  2. YOLOv5WithClassification uses PyTorch default → small random bias")
+    print("  3. Load weights from yolov5s.pt → no classification weights, bias unchanged")
+    print("  4. Bias should be SMALL RANDOM, not [0, 0, 0]")
+    print("\nIf you see [0, 0, 0], check:")
+    print("  - Are you resuming from a checkpoint with zero bias?")
+    print("  - Is there code that explicitly resets bias?")
+    print("\nIf bias starts small random and becomes [-0.263], that's due to")
+    print("class imbalance during training - use class weights to fix!")

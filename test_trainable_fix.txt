@@ -1,0 +1,9 @@
+# Test command to verify the fix works
+python train_classification_task.py \
+    --data regurgitationV1/data.yaml \
+    --epochs 1 \
+    --batch-size 4 \
+    --device auto \
+    --weights yolov5c/runs/classifybackbone13/weights/last_trainable.pt \
+    --hyp yolov5c/runs/classifybackbone13/hyp.yaml \
+    --name test_trainable_model

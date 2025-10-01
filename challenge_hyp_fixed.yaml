@@ -1,0 +1,46 @@
+# YOLOv5 Classification-Only Hyperparameters
+# FIXED for class imbalance (A4C: 59, PSAX: 33, PLAX: 89)
+
+# Learning rate settings (adjusted for class imbalance)
+lr0: 0.003  # Higher LR to overcome class bias
+lrf: 0.1    # Final learning rate factor
+
+# Optimizer settings (Adam for better convergence)
+momentum: 0.937       # SGD momentum/Adam beta1
+weight_decay: 0.0005  # Optimizer weight decay
+
+# Warmup settings (longer warmup for stability)
+warmup_epochs: 5.0
+warmup_momentum: 0.8
+warmup_bias_lr: 0.1
+
+# Detection loss weights (DISABLED for classification-only)
+box: 0.0   # Box loss gain (disabled)
+cls: 0.0   # Detection cls loss gain (disabled)
+obj: 0.0   # Object loss gain (disabled)
+
+# Additional detection parameters (set to defaults, won't be used)
+cls_pw: 1.0
+obj_pw: 1.0
+iou_t: 0.2
+anchor_t: 4.0
+fl_gamma: 0.0
+
+# Classification-specific parameters (ADJUSTED for class imbalance)
+cls_task: 2.0         # Higher weight for classification task
+label_smoothing: 0.15 # Higher smoothing for imbalanced classes
+
+# Data augmentation (DISABLED per project rules for medical images)
+hsv_h: 0.0
+hsv_s: 0.0
+hsv_v: 0.0
+degrees: 0.0
+translate: 0.0
+scale: 0.0
+shear: 0.0
+perspective: 0.0
+flipud: 0.0
+fliplr: 0.0
+mosaic: 0.0
+mixup: 0.0
+copy_paste: 0.0

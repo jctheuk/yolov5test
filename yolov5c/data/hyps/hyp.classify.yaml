@@ -1,0 +1,43 @@
+# YOLOv5 🚀 Classification Task Hyperparameters
+# Optimized for classification tasks - matching YOLOv5 classify/train.py defaults
+# Based on successful YOLOv5 Classify training with 96% accuracy
+
+# === Learning Rate Configuration (matching classify/train.py) ===
+lr0: 0.001  # initial learning rate (Adam=1E-3, same as YOLOv5 Classify default)
+lrf: 0.01  # final OneCycleLR learning rate (lr0 * lrf)
+momentum: 0.9  # SGD momentum/Adam beta1
+weight_decay: 0.00005  # optimizer weight decay (5e-5, matching classify default)
+warmup_epochs: 3.0  # warmup epochs (fractions ok)
+warmup_momentum: 0.8  # warmup initial momentum
+warmup_bias_lr: 0.1  # warmup initial bias lr
+
+# === Detection Loss Gains (kept for compatibility, set to 0 in classification-only mode) ===
+box: 0.05  # box loss gain
+cls: 0.5  # cls loss gain
+cls_pw: 1.0  # cls BCELoss positive_weight
+obj: 1.0  # obj loss gain (scale with pixels)
+obj_pw: 1.0  # obj BCELoss positive_weight
+iou_t: 0.20  # IoU training threshold
+anchor_t: 4.0  # anchor-multiple threshold
+fl_gamma: 0.0  # focal loss gamma (efficientDet default gamma=1.5)
+
+# === Classification Task Configuration ===
+cls_task: 0.3  # classification task loss weight
+label_smoothing: 0.0  # label smoothing (disabled for PyTorch 21.08 compatibility)
+
+# === Data Augmentation (disabled for medical images as per repository rules) ===
+hsv_h: 0.0  # image HSV-Hue augmentation (disabled for medical images)
+hsv_s: 0.0  # image HSV-Saturation augmentation (disabled)
+hsv_v: 0.0  # image HSV-Value augmentation (disabled)
+degrees: 0.0  # image rotation (+/- deg) (disabled)
+translate: 0.0  # image translation (+/- fraction) (disabled)
+scale: 0.0  # image scale (+/- gain) (disabled)
+shear: 0.0  # image shear (+/- deg) (disabled)
+perspective: 0.0  # image perspective (+/- fraction) (disabled)
+flipud: 0.0  # image flip up-down (disabled)
+fliplr: 0.0  # image flip left-right (disabled)
+mosaic: 0.0  # image mosaic (disabled for medical images)
+mixup: 0.0  # image mixup (disabled)
+copy_paste: 0.0  # segment copy-paste (disabled)
+
+

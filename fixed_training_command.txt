@@ -1,0 +1,11 @@
+# Fixed training command
+python train_classification_task.py \
+    --data regurgitationV1/data.yaml \
+    --weights yolov5s.pt \
+    --hyp fixed_hyp.yaml \
+    --epochs 100 \
+    --batch-size 16 \
+    --device auto \
+    --optimizer Adam \
+    --name classifybackbone_fixed \
+    --patience 0

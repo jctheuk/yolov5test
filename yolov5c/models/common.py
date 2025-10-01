@@ -890,9 +890,10 @@ class Classify(nn.Module):
             x = torch.cat(x, 1)
         return self.linear(self.drop(self.pool(self.conv(x)).flatten(1)))
     
-class YOLOv5WithClassification(nn.Module):
+class YOLOv5WithClassification2(nn.Module):
+    """Original complex YOLOv5WithClassification implementation (renamed for reference)"""
     def __init__(self, in_channels, num_classes):
-        super(YOLOv5WithClassification, self).__init__()
+        super(YOLOv5WithClassification2, self).__init__()
         self.num_classes = num_classes
         
         # More sophisticated classification head
@@ -957,6 +958,37 @@ class YOLOv5WithClassification(nn.Module):
         output = self.classifier(flattened)
         
         return output
+
+
+class YOLOv5WithClassification(nn.Module):
+    """Stable YOLOv5 classification head for dual task models, based on original Classify design"""
+    def __init__(self, in_channels, num_classes, k=1, s=1, p=None, g=1, dropout_p=0.0):
+        super(YOLOv5WithClassification, self).__init__()
+        self.num_classes = num_classes
+        
+        # Use original Classify approach - simple and stable
+        # Calculate intermediate channels similar to original Classify
+        c_ = min(1280, max(256, in_channels * 4))  # Adaptive channel size
+        
+        # Simple conv layer (like original Classify)
+        self.conv = Conv(in_channels, c_, k, s, autopad(k, p), g)
+        
+        # Global pooling (like original Classify)
+        self.pool = nn.AdaptiveAvgPool2d(1)  # to x(b,c_,1,1)
+        
+        # Dropout (like original Classify)
+        self.drop = nn.Dropout(p=dropout_p, inplace=True)
+        
+        # Single linear layer (like original Classify)
+        self.linear = nn.Linear(c_, num_classes)  # to x(b,num_classes)
+        
+        # No custom weight initialization - use PyTorch defaults (more stable)
+
+    def forward(self, x):
+        """Forward pass - identical to original Classify"""
+        if isinstance(x, list):
+            x = torch.cat(x, 1)
+        return self.linear(self.drop(self.pool(self.conv(x)).flatten(1)))
 
 
 
