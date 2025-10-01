@@ -9,9 +9,9 @@
 - ✅ **Loss function is WORKING** - computes loss correctly with different labels
 - ✅ **Class distribution is IMBALANCED** - A4C:32.5%, PSAX:21.9%, PLAX:45.6%
 - ✅ **ROOT CAUSE IDENTIFIED**: Class imbalance bias - PSAX bias = -0.263 suppresses predictions
-- ✅ **Model IS LEARNING** - A4C: 44% recall, PLAX: 52% recall (both good!)
-- ✅ **Solution IMPLEMENTED** - Class weights: [1.026, 1.524, 0.730] in psax_bias_fix_hyp.yaml
-- 🎯 **Current Status**: Ready to test fix - expect 50-60% accuracy with balanced PSAX recall
+- ⚠️ **Class weights TESTED** - Epoch 0 shows PSAX recall STILL 9.1% (same as baseline!)
+- 🚨 **CRITICAL ISSUE**: Class weights NOT working as expected - need to investigate why
+- 🎯 **Current Status**: Training in progress - monitoring if class weights take effect over time OR need bug fix
 
 ---
 
@@ -162,12 +162,22 @@
 - This bias evolution is NOT a code bug - it's the natural result of class imbalance
 - Shuffle is already enabled, but doesn't fully compensate for imbalance
 
-**✅ SOLUTION IMPLEMENTED:**
+**⚠️ SOLUTION TESTED - UNEXPECTED RESULTS:**
 - [x] Class weights calculated: [1.026, 1.524, 0.730] for A4C, PSAX, PLAX
 - [x] Integrated into ClassificationTaskLoss
 - [x] Created psax_bias_fix_hyp.yaml with class weights
 - [x] Updated train_classification_task.py to use class weights
-- **Ready to test!**
+- [x] TESTED: Epoch 0 results show PSAX recall STILL 9.1% (no improvement!)
+- **Need to investigate WHY class weights aren't working**
+
+**🔍 ISSUES TO INVESTIGATE:**
+- [ ] Are class weights being applied in the loss gradient computation?
+- [ ] Is the weight magnitude [1.026, 1.524, 0.730] strong enough?
+- [ ] Does the loss function implementation have a bug?
+- [ ] Are class weights overridden somewhere in the training loop?
+- [ ] Do we need stronger weights like [1.0, 3.0, 0.5] instead?
+- [ ] Is this normal for epoch 0 and will improve later?
+- [ ] Should we use WeightedRandomSampler instead of loss weights?
 
 ---
 
@@ -334,11 +344,24 @@
    - Focal Loss (~30 lines of code)
    - Oversampling (~20 lines of code)
 
-### **📊 Expected Results After Fix**
+### **📊 Actual Results vs Expected**
+
+**Expected Results:**
 - PSAX recall: 9% → 25-35% (3x improvement)
 - Overall accuracy: 41% → 50-60% (significant improvement)
 - PSAX bias: -0.263 → ~0.0 (fixed)
-- Model will learn all classes fairly
+
+**Actual Results (Epoch 0 with class weights):**
+- PSAX recall: **9.1%** (NO CHANGE - still same as baseline!)
+- Overall accuracy: **38.1%** (WORSE than baseline 42%)
+- Training batch accuracy: 65.6% (good on training, poor on validation)
+- **Class weights confirmed loaded**: tensor([1.026, 1.524, 0.730])
+
+**⚠️ DIAGNOSIS NEEDED:**
+- Either class weights need more epochs to work
+- Or class weights implementation has a bug
+- Or weights [1.026, 1.524, 0.730] are too weak
+- Monitor next 10-20 epochs to determine which
 
 ---
 

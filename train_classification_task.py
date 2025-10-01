@@ -817,6 +817,9 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
         LOGGER.info('Using SyncBatchNorm()')
 
     # Trainloader
+    # DEBUG: Check rect and shuffle settings
+    LOGGER.info(f'[DEBUG] opt.rect={opt.rect}, requesting shuffle=True for training')
+    
     train_loader, dataset = create_dataloader(train_path,
                                               imgsz,
                                               batch_size // WORLD_SIZE,
@@ -844,7 +847,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                                        single_cls,
                                        hyp=hyp,
                                        cache=None if noval else opt.cache,
-                                       rect=True,
+                                       rect=False,  # Changed from True to False for classification - enables shuffle
                                        rank=-1,
                                        workers=workers * 2,
                                        pad=0.5,
