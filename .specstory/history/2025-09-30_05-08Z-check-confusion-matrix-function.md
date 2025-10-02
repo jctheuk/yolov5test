@@ -59,6 +59,71 @@ Let me search for confusion matrix functions specifically in the classification 
 
 Tool use: **grep**
 
+<details>
+<summary>Grep for "confusion_matrix" in "yolov5c" • 53 matches</summary>
+
+Output mode: content
+
+
+| Content | Line |
+|------|------|
+| `from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix` | L6 |
+| `cm = confusion_matrix(targets, pred_labels)` | L70 |
+| `'confusion_matrix': cm,` | L80 |
+| `cm = metrics['confusion_matrix']` | L110 |
+| `plt.savefig(save_dir / f'\{prefix\}_confusion_matrix.png', dpi=300, bbox_inches='tight')` | L117 |
+| `confusion_matrix = ConfusionMatrix(nc=nc)` | L187 |
+| `confusion_matrix.process_batch(detections=None, labels=target_labels[:, 0])` | L296 |
+| `confusion_matrix.process_batch(predn, labelsn)` | L312 |
+| `if plots and hasattr(confusion_matrix, 'process_classification_batch'):` | L408 |
+| `confusion_matrix.process_classification_batch(cls_targets.cpu(), pred_classes.cpu())` | L410 |
+| `confusion_matrix.plot(save_dir=save_dir, names=list(names.values()))` | L483 |
+| `callbacks.run('on_val_end', nt, tp, fp, p, r, f1, ap, ap50, ap_class, confusion_matrix)` | L484 |
+| `if hasattr(confusion_matrix, 'classification_true_labels') and hasattr(confusion_matrix, 'classification_pred_labels'):` | L487 |
+| `true_labels = confusion_matrix.classification_true_labels` | L488 |
+| `pred_labels = confusion_matrix.classification_pred_labels` | L489 |
+| `confusion_matrix.print_classification_confusion_matrix(true_labels, pred_labels)` | L493 |
+| `# Updated version of https://github.com/kaanakan/object_detection_confusion_matrix` | L131 |
+| `from utils.plots import plot_confusion_matrix` | L215 |
+| `fig.savefig(Path(save_dir) / 'detection_confusion_matrix.png', dpi=250)` | L244 |
+| `plot_confusion_matrix(self.matrix.copy(), names, normalize=normalize, save_dir=save_dir, prefix='detection')` | L248 |
+| `plot_classification_confusion_matrix(` | L260 |
+| `self.print_classification_confusion_matrix(true_labels, pred_labels)` | L299 |
+| `def print_classification_confusion_matrix(self, true_labels, pred_labels):` | L301 |
+| `from sklearn.metrics import confusion_matrix` | L304 |
+| `cm = confusion_matrix(true_labels, pred_labels, labels=unique_classes)` | L312 |
+| `def plot_classification_confusion_matrix(true_labels, pred_labels, names=(), save_dir='', prefix=''):` | L477 |
+| `from sklearn.metrics import confusion_matrix` | L488 |
+| `cm = confusion_matrix(true_labels, pred_labels)` | L494 |
+| `save_path = Path(save_dir) / f'\{prefix\}_confusion_matrix.png'` | L509 |
+| `np.savetxt(Path(save_dir) / f'\{prefix\}_confusion_matrix.csv', cm, delimiter=',', fmt='%d')` | L515 |
+| `def plot_confusion_matrix(cm, names, normalize=True, save_dir='', prefix=''):` | L431 |
+| `fig.savefig(Path(save_dir) / f'\{prefix\}_confusion_matrix.png', dpi=250)` | L469 |
+| `LOGGER.info(f"Confusion matrix saved to \{save_dir\}/\{prefix\}_confusion_matrix.png")` | L472 |
+| `def plot_classification_confusion_matrix(true_labels, pred_labels, names, save_dir='', prefix='classification'):` | L478 |
+| `from sklearn.metrics import confusion_matrix` | L489 |
+| `cm = confusion_matrix(true_labels, pred_labels)` | L493 |
+| `fig.savefig(Path(save_dir) / f'\{prefix\}_confusion_matrix.png', dpi=250)` | L516 |
+| `LOGGER.info(f"Classification confusion matrix saved to \{save_dir\}/\{prefix\}_confusion_matrix.png")` | L519 |
+| `def on_val_end(self, nt, tp, fp, p, r, f1, ap, ap50, ap_class, confusion_matrix):` | L212 |
+| `self.comet_logger.on_val_end(nt, tp, fp, p, r, f1, ap, ap50, ap_class, confusion_matrix)` | L222 |
+| `files = ['results.png', 'confusion_matrix.png', *(f'\{x\}_curve.png' for x in ('F1', 'PR', 'P', 'R'))]` | L274 |
+| `"Confusion matrix saved to runs\\train\\yolov5s_test22/detection_confusion_matrix.png\n",` | L38791 |
+| `self.comet_log_confusion_matrix = COMET_LOG_CONFUSION_MATRIX` | L125 |
+| `'comet_log_confusion_matrix': COMET_LOG_CONFUSION_MATRIX,` | L155 |
+| `def on_val_end(self, nt, tp, fp, p, r, f1, ap, ap50, ap_class, confusion_matrix):` | L473 |
+| `if self.comet_log_confusion_matrix:` | L491 |
+| `self.experiment.log_confusion_matrix(` | L497 |
+| `matrix=confusion_matrix.matrix,` | L498 |
+| `confusion_matrix = ConfusionMatrix(nc=nc)` | L229 |
+| `confusion_matrix.process_batch(detections=None, labels=labels[:, 0])` | L289 |
+| `confusion_matrix.process_batch(predn, labelsn)` | L311 |
+| `confusion_matrix.plot(save_dir=save_dir, names=list(names.values()))` | L363 |
+| `files = ['results.png', 'confusion_matrix.png', *(f'\{x\}_curve.png' for x in ('F1', 'PR', 'P', 'R'))]` | L456 |
+
+
+</details>
+
 ---
 
 Now let me read the specific confusion matrix functions to provide you with a comprehensive overview:

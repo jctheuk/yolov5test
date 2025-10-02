@@ -3,6 +3,7 @@
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from utils.metrics import bbox_iou
 from utils.torch_utils import de_parallel
@@ -85,7 +86,7 @@ class ComputeLoss:
     sort_obj_iou = False
 
     # Compute losses
-    def __init__(self, model, autobalance=False):
+    def __init__(self, model, autobalance=False, class_weights=None):
         device = next(model.parameters()).device  # get model device
         
         # Get hyperparameters from model or use defaults
@@ -105,6 +106,15 @@ class ComputeLoss:
                 'cls_task': 0.3,  # classification task loss weight
                 'label_smoothing': 0.1
             }
+        
+        # Class weights for classification task (optional)
+        self.class_weights = class_weights
+        if self.class_weights is not None:
+            if isinstance(self.class_weights, (list, tuple)):
+                self.class_weights = torch.tensor(self.class_weights, dtype=torch.float32, device=device)
+            elif isinstance(self.class_weights, torch.Tensor):
+                self.class_weights = self.class_weights.to(device)
+            print(f"[INFO] Using class weights for classification: {self.class_weights}")
 
         # Define criteria for detection
         BCEcls = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([h['cls_pw']], device=device))
@@ -145,16 +155,17 @@ class ComputeLoss:
         self.cls_task_loss_weight = h.get('cls_task', 0.3)  # Original weight
         self.temperature = h.get('temperature', 1.0)  # Temperature for softmax sharpness
         
-        # Standard CrossEntropy for classification (NO FOCAL LOSS)
-        self.classification_criterion = nn.CrossEntropyLoss()
+        # Manual CrossEntropy implementation for PyTorch compatibility (like train_classification_task.py)
+        self.classification_criterion = None  # Use manual implementation to avoid PyTorch version issues
         
         # Keep only essential debug info
         print(f"[DEBUG] Classification loss weight: {self.cls_task_loss_weight}")
-        print(f"[DEBUG] Using standard CrossEntropy for classification (NO FOCAL LOSS)")
+        print(f"[DEBUG] Using manual CrossEntropy implementation for PyTorch compatibility")
     
-    def standard_classification_loss(self, logits, targets):
+    def manual_cross_entropy_loss(self, logits, targets):
         """
-        Calculate standard CrossEntropy loss for classification task.
+        Manual CrossEntropy loss implementation for PyTorch compatibility.
+        Same as train_classification_task.py implementation.
         
         Args:
             logits: Raw classification logits [batch_size, num_classes]
@@ -163,7 +174,15 @@ class ComputeLoss:
         Returns:
             CrossEntropy loss value
         """
-        return self.classification_criterion(logits, targets)
+        # Compute log softmax
+        log_probs = F.log_softmax(logits, dim=1)
+        
+        # Gather the log probabilities for the target classes
+        batch_size = logits.shape[0]
+        target_log_probs = log_probs[range(batch_size), targets]
+        
+        # Return negative log likelihood (CrossEntropy loss)
+        return -target_log_probs.mean()
 
     def __call__(self, p, targets, cls_targets=None):  # predictions, targets, classification_targets
         # Handle dual outputs: p can be either detection outputs only or (detection_outputs, classification_output)
@@ -204,7 +223,7 @@ class ComputeLoss:
                 pxy = ps[:, :2].sigmoid() * 2. - 0.5
                 pwh = (ps[:, 2:4].sigmoid() * 2) ** 2 * anchors[i]
                 pbox = torch.cat((pxy, pwh), 1)  # predicted box
-                iou = bbox_iou(pbox.T, tbox[i], x1y1x2y2=False, CIoU=True)  # iou(prediction, target)
+                iou = bbox_iou(pbox, tbox[i], CIoU=True).squeeze()  # iou(prediction, target)
                 lbox += (1.0 - iou).mean()  # iou loss
 
                 # Objectness
@@ -241,25 +260,28 @@ class ComputeLoss:
             if target_indices.max() >= classification_output.shape[-1]:
                 target_indices = torch.clamp(target_indices, 0, classification_output.shape[-1] - 1)
             
-            # Calculate classification loss using Focal Loss for class imbalance
+            # Calculate classification loss with manual implementation (like train_classification_task.py)
             try:
-                # Apply temperature-scaled softmax to get probabilities with numerical stability
-                scaled_logits = classification_output / self.temperature
-                
-                # Use log-sum-exp trick for numerical stability
-                logits_max = torch.max(scaled_logits, dim=1, keepdim=True)[0]
-                scaled_logits_stable = scaled_logits - logits_max
-                probs = torch.softmax(scaled_logits_stable, dim=1)
-                
-                # Clamp probabilities to avoid numerical issues
-                probs = torch.clamp(probs, min=1e-8, max=1.0 - 1e-8)
-                
-                # Calculate standard CrossEntropy loss for classification
-                lcls_task = self.standard_classification_loss(classification_output, target_indices) * self.cls_task_loss_weight
+                # Apply class weights if provided (for handling class imbalance like PSAX)
+                if self.class_weights is not None:
+                    # Manual cross-entropy with class weights
+                    log_probs = torch.nn.functional.log_softmax(classification_output, dim=1)
+                    batch_size = classification_output.shape[0]
+                    target_log_probs = log_probs[range(batch_size), target_indices]
+                    
+                    # Get weights for each target class
+                    target_weights = self.class_weights[target_indices]
+                    
+                    # Weight the losses
+                    weighted_losses = -target_log_probs * target_weights
+                    lcls_task = weighted_losses.mean() * self.cls_task_loss_weight
+                else:
+                    # Manual CrossEntropy loss (no class weights) - same as train_classification_task.py
+                    lcls_task = self.manual_cross_entropy_loss(classification_output, target_indices) * self.cls_task_loss_weight
                 
                 # Check for overfitting (model predicting only one class)
                 with torch.no_grad():
-                    pred_classes = torch.argmax(probs, dim=1)
+                    pred_classes = torch.argmax(classification_output, dim=1)
                     unique_preds = torch.unique(pred_classes)
                     unique_targets = torch.unique(target_indices)
                     
@@ -275,8 +297,10 @@ class ComputeLoss:
                 print(f"[DEBUG] ERROR in classification loss calculation: {e}")
                 lcls_task = torch.tensor(0.0, device=self.device)
 
-        # Total loss
-        total_loss = (lbox + lobj + lcls + lcls_task) * len(targets)
+        # Total loss - FIXED: Properly combine detection and classification losses
+        # Original (BROKEN): total_loss = (lbox + lobj + lcls + lcls_task) * len(targets)  # Batch size scaling causes explosion
+        # Fixed: Combine losses without batch size scaling (like original loss.py line 189)
+        total_loss = lbox + lobj + lcls + lcls_task
         
         # Check for NaN/Inf in total loss
         if torch.isnan(total_loss) or torch.isinf(total_loss):
@@ -286,23 +310,12 @@ class ComputeLoss:
             print(f"[DEBUG]   lcls: {lcls.item():.6f}")
             print(f"[DEBUG]   lcls_task: {lcls_task.item():.6f}")
         
-        # Ensure all loss components are properly shaped tensors (not empty) and have consistent shapes
-        def ensure_tensor_shape(tensor):
-            if tensor.numel() == 0:
-                return torch.tensor(0.0, device=self.device)
-            elif tensor.dim() == 0:
-                return tensor.unsqueeze(0)
-            else:
-                return tensor
-        
-        # Ensure each final component is a scalar tensor with shape [1]
-        lbox_final = ensure_tensor_shape(lbox.detach()).view(1)
-        lobj_final = ensure_tensor_shape(lobj.detach()).view(1)
-        lcls_final = ensure_tensor_shape(lcls.detach()).view(1)
-        lcls_task_final = ensure_tensor_shape(lcls_task.detach()).view(1)
-        
-        # Return total loss and individual losses as a list
-        return total_loss, [lbox_final, lobj_final, lcls_final, lcls_task_final]
+        # Return total loss and individual losses (like original loss.py line 189)
+        # Original format: return (lbox + lobj + lcls) * bs, torch.cat((lbox, lobj, lcls)).detach()
+        # Our format: return total_loss, torch.cat((lbox, lobj, lcls, lcls_task)).detach()
+        # Ensure all loss components are scalars for concatenation
+        lcls_task_scalar = lcls_task if lcls_task.dim() > 0 else lcls_task.unsqueeze(0)
+        return total_loss, torch.cat((lbox, lobj, lcls, lcls_task_scalar)).detach()
 
     def build_targets(self, p, targets):
         # Build targets for compute_loss(), input targets(image,class,x,y,w,h)
@@ -330,8 +343,8 @@ class ComputeLoss:
                             ], device=self.device).float() * g  # offsets
 
         for i in range(self.nl):
-            anchors = self.anchors[i]
-            gain[2:6] = torch.tensor(p[i].shape)[[3, 2, 3, 2]]  # xyxy gain
+            anchors, shape = self.anchors[i], p[i].shape
+            gain[2:6] = torch.tensor(shape)[[3, 2, 3, 2]]  # xyxy gain
 
             # Match targets to anchors
             t = targets * gain
@@ -362,7 +375,7 @@ class ComputeLoss:
 
             # Append
             a = t[:, 6].long()  # anchor indices
-            indices.append((b, a, gj.clamp_(0, gain[3] - 1), gi.clamp_(0, gain[2] - 1)))  # image, anchor, grid indices
+            indices.append((b, a, gj.clamp_(0, shape[2] - 1), gi.clamp_(0, shape[3] - 1)))  # image, anchor, grid indices
             tbox.append(torch.cat((gxy - gij, gwh), 1))  # box
             anch.append(anchors[a])  # anchors
             tcls.append(c)  # class

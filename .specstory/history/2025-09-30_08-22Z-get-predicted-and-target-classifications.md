@@ -22,7 +22,7 @@ I'll add a small, optional dump that saves raw `pred_classification` logits and 
 
 ---
 
-Tool use: **apply_patch**
+Cancelled
 
 ---
 
@@ -48,6 +48,24 @@ I'll look through your existing logs and results to extract the printed predicti
 
 Tool use: **grep**
 
+<details>
+<summary>Grep for "Model Predictions vs Ground Truth|Batch Statistics|^\s*\d+\s+.*\s+\S+\s+\S+\s+\d+\.\d+\s+" in "c:\Users\darks\Desktop\yolov5test\run_batch8.log" • 6 matches</summary>
+
+Output mode: content
+
+
+| Content | Line |
+|------|------|
+| `1        181         55   0.000125     0.0182    6.6e-05` | L470 |
+| `2        181         12   0.000105     0.0833   8.63e-05` | L472 |
+| `3        181         48   0.000168     0.0208    0.00039` | L474 |
+| `1 epochs completed in 0.100 hours.` | L477 |
+| `1        181         55   0.000155     0.0182   7.99e-05` | L543 |
+| `3        181         48   0.000212     0.0208   0.000129` | L547 |
+
+
+</details>
+
 ---
 
 Tool use: **read_file**
@@ -67,6 +85,213 @@ Read file: c:\Users\darks\Desktop\yolov5test\yolov5c\runs\classifybackbone13\res
 ---
 
 Tool use: **grep**
+
+<details>
+<summary>Grep for "\[DEBUG\].*Batch" in "c:\Users\darks\Desktop\yolov5test" • 195 matches</summary>
+
+Output mode: content
+
+
+| Content | Line |
+|------|------|
+| `[DEBUG] Batch 0 information:` | L268 |
+| `[DEBUG] Unique classification label indices in batch 0: [0, 1, 2]` | L282 |
+| `[DEBUG] total_loss is None at epoch 0, batch 0 ΓÇö skipping this batch` | L286 |
+| `[DEBUG] total_loss is None at epoch 0, batch 1 ΓÇö skipping this batch` | L287 |
+| `[DEBUG] total_loss is None at epoch 0, batch 2 ΓÇö skipping this batch` | L288 |
+| `[DEBUG] total_loss is None at epoch 0, batch 3 ΓÇö skipping this batch` | L289 |
+| `[DEBUG] total_loss is None at epoch 0, batch 4 ΓÇö skipping this batch` | L290 |
+| `[DEBUG] total_loss is None at epoch 0, batch 5 ΓÇö skipping this batch` | L291 |
+| `[DEBUG] total_loss is None at epoch 0, batch 6 ΓÇö skipping this batch` | L292 |
+| `[DEBUG] total_loss is None at epoch 0, batch 7 ΓÇö skipping this batch` | L293 |
+| `[DEBUG] total_loss is None at epoch 0, batch 8 ΓÇö skipping this batch` | L294 |
+| `[DEBUG] total_loss is None at epoch 0, batch 9 ΓÇö skipping this batch` | L295 |
+| `[DEBUG] total_loss is None at epoch 0, batch 10 ΓÇö skipping this batch` | L296 |
+| `[DEBUG] total_loss is None at epoch 0, batch 11 ΓÇö skipping this batch` | L297 |
+| `[DEBUG] total_loss is None at epoch 0, batch 12 ΓÇö skipping this batch` | L298 |
+| `[DEBUG] total_loss is None at epoch 0, batch 13 ΓÇö skipping this batch` | L299 |
+| `[DEBUG] total_loss is None at epoch 0, batch 14 ΓÇö skipping this batch` | L300 |
+| `[DEBUG] total_loss is None at epoch 0, batch 15 ΓÇö skipping this batch` | L301 |
+| `[DEBUG] total_loss is None at epoch 0, batch 16 ΓÇö skipping this batch` | L302 |
+| `[DEBUG] total_loss is None at epoch 0, batch 17 ΓÇö skipping this batch` | L303 |
+| `[DEBUG] total_loss is None at epoch 0, batch 18 ΓÇö skipping this batch` | L304 |
+| `[DEBUG] total_loss is None at epoch 0, batch 19 ΓÇö skipping this batch` | L305 |
+| `[DEBUG] total_loss is None at epoch 0, batch 20 ΓÇö skipping this batch` | L306 |
+| `[DEBUG] total_loss is None at epoch 0, batch 21 ΓÇö skipping this batch` | L307 |
+| `[DEBUG] total_loss is None at epoch 0, batch 22 ΓÇö skipping this batch` | L308 |
+| `[DEBUG] total_loss is None at epoch 0, batch 23 ΓÇö skipping this batch` | L309 |
+| `[DEBUG] total_loss is None at epoch 0, batch 24 ΓÇö skipping this batch` | L310 |
+| `[DEBUG] total_loss is None at epoch 0, batch 25 ΓÇö skipping this batch` | L311 |
+| `[DEBUG] total_loss is None at epoch 0, batch 26 ΓÇö skipping this batch` | L312 |
+| `[DEBUG] total_loss is None at epoch 0, batch 27 ΓÇö skipping this batch` | L313 |
+| `[DEBUG] total_loss is None at epoch 0, batch 28 ΓÇö skipping this batch` | L314 |
+| `[DEBUG] total_loss is None at epoch 0, batch 29 ΓÇö skipping this batch` | L315 |
+| `[DEBUG] total_loss is None at epoch 0, batch 30 ΓÇö skipping this batch` | L316 |
+| `[DEBUG] total_loss is None at epoch 0, batch 31 ΓÇö skipping this batch` | L317 |
+| `[DEBUG] total_loss is None at epoch 0, batch 32 ΓÇö skipping this batch` | L318 |
+| `[DEBUG] total_loss is None at epoch 0, batch 33 ΓÇö skipping this batch` | L319 |
+| `[DEBUG] total_loss is None at epoch 0, batch 34 ΓÇö skipping this batch` | L320 |
+| `[DEBUG] total_loss is None at epoch 0, batch 35 ΓÇö skipping this batch` | L321 |
+| `[DEBUG] total_loss is None at epoch 0, batch 36 ΓÇö skipping this batch` | L322 |
+| `[DEBUG] total_loss is None at epoch 0, batch 37 ΓÇö skipping this batch` | L323 |
+| `[DEBUG] total_loss is None at epoch 0, batch 38 ΓÇö skipping this batch` | L324 |
+| `[DEBUG] total_loss is None at epoch 0, batch 39 ΓÇö skipping this batch` | L325 |
+| `[DEBUG] total_loss is None at epoch 0, batch 40 ΓÇö skipping this batch` | L326 |
+| `[DEBUG] total_loss is None at epoch 0, batch 41 ΓÇö skipping this batch` | L327 |
+| `[DEBUG] total_loss is None at epoch 0, batch 42 ΓÇö skipping this batch` | L328 |
+| `[DEBUG] total_loss is None at epoch 0, batch 43 ΓÇö skipping this batch` | L329 |
+| `[DEBUG] total_loss is None at epoch 0, batch 44 ΓÇö skipping this batch` | L330 |
+| `[DEBUG] total_loss is None at epoch 0, batch 45 ΓÇö skipping this batch` | L331 |
+| `[DEBUG] total_loss is None at epoch 0, batch 46 ΓÇö skipping this batch` | L332 |
+| `[DEBUG] total_loss is None at epoch 0, batch 47 ΓÇö skipping this batch` | L333 |
+| `[DEBUG] total_loss is None at epoch 0, batch 48 ΓÇö skipping this batch` | L334 |
+| `[DEBUG] total_loss is None at epoch 0, batch 49 ΓÇö skipping this batch` | L335 |
+| `[DEBUG] total_loss is None at epoch 0, batch 50 ΓÇö skipping this batch` | L336 |
+| `[DEBUG] total_loss is None at epoch 0, batch 51 ΓÇö skipping this batch` | L337 |
+| `[DEBUG] total_loss is None at epoch 0, batch 52 ΓÇö skipping this batch` | L338 |
+| `[DEBUG] total_loss is None at epoch 0, batch 53 ΓÇö skipping this batch` | L339 |
+| `[DEBUG] total_loss is None at epoch 0, batch 54 ΓÇö skipping this batch` | L340 |
+| `[DEBUG] total_loss is None at epoch 0, batch 55 ΓÇö skipping this batch` | L341 |
+| `[DEBUG] total_loss is None at epoch 0, batch 56 ΓÇö skipping this batch` | L342 |
+| `[DEBUG] total_loss is None at epoch 0, batch 57 ΓÇö skipping this batch` | L343 |
+| `[DEBUG] total_loss is None at epoch 0, batch 58 ΓÇö skipping this batch` | L344 |
+| `[DEBUG] total_loss is None at epoch 0, batch 59 ΓÇö skipping this batch` | L345 |
+| `[DEBUG] total_loss is None at epoch 0, batch 60 ΓÇö skipping this batch` | L346 |
+| `[DEBUG] total_loss is None at epoch 0, batch 61 ΓÇö skipping this batch` | L347 |
+| `[DEBUG] total_loss is None at epoch 0, batch 62 ΓÇö skipping this batch` | L348 |
+| `[DEBUG] total_loss is None at epoch 0, batch 63 ΓÇö skipping this batch` | L349 |
+| `[DEBUG] total_loss is None at epoch 0, batch 64 ΓÇö skipping this batch` | L350 |
+| `[DEBUG] total_loss is None at epoch 0, batch 65 ΓÇö skipping this batch` | L351 |
+| `[DEBUG] total_loss is None at epoch 0, batch 66 ΓÇö skipping this batch` | L352 |
+| `[DEBUG] total_loss is None at epoch 0, batch 67 ΓÇö skipping this batch` | L353 |
+| `[DEBUG] total_loss is None at epoch 0, batch 68 ΓÇö skipping this batch` | L354 |
+| `[DEBUG] total_loss is None at epoch 0, batch 69 ΓÇö skipping this batch` | L355 |
+| `[DEBUG] total_loss is None at epoch 0, batch 70 ΓÇö skipping this batch` | L356 |
+| `[DEBUG] total_loss is None at epoch 0, batch 71 ΓÇö skipping this batch` | L357 |
+| `[DEBUG] total_loss is None at epoch 0, batch 72 ΓÇö skipping this batch` | L358 |
+| `[DEBUG] total_loss is None at epoch 0, batch 73 ΓÇö skipping this batch` | L359 |
+| `[DEBUG] total_loss is None at epoch 0, batch 74 ΓÇö skipping this batch` | L360 |
+| `[DEBUG] total_loss is None at epoch 0, batch 75 ΓÇö skipping this batch` | L361 |
+| `[DEBUG] total_loss is None at epoch 0, batch 76 ΓÇö skipping this batch` | L362 |
+| `[DEBUG] total_loss is None at epoch 0, batch 77 ΓÇö skipping this batch` | L363 |
+| `[DEBUG] total_loss is None at epoch 0, batch 78 ΓÇö skipping this batch` | L364 |
+| `[DEBUG] total_loss is None at epoch 0, batch 79 ΓÇö skipping this batch` | L365 |
+| `[DEBUG] total_loss is None at epoch 0, batch 80 ΓÇö skipping this batch` | L366 |
+| `[DEBUG] total_loss is None at epoch 0, batch 81 ΓÇö skipping this batch` | L367 |
+| `[DEBUG] total_loss is None at epoch 0, batch 82 ΓÇö skipping this batch` | L368 |
+| `[DEBUG] total_loss is None at epoch 0, batch 83 ΓÇö skipping this batch` | L369 |
+| `[DEBUG] total_loss is None at epoch 0, batch 84 ΓÇö skipping this batch` | L370 |
+| `[DEBUG] total_loss is None at epoch 0, batch 85 ΓÇö skipping this batch` | L371 |
+| `[DEBUG] total_loss is None at epoch 0, batch 86 ΓÇö skipping this batch` | L372 |
+| `[DEBUG] total_loss is None at epoch 0, batch 87 ΓÇö skipping this batch` | L373 |
+| `[DEBUG] total_loss is None at epoch 0, batch 88 ΓÇö skipping this batch` | L374 |
+| `[DEBUG] total_loss is None at epoch 0, batch 89 ΓÇö skipping this batch` | L375 |
+| `[DEBUG] total_loss is None at epoch 0, batch 90 ΓÇö skipping this batch` | L376 |
+| `[DEBUG] total_loss is None at epoch 0, batch 91 ΓÇö skipping this batch` | L377 |
+| `[DEBUG] total_loss is None at epoch 0, batch 92 ΓÇö skipping this batch` | L378 |
+| `[DEBUG] total_loss is None at epoch 0, batch 93 ΓÇö skipping this batch` | L379 |
+| `[DEBUG] total_loss is None at epoch 0, batch 94 ΓÇö skipping this batch` | L380 |
+| `[DEBUG] total_loss is None at epoch 0, batch 95 ΓÇö skipping this batch` | L381 |
+| `[DEBUG] total_loss is None at epoch 0, batch 96 ΓÇö skipping this batch` | L382 |
+| `[DEBUG] total_loss is None at epoch 0, batch 97 ΓÇö skipping this batch` | L383 |
+| `[DEBUG] total_loss is None at epoch 0, batch 98 ΓÇö skipping this batch` | L384 |
+| `[DEBUG] total_loss is None at epoch 0, batch 99 ΓÇö skipping this batch` | L385 |
+| `[DEBUG] total_loss is None at epoch 0, batch 100 ΓÇö skipping this batch` | L386 |
+| `[DEBUG] total_loss is None at epoch 0, batch 101 ΓÇö skipping this batch` | L387 |
+| `[DEBUG] total_loss is None at epoch 0, batch 102 ΓÇö skipping this batch` | L388 |
+| `[DEBUG] total_loss is None at epoch 0, batch 103 ΓÇö skipping this batch` | L389 |
+| `[DEBUG] total_loss is None at epoch 0, batch 104 ΓÇö skipping this batch` | L390 |
+| `[DEBUG] total_loss is None at epoch 0, batch 105 ΓÇö skipping this batch` | L391 |
+| `[DEBUG] total_loss is None at epoch 0, batch 106 ΓÇö skipping this batch` | L392 |
+| `[DEBUG] total_loss is None at epoch 0, batch 107 ΓÇö skipping this batch` | L393 |
+| `[DEBUG] total_loss is None at epoch 0, batch 108 ΓÇö skipping this batch` | L394 |
+| `[DEBUG] total_loss is None at epoch 0, batch 109 ΓÇö skipping this batch` | L395 |
+| `[DEBUG] total_loss is None at epoch 0, batch 110 ΓÇö skipping this batch` | L396 |
+| `[DEBUG] total_loss is None at epoch 0, batch 111 ΓÇö skipping this batch` | L397 |
+| `[DEBUG] total_loss is None at epoch 0, batch 112 ΓÇö skipping this batch` | L398 |
+| `[DEBUG] total_loss is None at epoch 0, batch 113 ΓÇö skipping this batch` | L399 |
+| `[DEBUG] total_loss is None at epoch 0, batch 114 ΓÇö skipping this batch` | L400 |
+| `[DEBUG] total_loss is None at epoch 0, batch 115 ΓÇö skipping this batch` | L401 |
+| `[DEBUG] total_loss is None at epoch 0, batch 116 ΓÇö skipping this batch` | L402 |
+| `[DEBUG] total_loss is None at epoch 0, batch 117 ΓÇö skipping this batch` | L403 |
+| `[DEBUG] total_loss is None at epoch 0, batch 118 ΓÇö skipping this batch` | L404 |
+| `[DEBUG] total_loss is None at epoch 0, batch 119 ΓÇö skipping this batch` | L405 |
+| `[DEBUG] total_loss is None at epoch 0, batch 120 ΓÇö skipping this batch` | L406 |
+| `[DEBUG] total_loss is None at epoch 0, batch 121 ΓÇö skipping this batch` | L407 |
+| `[DEBUG] total_loss is None at epoch 0, batch 122 ΓÇö skipping this batch` | L408 |
+| `[DEBUG] total_loss is None at epoch 0, batch 123 ΓÇö skipping this batch` | L409 |
+| `[DEBUG] total_loss is None at epoch 0, batch 124 ΓÇö skipping this batch` | L410 |
+| `print(f"[DEBUG] Epoch: \{epoch\}, Batch: \{batch\}")` | L191 |
+| `print(f"[DEBUG] BatchNorm issues: \{bn_issues\}")` | L232 |
+| `print(f"[DEBUG] ===== BATCHNORM DEBUG: \{stage\} =====")` | L242 |
+| `print(f"[DEBUG] Epoch: \{epoch\}, Batch: \{batch\}")` | L243 |
+| `print(f"[DEBUG] BatchNorm layer: \{name\}")` | L249 |
+| `print(f"[DEBUG] ⚠️  PROBLEMATIC BATCHNORM LAYERS: \{problematic_layers\}")` | L280 |
+| `print(f"[DEBUG] ✅ All BatchNorm layers appear normal")` | L282 |
+| `print(f"[DEBUG] ===== BATCHNORM NaN DIAGNOSIS =====")` | L292 |
+| `print(f"[DEBUG] Epoch: \{epoch\}, Batch: \{batch\}")` | L293 |
+| `print(f"[DEBUG] 4. BatchNorm Specific Issues:")` | L336 |
+| `print(f"[DEBUG]   ❌ BatchNorm issues found:")` | L362 |
+| `print(f"[DEBUG]   ✅ No obvious BatchNorm issues detected")` | L366 |
+| `print(f"[DEBUG] Epoch: \{epoch\}, Batch: \{batch\}")` | L382 |
+| `print(f"[DEBUG] Epoch: \{epoch\}, Batch: \{batch\}")` | L423 |
+| `print(f"[DEBUG] BatchNorm gradient analysis:")` | L464 |
+| `print(f"[DEBUG]   ✅ All BatchNorm gradients appear normal")` | L485 |
+| `print(f"[DEBUG] Epoch: \{epoch\}, Batch: \{batch\}")` | L496 |
+| `print(f"[DEBUG] No BatchNorm layers found or forward pass failed")` | L532 |
+| `print(f"[DEBUG] ===== BATCHNORM BACKWARD INPUTS DEBUG =====")` | L546 |
+| `print(f"[DEBUG] Epoch: \{epoch\}, Batch: \{batch\}")` | L547 |
+| `print(f"[DEBUG] Registered backward hooks on \{len(hooks)\} BatchNorm layers")` | L582 |
+| `print(f"[DEBUG] Epoch: \{epoch\}, Batch: \{batch\}")` | L593 |
+| `print(f"[DEBUG] AMP is enabled - this might be causing BatchNorm NaN issues")` | L756 |
+| `print(f"[DEBUG] Consider disabling AMP if BatchNorm NaN persists")` | L757 |
+| `print(f"[DEBUG] Batch \{i\} information:")` | L925 |
+| `print(f"[DEBUG] Unique classification label indices in batch 0: \{unique_labels\}")` | L1068 |
+| `#     print(f"\n[DEBUG] ===== FINAL BATCH \{i\} (Epoch \{epoch\}) DETAILED ANALYSIS =====")` | L1089 |
+| `print(f"[DEBUG] total_loss is None at epoch \{epoch\}, batch \{i\} — skipping this batch")` | L1113 |
+| `print(f"[DEBUG] total_loss is None at epoch \{epoch\}, batch \{i\} — skipping backward for this batch")` | L1138 |
+| `print(f"[DEBUG] NaN/Inf detected in total_loss at epoch \{epoch\}, batch \{i\}")` | L1141 |
+| `print(f"[DEBUG] Skipping this batch...")` | L1143 |
+| `print(f"[DEBUG] Skipping this batch...")` | L1151 |
+| `print(f"[DEBUG] Epoch: \{epoch\}, Batch: \{i\}")` | L1161 |
+| `# print(f"[DEBUG] Epoch: \{epoch\}, Batch: \{i\}")` | L1177 |
+| `#     print(f"[DEBUG] Registering BatchNorm backward hooks for detailed tracking...")` | L1184 |
+| `#     print(f"[DEBUG] ===== BATCHNORM BACKWARD RESULTS =====")` | L1191 |
+| `print(f"\n[DEBUG] ===== BATCHNORM ERROR DETECTED =====")` | L1205 |
+| `print(f"[DEBUG] Epoch: \{epoch\}, Batch: \{i\}")` | L1207 |
+| `# print(f"[DEBUG] Detailed BatchNorm analysis...")` | L1216 |
+| `print(f"[DEBUG] Epoch: \{epoch\}, Batch: \{i\}")` | L1261 |
+| `#     print(f"\n[DEBUG] ===== EPOCH \{epoch\} FINAL BATCH SUMMARY =====")` | L1318 |
+| `#     print(f"[DEBUG] Total batches in epoch: \{nb\}")` | L1319 |
+| `#     print(f"[DEBUG] Final 3 batches analyzed: \{max(0, nb-3)\} to \{nb-1\}")` | L1320 |
+| `[DEBUG] AMP is enabled - this might be causing BatchNorm NaN issues` | L308 |
+| `[DEBUG] Consider disabling AMP if BatchNorm NaN persists` | L309 |
+| `[DEBUG] Batch 0 information:` | L329 |
+| `[DEBUG] Epoch: 0, Batch: 0` | L344 |
+| `[DEBUG] Registering BatchNorm backward hooks for detailed tracking...` | L350 |
+| `[DEBUG] ===== BATCHNORM BACKWARD INPUTS DEBUG =====` | L351 |
+| `[DEBUG] Epoch: 0, Batch: 0` | L352 |
+| `[DEBUG] Registered backward hooks on 58 BatchNorm layers` | L353 |
+| `[DEBUG] ===== BATCHNORM BACKWARD RESULTS =====` | L355 |
+| `[DEBUG] Batch 1 - Model Predictions vs Ground Truth:` | L359 |
+| `[DEBUG] Batch Statistics:` | L368 |
+| `[DEBUG] Epoch: 0, Batch: 1` | L374 |
+| `[DEBUG] Epoch: 0, Batch: 2` | L382 |
+| `[DEBUG] Epoch: 0, Batch: 3` | L390 |
+| `[DEBUG] Epoch: 0, Batch: 4` | L398 |
+| `[DEBUG] Epoch: 0, Batch: 5` | L406 |
+| `[DEBUG] Epoch: 0, Batch: 6` | L414 |
+| `[DEBUG] Epoch: 0, Batch: 7` | L422 |
+| `[DEBUG] Epoch: 0, Batch: 8` | L430 |
+| `[DEBUG] Epoch: 0, Batch: 9` | L438 |
+| `[DEBUG] Epoch: 0, Batch: 10` | L446 |
+| `[DEBUG] Epoch: 0, Batch: 11` | L454 |
+| `[DEBUG] Epoch: 0, Batch: 12` | L462 |
+| `[DEBUG] Epoch: 0, Batch: 13` | L470 |
+| `[DEBUG] Epoch: 0, Batch: 14` | L478 |
+
+
+</details>
 
 ---
 
@@ -176,13 +401,493 @@ I'll scan all logs and text artifacts for lines where predictions and targets we
 
 Tool use: **grep**
 
+<details>
+<summary>Grep for "Model Predictions vs Ground Truth|Predicted\s+Ground Truth|pred=\d+.*target=\d+" in "c:\Users\darks\Desktop\yolov5test" • 399 matches</summary>
+
+Output mode: content
+
+
+| Content | Line |
+|------|------|
+| `[DEBUG] Batch 1 - Model Predictions vs Ground Truth:` | L359 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L360 |
+| `[DEBUG] Batch final_29 - Model Predictions vs Ground Truth:` | L599 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L600 |
+| `[DEBUG] Batch final_30 - Model Predictions vs Ground Truth:` | L626 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L627 |
+| `[DEBUG] Batch final_31 - Model Predictions vs Ground Truth:` | L654 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L655 |
+| `[DEBUG] Batch final_64 - Model Predictions vs Ground Truth:` | L1008 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L1009 |
+| `[DEBUG] Batch final_65 - Model Predictions vs Ground Truth:` | L1035 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L1036 |
+| `[DEBUG] Batch final_66 - Model Predictions vs Ground Truth:` | L1063 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L1064 |
+| `[DEBUG] Batch final_99 - Model Predictions vs Ground Truth:` | L1417 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L1418 |
+| `[DEBUG] Batch final_100 - Model Predictions vs Ground Truth:` | L1444 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L1445 |
+| `[DEBUG] Batch final_101 - Model Predictions vs Ground Truth:` | L1472 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L1473 |
+| `[DEBUG] Batch final_134 - Model Predictions vs Ground Truth:` | L1826 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L1827 |
+| `[DEBUG] Batch final_135 - Model Predictions vs Ground Truth:` | L1853 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L1854 |
+| `[DEBUG] Batch final_136 - Model Predictions vs Ground Truth:` | L1881 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L1882 |
+| `[DEBUG] Batch final_169 - Model Predictions vs Ground Truth:` | L2235 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L2236 |
+| `[DEBUG] Batch final_170 - Model Predictions vs Ground Truth:` | L2262 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L2263 |
+| `[DEBUG] Batch final_171 - Model Predictions vs Ground Truth:` | L2290 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L2291 |
+| `[DEBUG] Batch final_204 - Model Predictions vs Ground Truth:` | L2652 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L2653 |
+| `[DEBUG] Batch final_205 - Model Predictions vs Ground Truth:` | L2679 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L2680 |
+| `[DEBUG] Batch final_206 - Model Predictions vs Ground Truth:` | L2707 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L2708 |
+| `[DEBUG] Batch final_239 - Model Predictions vs Ground Truth:` | L3061 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L3062 |
+| `[DEBUG] Batch final_240 - Model Predictions vs Ground Truth:` | L3088 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L3089 |
+| `[DEBUG] Batch final_241 - Model Predictions vs Ground Truth:` | L3116 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L3117 |
+| `[DEBUG] Batch final_274 - Model Predictions vs Ground Truth:` | L3470 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L3471 |
+| `[DEBUG] Batch final_275 - Model Predictions vs Ground Truth:` | L3497 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L3498 |
+| `[DEBUG] Batch final_276 - Model Predictions vs Ground Truth:` | L3525 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L3526 |
+| `[DEBUG] Batch final_309 - Model Predictions vs Ground Truth:` | L3879 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L3880 |
+| `[DEBUG] Batch final_310 - Model Predictions vs Ground Truth:` | L3906 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L3907 |
+| `[DEBUG] Batch final_311 - Model Predictions vs Ground Truth:` | L3934 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L3935 |
+| `[DEBUG] Batch final_344 - Model Predictions vs Ground Truth:` | L4288 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L4289 |
+| `[DEBUG] Batch final_345 - Model Predictions vs Ground Truth:` | L4315 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L4316 |
+| `[DEBUG] Batch final_346 - Model Predictions vs Ground Truth:` | L4343 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L4344 |
+| `[DEBUG] Batch final_379 - Model Predictions vs Ground Truth:` | L4697 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L4698 |
+| `[DEBUG] Batch final_380 - Model Predictions vs Ground Truth:` | L4724 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L4725 |
+| `[DEBUG] Batch final_381 - Model Predictions vs Ground Truth:` | L4752 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L4753 |
+| `[DEBUG] Batch final_414 - Model Predictions vs Ground Truth:` | L5106 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L5107 |
+| `[DEBUG] Batch final_415 - Model Predictions vs Ground Truth:` | L5133 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L5134 |
+| `[DEBUG] Batch final_416 - Model Predictions vs Ground Truth:` | L5161 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L5162 |
+| `[DEBUG] Batch final_449 - Model Predictions vs Ground Truth:` | L5515 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L5516 |
+| `[DEBUG] Batch final_450 - Model Predictions vs Ground Truth:` | L5542 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L5543 |
+| `[DEBUG] Batch final_451 - Model Predictions vs Ground Truth:` | L5570 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L5571 |
+| `[DEBUG] Batch final_484 - Model Predictions vs Ground Truth:` | L5924 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L5925 |
+| `[DEBUG] Batch final_485 - Model Predictions vs Ground Truth:` | L5951 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L5952 |
+| `[DEBUG] Batch final_486 - Model Predictions vs Ground Truth:` | L5979 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L5980 |
+| `[DEBUG] Batch final_519 - Model Predictions vs Ground Truth:` | L6333 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L6334 |
+| `[DEBUG] Batch final_520 - Model Predictions vs Ground Truth:` | L6360 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L6361 |
+| `[DEBUG] Batch final_521 - Model Predictions vs Ground Truth:` | L6388 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L6389 |
+| `[DEBUG] Batch final_554 - Model Predictions vs Ground Truth:` | L6742 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L6743 |
+| `[DEBUG] Batch final_555 - Model Predictions vs Ground Truth:` | L6769 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L6770 |
+| `[DEBUG] Batch final_556 - Model Predictions vs Ground Truth:` | L6797 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L6798 |
+| `[DEBUG] Batch final_589 - Model Predictions vs Ground Truth:` | L7151 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L7152 |
+| `[DEBUG] Batch final_590 - Model Predictions vs Ground Truth:` | L7178 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L7179 |
+| `[DEBUG] Batch final_591 - Model Predictions vs Ground Truth:` | L7206 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L7207 |
+| `[DEBUG] Batch final_624 - Model Predictions vs Ground Truth:` | L7560 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L7561 |
+| `[DEBUG] Batch final_625 - Model Predictions vs Ground Truth:` | L7587 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L7588 |
+| `[DEBUG] Batch final_626 - Model Predictions vs Ground Truth:` | L7615 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L7616 |
+| `[DEBUG] Batch final_659 - Model Predictions vs Ground Truth:` | L7969 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L7970 |
+| `[DEBUG] Batch final_660 - Model Predictions vs Ground Truth:` | L7996 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L7997 |
+| `[DEBUG] Batch final_661 - Model Predictions vs Ground Truth:` | L8024 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L8025 |
+| `[DEBUG] Batch final_694 - Model Predictions vs Ground Truth:` | L8378 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L8379 |
+| `[DEBUG] Batch final_695 - Model Predictions vs Ground Truth:` | L8405 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L8406 |
+| `[DEBUG] Batch final_696 - Model Predictions vs Ground Truth:` | L8433 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L8434 |
+| `[DEBUG] Batch final_729 - Model Predictions vs Ground Truth:` | L8787 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L8788 |
+| `[DEBUG] Batch final_730 - Model Predictions vs Ground Truth:` | L8814 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L8815 |
+| `[DEBUG] Batch final_731 - Model Predictions vs Ground Truth:` | L8842 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L8843 |
+| `[DEBUG] Batch final_764 - Model Predictions vs Ground Truth:` | L9196 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L9197 |
+| `[DEBUG] Batch final_765 - Model Predictions vs Ground Truth:` | L9223 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L9224 |
+| `[DEBUG] Batch final_766 - Model Predictions vs Ground Truth:` | L9251 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L9252 |
+| `[DEBUG] Batch final_799 - Model Predictions vs Ground Truth:` | L9605 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L9606 |
+| `[DEBUG] Batch final_800 - Model Predictions vs Ground Truth:` | L9632 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L9633 |
+| `[DEBUG] Batch final_801 - Model Predictions vs Ground Truth:` | L9660 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L9661 |
+| `[DEBUG] Batch final_834 - Model Predictions vs Ground Truth:` | L10014 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L10015 |
+| `[DEBUG] Batch final_835 - Model Predictions vs Ground Truth:` | L10041 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L10042 |
+| `[DEBUG] Batch final_836 - Model Predictions vs Ground Truth:` | L10069 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L10070 |
+| `[DEBUG] Batch final_869 - Model Predictions vs Ground Truth:` | L10423 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L10424 |
+| `[DEBUG] Batch final_870 - Model Predictions vs Ground Truth:` | L10450 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L10451 |
+| `[DEBUG] Batch final_871 - Model Predictions vs Ground Truth:` | L10478 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L10479 |
+| `[DEBUG] Batch final_904 - Model Predictions vs Ground Truth:` | L10832 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L10833 |
+| `[DEBUG] Batch final_905 - Model Predictions vs Ground Truth:` | L10859 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L10860 |
+| `[DEBUG] Batch final_906 - Model Predictions vs Ground Truth:` | L10887 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L10888 |
+| `[DEBUG] Batch final_939 - Model Predictions vs Ground Truth:` | L11241 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L11242 |
+| `[DEBUG] Batch final_940 - Model Predictions vs Ground Truth:` | L11268 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L11269 |
+| `[DEBUG] Batch final_941 - Model Predictions vs Ground Truth:` | L11296 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L11297 |
+| `[DEBUG] Batch final_974 - Model Predictions vs Ground Truth:` | L11650 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L11651 |
+| `[DEBUG] Batch final_975 - Model Predictions vs Ground Truth:` | L11677 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L11678 |
+| `[DEBUG] Batch final_976 - Model Predictions vs Ground Truth:` | L11705 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L11706 |
+| `[DEBUG] Batch final_1009 - Model Predictions vs Ground Truth:` | L12059 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L12060 |
+| `[DEBUG] Batch final_1010 - Model Predictions vs Ground Truth:` | L12086 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L12087 |
+| `[DEBUG] Batch final_1011 - Model Predictions vs Ground Truth:` | L12114 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L12115 |
+| `[DEBUG] Batch final_1044 - Model Predictions vs Ground Truth:` | L12468 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L12469 |
+| `[DEBUG] Batch final_1045 - Model Predictions vs Ground Truth:` | L12495 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L12496 |
+| `[DEBUG] Batch final_1046 - Model Predictions vs Ground Truth:` | L12523 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L12524 |
+| `[DEBUG] Batch final_1079 - Model Predictions vs Ground Truth:` | L12877 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L12878 |
+| `[DEBUG] Batch final_1080 - Model Predictions vs Ground Truth:` | L12904 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L12905 |
+| `[DEBUG] Batch final_1081 - Model Predictions vs Ground Truth:` | L12932 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L12933 |
+| `[DEBUG] Batch final_1114 - Model Predictions vs Ground Truth:` | L13286 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L13287 |
+| `[DEBUG] Batch final_1115 - Model Predictions vs Ground Truth:` | L13313 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L13314 |
+| `[DEBUG] Batch final_1116 - Model Predictions vs Ground Truth:` | L13341 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L13342 |
+| `[DEBUG] Batch final_1149 - Model Predictions vs Ground Truth:` | L13695 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L13696 |
+| `[DEBUG] Batch final_1150 - Model Predictions vs Ground Truth:` | L13722 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L13723 |
+| `[DEBUG] Batch final_1151 - Model Predictions vs Ground Truth:` | L13750 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L13751 |
+| `[DEBUG] Batch final_1184 - Model Predictions vs Ground Truth:` | L14104 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L14105 |
+| `[DEBUG] Batch final_1185 - Model Predictions vs Ground Truth:` | L14131 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L14132 |
+| `[DEBUG] Batch final_1186 - Model Predictions vs Ground Truth:` | L14159 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L14160 |
+| `[DEBUG] Batch final_1219 - Model Predictions vs Ground Truth:` | L14513 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L14514 |
+| `[DEBUG] Batch final_1220 - Model Predictions vs Ground Truth:` | L14540 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L14541 |
+| `[DEBUG] Batch final_1221 - Model Predictions vs Ground Truth:` | L14568 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L14569 |
+| `[DEBUG] Batch final_1254 - Model Predictions vs Ground Truth:` | L14922 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L14923 |
+| `[DEBUG] Batch final_1255 - Model Predictions vs Ground Truth:` | L14949 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L14950 |
+| `[DEBUG] Batch final_1256 - Model Predictions vs Ground Truth:` | L14977 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L14978 |
+| `[DEBUG] Batch final_1289 - Model Predictions vs Ground Truth:` | L15331 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L15332 |
+| `[DEBUG] Batch final_1290 - Model Predictions vs Ground Truth:` | L15358 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L15359 |
+| `[DEBUG] Batch final_1291 - Model Predictions vs Ground Truth:` | L15386 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L15387 |
+| `[DEBUG] Batch final_1324 - Model Predictions vs Ground Truth:` | L15740 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L15741 |
+| `[DEBUG] Batch final_1325 - Model Predictions vs Ground Truth:` | L15767 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L15768 |
+| `[DEBUG] Batch final_1326 - Model Predictions vs Ground Truth:` | L15795 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L15796 |
+| `[DEBUG] Batch final_1359 - Model Predictions vs Ground Truth:` | L16149 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L16150 |
+| `[DEBUG] Batch final_1360 - Model Predictions vs Ground Truth:` | L16176 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L16177 |
+| `[DEBUG] Batch final_1361 - Model Predictions vs Ground Truth:` | L16204 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L16205 |
+| `[DEBUG] Batch final_1394 - Model Predictions vs Ground Truth:` | L16558 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L16559 |
+| `[DEBUG] Batch final_1395 - Model Predictions vs Ground Truth:` | L16585 |
+| `Sample   Image Name (parent/name)                     Predicted       Ground Truth    Confidence   Correct` | L16586 |
+
+
+</details>
+
 ---
 
 Tool use: **grep**
 
+<details>
+<summary>Grep for "Batch \d+ - Model Predictions|===== FINAL BATCH PREDICTIONS" in "c:\Users\darks\Desktop\yolov5test" • 199 matches</summary>
+
+Output mode: content
+
+
+| Content | Line |
+|------|------|
+| `[DEBUG] Batch 1 - Model Predictions vs Ground Truth:` | L359 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L597 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L624 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L652 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L1006 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L1033 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L1060 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L1415 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L1442 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L1470 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L1824 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L1851 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L1879 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L2233 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L2260 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L2288 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L2650 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L2677 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L2705 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L3059 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L3086 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L3114 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L3468 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L3495 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L3523 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L3877 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L3904 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L3932 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L4286 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L4313 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L4341 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L4695 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L4722 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L4750 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L5104 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L5131 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L5159 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L5513 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L5540 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L5568 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L5922 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L5949 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L5977 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L6331 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L6358 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L6386 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L6740 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L6767 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L6795 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L7149 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L7176 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L7204 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L7558 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L7585 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L7613 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L7967 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L7994 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L8022 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L8376 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L8403 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L8431 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L8785 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L8812 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L8840 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L9194 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L9221 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L9249 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L9603 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L9630 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L9658 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L10012 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L10039 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L10067 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L10421 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L10448 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L10476 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L10830 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L10857 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L10885 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L11239 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L11266 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L11294 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L11648 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L11675 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L11703 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L12057 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L12084 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L12112 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L12466 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L12493 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L12521 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L12875 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L12902 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L12930 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L13284 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L13311 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L13339 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L13693 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L13720 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L13748 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L14102 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L14129 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L14157 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L14511 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L14538 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L14566 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L14920 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L14947 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L14975 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L15329 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L15356 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L15384 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L15738 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L15765 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L15793 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L16147 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L16174 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L16202 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L16556 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L16583 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L16611 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L16965 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L16992 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L17020 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L17374 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L17401 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L17429 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L17783 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L17810 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L17838 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L18192 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L18219 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L18247 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L18601 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L18628 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L18656 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L19010 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L19037 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L19065 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L19419 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L19446 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L19474 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L19828 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L19855 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L19883 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L20237 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L20264 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L20292 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L20646 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L20673 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L20701 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L21055 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L21082 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L21110 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L21464 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L21491 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L21519 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L21873 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L21900 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L21928 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L22282 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L22309 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L22337 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L22691 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L22718 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L22746 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L23100 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L23127 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L23155 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L23509 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L23536 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L23564 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L23918 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L23945 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L23973 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L24327 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L24354 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L24382 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L24736 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L24763 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L24791 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L25145 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L25172 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L25200 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L25554 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L25581 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L25609 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L25963 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L25990 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L26018 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L26372 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L26399 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L26427 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L26781 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L26808 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L26836 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L27190 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L27217 |
+| `[DEBUG] ===== FINAL BATCH PREDICTIONS AND GROUND TRUTH =====` | L27245 |
+
+
+</details>
+
 ---
 
 Tool use: **grep**
+
+<details>
+<summary>Grep for "sample_\d+|^\s*\d+\s+\S+\s+\S+\s+\d+\.\d+\s+" in "c:\Users\darks\Desktop\yolov5test\run_batch8.log" • 5 matches</summary>
+
+Output mode: content
+
+
+| Content | Line |
+|------|------|
+| `1        181         55   0.000125     0.0182    6.6e-05` | L470 |
+| `2        181         12   0.000105     0.0833   8.63e-05` | L472 |
+| `3        181         48   0.000168     0.0208    0.00039` | L474 |
+| `1        181         55   0.000155     0.0182   7.99e-05` | L543 |
+| `3        181         48   0.000212     0.0208   0.000129` | L547 |
+
+
+</details>
 
 ---
 

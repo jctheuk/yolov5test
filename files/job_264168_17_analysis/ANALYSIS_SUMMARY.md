@@ -179,3 +179,5 @@ Select-String -Path files/job_264168_17_1759205531.log -Pattern "ERROR|Exception
 建議重新檢查訓練配置，降低學習率後重新訓練。
 
 
+
+

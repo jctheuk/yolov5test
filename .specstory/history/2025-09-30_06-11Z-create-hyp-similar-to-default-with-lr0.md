@@ -88,6 +88,18 @@ Read file: c:\Users\darks\Desktop\yolov5test\yolov5c\data\hyps\hyp.scratch-high.
 
 Tool use: **glob_file_search**
 
+<details>
+<summary>Searched codebase "*.yaml" • **2** results in **1** directory</summary>
+
+Directory: **c:\Users\darks\Desktop\yolov5test\runs\train** (2 files)
+
+| File |
+|------|
+| `exp\opt.yaml` |
+| `exp\hyp.yaml` |
+
+</details>
+
 ---
 
 <think><details><summary>Thought Process</summary>找到了之前的訓練配置！讓我讀取這些文件來看看用戶之前使用的學習率。</details></think>

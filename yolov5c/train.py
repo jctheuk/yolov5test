@@ -229,7 +229,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     
     # Get classification info
     num_cls = data_dict.get('num_cls', 3)  # number of classification classes
-    cls_names = data_dict.get('cls_names', ['PSAX', 'PLAX', 'A4C'])  # classification class names
+    cls_names = data_dict.get('cls_names', ['A4C', 'PSAX', 'PLAX'])  # classification class names (CORRECTED ORDER)
 
     # Model
     check_suffix(weights, '.pt')  # check weights
@@ -333,7 +333,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                                        single_cls,
                                        hyp=hyp,
                                        cache=None if noval else opt.cache,
-                                       rect=True,
+                                       rect=False,  # Changed from True to False for classification - enables shuffle
                                        rank=-1,
                                        workers=workers * 2,
                                        pad=0.5,
@@ -380,7 +380,13 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     stopper, stop = EarlyStopping(patience=opt.patience), False
     # Attach hyperparameters to the model
     model.hyp = hyp
-    compute_loss = ComputeLoss(model)  # init dual loss class for detection + classification
+    
+    # Get class weights from hyperparameters (optional, for handling class imbalance)
+    class_weights = hyp.get('class_weights', None)
+    if class_weights is not None:
+        LOGGER.info(f'Using class weights for classification: {class_weights}')
+    
+    compute_loss = ComputeLoss(model, class_weights=class_weights)  # init FIXED dual loss class for detection + classification
     callbacks.run('on_train_start')
     LOGGER.info(f'Image sizes {imgsz} train, {imgsz} val\n'
                 f'Using {train_loader.num_workers * WORLD_SIZE} dataloader workers\n'
@@ -484,15 +490,15 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                                         tensor_list = []
                                         for cls in classification_labels:
                                             if isinstance(cls, (list, tuple)):
-                                                tensor_list.append(torch.tensor(cls, dtype=torch.float32))
+                                                tensor_list.append(torch.tensor(cls, dtype=torch.long))
                                             else:
-                                                tensor_list.append(torch.tensor([cls], dtype=torch.float32))
+                                                tensor_list.append(torch.tensor([cls], dtype=torch.long))
                                         classification_labels = torch.stack(tensor_list)
                                     else:
                                         # Convert simple list/tuple to tensor
-                                        classification_labels = torch.tensor(classification_labels, dtype=torch.float32)
+                                        classification_labels = torch.tensor(classification_labels, dtype=torch.long)
                                 else:
-                                    classification_labels = torch.zeros(imgs.shape[0], dtype=torch.float32, device=device)
+                                    classification_labels = torch.zeros(imgs.shape[0], dtype=torch.long, device=device)
                             else:
                                 classification_labels = classification_labels.to(device)
                             

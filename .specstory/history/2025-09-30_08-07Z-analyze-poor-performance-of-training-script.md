@@ -190,6 +190,63 @@ I'll add a concise debug block in the training loop to print out the unique `cla
 
 Tool use: **apply_patch**
 
+<details>
+        <summary>Apply patch for c:\Users\darks\Desktop\yolov5test\train_classification_task.py</summary>
+      
+
+```diff
+*** Begin Patch
+*** Update File: c:\Users\darks\Desktop\yolov5test\train_classification_task.py
+@@
+                         else:
+                             # Create default classification labels if none provided
+                             classification_labels = torch.zeros(imgs.shape[0], dtype=torch.long, device=device)
+                         
+                         # Ensure class_outputs has the right shape
+                         if class_outputs is not None:
+                             if len(class_outputs.shape) == 1:
+                                 # If it's 1D, reshape to (1, num_classes)
+                                 class_outputs = class_outputs.unsqueeze(0)
+                             elif len(class_outputs.shape) > 2:
+                                 # If it's more than 2D, flatten to (batch_size, num_classes)
+                                 batch_size = class_outputs.shape[0]
+                                 class_outputs = class_outputs.view(batch_size, -1)
++                        
++                        # Debug: Verify classification_labels mapping to cls_names on first batch
++                        if i == 0 and RANK in {-1, 0}:
++                            try:
++                                unique_labels = classification_labels.detach().to('cpu', non_blocking=True).unique().tolist()
++                            except Exception:
++                                unique_labels = []
++                            # Build mapping index -> name
++                            idx_to_name = {}
++                            out_of_range_indices = []
++                            for idx in unique_labels:
++                                if isinstance(idx, torch.Tensor):
++                                    idx = int(idx.item())
++                                else:
++                                    idx = int(idx)
++                                if 0 <= idx < len(cls_names):
++                                    idx_to_name[idx] = cls_names[idx]
++                                else:
++                                    out_of_range_indices.append(idx)
++                            print(f"[DEBUG] Classification class names (order): {cls_names}")
++                            print(f"[DEBUG] Unique classification label indices in batch 0: {unique_labels}")
++                            print(f"[DEBUG] Index -> name mapping (from data.yaml): {idx_to_name}")
++                            if out_of_range_indices:
++                                print(f"[DEBUG] ❌ Out-of-range label indices detected: {out_of_range_indices}; num_cls={len(cls_names)}")
++                            # Show first few samples
++                            sample_n = min(8, classification_labels.shape[0])
++                            try:
++                                sample_idxs = classification_labels[:sample_n].detach().to('cpu', non_blocking=True).tolist()
++                            except Exception:
++                                sample_idxs = []
++                            sample_names = [cls_names[x] if isinstance(x, int) and 0 <= x < len(cls_names) else 'OUT_OF_RANGE' for x in sample_idxs]
++                            print(f"[DEBUG] First {sample_n} classification labels (idx): {sample_idxs}")
++                            print(f"[DEBUG] First {sample_n} classification labels (name): {sample_names}")
+*** End Patch
+```
+
 ---
 
 <think><details><summary>Thought Process</summary>**Suggesting commands for execution**
@@ -203,6 +260,56 @@ I added a small debug section in the first batch to print unique classification 
 ---
 
 Tool use: **read_lints**
+
+<details>
+          <summary>Read lints for 1 file</summary>
+      
+Lint paths:
+
+- `c:\Users\darks\Desktop\yolov5test\train_classification_task.py`
+
+Lint results
+
+Lint errors for `train_classification_task.py`
+
+
+| Message | Range | Severity |
+|-------|-------|----------|
+| Import "comet_ml" could not be resolved | 30:12-30:20 | DIAGNOSTIC_SEVERITY_WARNING |
+| Import "comet_ml" is not accessed | 30:12-30:20 | DIAGNOSTIC_SEVERITY_HINT |
+| Import "F" is not accessed | 38:31-38:32 | DIAGNOSTIC_SEVERITY_HINT |
+| Import "val" could not be resolved | 51:8-51:11 | DIAGNOSTIC_SEVERITY_WARNING |
+| Import "models.experimental" could not be resolved | 52:6-52:25 | DIAGNOSTIC_SEVERITY_WARNING |
+| Import "models.yolo" could not be resolved | 54:6-54:17 | DIAGNOSTIC_SEVERITY_WARNING |
+| Import "ClassificationModel2" is not accessed | 54:32-54:52 | DIAGNOSTIC_SEVERITY_HINT |
+| Import "utils.autoanchor" could not be resolved | 55:6-55:22 | DIAGNOSTIC_SEVERITY_WARNING |
+| Import "utils.autobatch" could not be resolved | 56:6-56:21 | DIAGNOSTIC_SEVERITY_WARNING |
+| Import "utils.callbacks" could not be resolved | 57:6-57:21 | DIAGNOSTIC_SEVERITY_WARNING |
+| Import "utils.dataloaders" could not be resolved | 58:6-58:23 | DIAGNOSTIC_SEVERITY_WARNING |
+| Import "utils.downloads" could not be resolved | 59:6-59:21 | DIAGNOSTIC_SEVERITY_WARNING |
+| Import "utils.general" could not be resolved | 60:6-60:19 | DIAGNOSTIC_SEVERITY_WARNING |
+| Import "labels_to_class_weights" is not accessed | 62:89-62:112 | DIAGNOSTIC_SEVERITY_HINT |
+| Import "utils.loggers" could not be resolved | 65:6-65:19 | DIAGNOSTIC_SEVERITY_WARNING |
+| Import "utils.loggers.comet.comet_utils" could not be resolved | 66:6-66:37 | DIAGNOSTIC_SEVERITY_WARNING |
+| Import "utils.classification_task_loss" could not be resolved | 67:6-67:36 | DIAGNOSTIC_SEVERITY_WARNING |
+| Import "utils.metrics" could not be resolved | 68:6-68:19 | DIAGNOSTIC_SEVERITY_WARNING |
+| Import "utils.plots" could not be resolved | 69:6-69:17 | DIAGNOSTIC_SEVERITY_WARNING |
+| Import "utils.torch_utils" could not be resolved | 71:6-71:23 | DIAGNOSTIC_SEVERITY_WARNING |
+| Import "smartCrossEntropyLoss" is not accessed | 72:76-72:97 | DIAGNOSTIC_SEVERITY_HINT |
+| Import "sns" is not accessed | 74:19-74:22 | DIAGNOSTIC_SEVERITY_HINT |
+| Variable "name" is not accessed | 401:9-401:13 | DIAGNOSTIC_SEVERITY_HINT |
+| "module" is not accessed | 502:18-502:24 | DIAGNOSTIC_SEVERITY_HINT |
+| "input" is not accessed | 502:26-502:31 | DIAGNOSTIC_SEVERITY_HINT |
+| "module" is not accessed | 553:18-553:24 | DIAGNOSTIC_SEVERITY_HINT |
+| Variable "train_losses" is not accessed | 881:5-881:17 | DIAGNOSTIC_SEVERITY_HINT |
+| Variable "val_losses" is not accessed | 882:5-882:15 | DIAGNOSTIC_SEVERITY_HINT |
+| Variable "shapes" is not accessed | 919:39-919:45 | DIAGNOSTIC_SEVERITY_HINT |
+| Import "utils.general" could not be resolved | 974:30-974:43 | DIAGNOSTIC_SEVERITY_WARNING |
+| Variable "has_nan_grad" is not accessed | 1256:21-1256:33 | DIAGNOSTIC_SEVERITY_HINT |
+| Variable "has_nan_grad" is not accessed | 1268:33-1268:45 | DIAGNOSTIC_SEVERITY_HINT |
+
+
+</details>
 
 ---
 
