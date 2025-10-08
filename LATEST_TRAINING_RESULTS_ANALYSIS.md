@@ -137,3 +137,4 @@ constraint_penalty: 5.0  # 降低懲罰因子
 這個結果顯示YOLOv5WithClassification架構在醫學圖像分析中具有很大潛力，特別是在視圖分類方面已經達到臨床應用標準。
 
 
+
