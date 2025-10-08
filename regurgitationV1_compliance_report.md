@@ -105,3 +105,4 @@ This validates the dataset's suitability for training anatomically-aware deep le
 The regurgitationV1 dataset demonstrates excellent adherence to anatomical constraints with a 99.33% compliance rate. The few violations (10 TR detections in PLAX view) represent only 0.67% of the dataset and should be investigated for potential labeling errors. Overall, this dataset provides a strong foundation for training anatomically-constrained models that can leverage these hidden rules to improve mAP and accuracy.
 
 
+
