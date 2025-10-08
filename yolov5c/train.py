@@ -374,7 +374,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     # nw = min(nw, (epochs - start_epoch) / 2 * nb)  # limit warmup to < 1/2 of training
     last_opt_step = -1
     maps = np.zeros(nc)  # mAP per class
-    results = (0, 0, 0, 0, 0, 0, 0)  # P, R, mAP@.5, mAP@.5-.95, val_loss(box, obj, cls)
+    results = (0, 0, 0, 0, 0, 0, 0, 0, 0)  # P, R, mAP@.5, mAP@.5-.95, val_loss(box, obj, cls, cls_task, constraint)
     scheduler.last_epoch = start_epoch - 1  # do not move
     scaler = torch.cuda.amp.GradScaler(enabled=amp)
     stopper, stop = EarlyStopping(patience=opt.patience), False
@@ -413,11 +413,11 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
         # b = int(random.uniform(0.25 * imgsz, 0.75 * imgsz + gs) // gs * gs)
         # dataset.mosaic_border = [b - imgsz, -b]  # height, width borders
 
-        mloss = torch.zeros(4, device=device)  # mean losses (box, obj, cls, cls_task)
+        mloss = torch.zeros(5, device=device)  # mean losses (box, obj, cls, cls_task, constraint)
         if RANK != -1:
             train_loader.sampler.set_epoch(epoch)
         pbar = enumerate(train_loader)
-        LOGGER.info(('\n' + '%11s' * 8) % ('Epoch', 'GPU_mem', 'box_loss', 'obj_loss', 'cls_loss', 'cls_task_loss', 'Instances', 'Size'))
+        LOGGER.info(('\n' + '%11s' * 9) % ('Epoch', 'GPU_mem', 'box_loss', 'obj_loss', 'cls_loss', 'cls_task_loss', 'constraint_loss', 'Instances', 'Size'))
         if RANK in {-1, 0}:
             pbar = tqdm(pbar, total=nb, bar_format=TQDM_BAR_FORMAT)  # progress bar
         optimizer.zero_grad()
@@ -627,7 +627,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                     mem = f'{torch.cuda.memory_reserved() / 1E9 if torch.cuda.is_available() else 0:.3g}G'  # (GB)
                     # Ensure mloss is a 1D list of floats for formatting
                     mloss_list = [float(x) for x in mloss.view(-1).tolist()]
-                    pbar.set_description(('%11s' * 2 + '%11.4g' * 6) %
+                    pbar.set_description(('%11s' * 2 + '%11.4g' * 7) %
                                          (f'{epoch}/{epochs - 1}', mem, *mloss_list, targets.shape[0], imgs.shape[-1]))
                     callbacks.run('on_train_batch_end', model, ni, imgs, targets, paths, list(mloss))
                     if callbacks.stop_training:
@@ -751,6 +751,34 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     return results
 
 
+def show_constraints_info():
+    """Show anatomical constraints information"""
+    print("=" * 60)
+    print("ANATOMICAL CONSTRAINTS INFORMATION")
+    print("=" * 60)
+    
+    try:
+        from utils.anatomical_constraints import AnatomicalConstraints
+        constraints = AnatomicalConstraints()
+        constraints.print_constraints()
+        
+        print("\nCONSTRAINT MODES:")
+        print("-" * 40)
+        print("• soft: Apply weighted penalties for violations (default)")
+        print("• strict: Completely forbid impossible detections")
+        print("• mixed: Combine soft and strict constraints")
+        
+        print("\nUSAGE EXAMPLES:")
+        print("-" * 40)
+        print("• Enable constraints: --enable-constraints")
+        print("• Disable constraints: --disable-constraints")
+        print("• Set constraint weight: --constraint-weight 0.5")
+        print("• Set constraint mode: --constraint-mode strict")
+        print("• Show this info: --show-constraints")
+        
+    except Exception as e:
+        print(f"❌ Failed to load constraints: {e}")
+
 def parse_opt(known=False):
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', type=str, default=ROOT / 'yolov5s.pt', help='initial weights path')
@@ -794,10 +822,25 @@ def parse_opt(known=False):
     parser.add_argument('--bbox_interval', type=int, default=-1, help='Set bounding-box image logging interval')
     parser.add_argument('--artifact_alias', type=str, default='latest', help='Version of dataset artifact to use')
 
+    # Anatomical constraints arguments
+    parser.add_argument('--enable-constraints', action='store_true', default=True, help='enable anatomical constraints (default: True)')
+    parser.add_argument('--disable-constraints', action='store_true', help='disable anatomical constraints')
+    parser.add_argument('--constraint-weight', type=float, default=None, help='weight for constraint loss (overrides hyperparameter file)')
+    parser.add_argument('--constraint-mode', type=str, default='soft', choices=['soft', 'strict', 'mixed'], help='constraint enforcement mode: soft, strict, or mixed')
+    parser.add_argument('--show-constraints', action='store_true', help='show anatomical constraints and exit')
+
     return parser.parse_known_args()[0] if known else parser.parse_args()
 
 
 def main(opt, callbacks=Callbacks()):
+    # Handle constraint-specific arguments
+    if hasattr(opt, 'show_constraints') and opt.show_constraints:
+        show_constraints_info()
+        return
+    
+    if hasattr(opt, 'disable_constraints') and opt.disable_constraints:
+        opt.enable_constraints = False
+    
     # Checks
     if RANK in {-1, 0}:
         print_args(vars(opt))
@@ -885,6 +928,15 @@ def main(opt, callbacks=Callbacks()):
             hyp = yaml.safe_load(f)  # load hyps dict
             if 'anchors' not in hyp:  # anchors commented in hyp.yaml
                 hyp['anchors'] = 3
+        
+        # Handle constraint parameters
+        if hasattr(opt, 'enable_constraints') and not opt.enable_constraints:
+            hyp['use_anatomical_constraints'] = False
+        elif hasattr(opt, 'constraint_weight') and opt.constraint_weight is not None:
+            hyp['constraint_weight'] = opt.constraint_weight
+        if hasattr(opt, 'constraint_mode'):
+            hyp['constraint_mode'] = opt.constraint_mode
+            
         if opt.noautoanchor:
             del hyp['anchors'], meta['anchors']
         opt.noval, opt.nosave, save_dir = True, True, Path(opt.save_dir)  # only val/save final epoch

@@ -286,8 +286,13 @@ class ComputeLoss:
                 print(f"[DEBUG] ERROR in classification loss calculation: {e}")
                 lcls_task = torch.tensor(0.0, device=self.device)
 
-        # Total loss
-        total_loss = (lbox + lobj + lcls + lcls_task) * len(targets)
+        # Total loss - IMPROVED: Scale detection losses only
+        # Get batch size from detection output shape
+        bs = detection_outputs[0].shape[0]  # batch size
+        # Scale detection losses by batch size, keep classification at original scale
+        detection_loss = (lbox + lobj + lcls) * bs
+        classification_loss = lcls_task
+        total_loss = detection_loss + classification_loss
         
         # Check for NaN/Inf in total loss
         if torch.isnan(total_loss) or torch.isinf(total_loss):
@@ -296,6 +301,9 @@ class ComputeLoss:
             print(f"[DEBUG]   lobj: {lobj.item():.6f}")
             print(f"[DEBUG]   lcls: {lcls.item():.6f}")
             print(f"[DEBUG]   lcls_task: {lcls_task.item():.6f}")
+            print(f"[DEBUG]   batch_size: {bs}")
+            print(f"[DEBUG]   detection_loss (scaled): {detection_loss.item():.6f}")
+            print(f"[DEBUG]   classification_loss (original): {classification_loss.item():.6f}")
         
         # Ensure all loss components are properly shaped tensors (not empty) and have consistent shapes
         def ensure_tensor_shape(tensor):

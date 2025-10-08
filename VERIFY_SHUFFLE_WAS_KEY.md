@@ -145,3 +145,5 @@ python yolov5c/train.py \
 **Test it and see! Shuffle might be all you need!** 🎯
 
 
+
+

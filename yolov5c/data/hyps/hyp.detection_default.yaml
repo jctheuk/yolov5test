@@ -1,0 +1,46 @@
+# YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
+# Detection-Default hyperparameters for dual-task training
+# Keeps all detection loss weights at YOLOv5 defaults, only modifies classification task
+
+# Optimizer hyperparameters (YOLOv5 ORIGINAL DEFAULTS)
+lr0: 0.01  # initial learning rate (SGD=1E-2, Adam=1E-3) - YOLOv5 original default
+lrf: 0.01  # final OneCycleLR learning rate (lr0 * lrf)
+momentum: 0.937  # SGD momentum/Adam beta1 - YOLOv5 original default
+weight_decay: 0.0005  # optimizer weight decay 5e-4 - YOLOv5 original default
+warmup_epochs: 3.0  # warmup epochs (fractions ok)
+warmup_momentum: 0.8  # warmup initial momentum
+warmup_bias_lr: 0.1  # warmup initial bias lr
+
+# Loss hyperparameters (YOLOv5 DEFAULT VALUES)
+box: 0.05  # box loss gain (YOLOv5 default)
+cls: 0.5  # cls loss gain (YOLOv5 default - detection classification)
+cls_pw: 1.0  # cls BCELoss positive_weight (YOLOv5 default)
+obj: 1.0  # obj loss gain (YOLOv5 default)
+obj_pw: 1.0  # obj BCELoss positive_weight (YOLOv5 default)
+iou_t: 0.2  # IoU training threshold (YOLOv5 default)
+anchor_t: 4.0  # anchor-multiple threshold (YOLOv5 default)
+fl_gamma: 0.0  # focal loss gamma (YOLOv5 default)
+
+# Classification Task specific hyperparameters (ONLY THIS IS MODIFIED)
+cls_task: 0.01  # classification task loss weight (reduced to prioritize detection)
+label_smoothing: 0.0  # Label smoothing epsilon
+temperature: 1.0 # Temperature for softmax sharpness
+
+# Anatomical Constraints hyperparameters
+use_anatomical_constraints: true  # Enable anatomical constraint loss
+constraint_weight: 0.1  # Weight for anatomical constraint loss
+
+# Image augmentation hyperparameters (disabled for medical images)
+hsv_h: 0.0  # image HSV-Hue augmentation (fraction)
+hsv_s: 0.0  # image HSV-Saturation augmentation (fraction)
+hsv_v: 0.0  # image HSV-Value augmentation (fraction)
+degrees: 0.0  # image rotation (+/- deg)
+translate: 0.0  # image translation (+/- fraction)
+scale: 0.0  # image scale (+/- gain)
+shear: 0.0  # image shear (+/- deg)
+perspective: 0.0  # image perspective (+/- fraction), range 0-0.001
+flipud: 0.0  # image flip up-down (probability)
+fliplr: 0.0  # image flip left-right (probability)
+mosaic: 0.0  # image mosaic (probability)
+mixup: 0.0  # image mixup (probability)
+copy_paste: 0.0  # segment copy-paste (probability)

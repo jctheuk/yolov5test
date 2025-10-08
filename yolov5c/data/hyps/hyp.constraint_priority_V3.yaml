@@ -1,0 +1,49 @@
+# YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
+# Detection-Priority V3: Optimized for mAP 70-80% target
+# Based on V1 success with further detection-focused optimizations
+
+# Optimizer hyperparameters - STABILITY OPTIMIZED
+lr0: 0.005  # initial learning rate (reduced for stability)
+lrf: 0.005  # final OneCycleLR learning rate (reduced for stability)
+momentum: 0.937  # SGD momentum/Adam beta1
+weight_decay: 0.0005  # optimizer weight decay 5e-4
+warmup_epochs: 5.0  # warmup epochs (increased for stability)
+warmup_momentum: 0.8  # warmup initial momentum
+warmup_bias_lr: 0.1  # warmup initial bias lr
+
+# Loss hyperparameters - DETECTION PRIORITY (3x improvement)
+box: 0.15  # box loss gain (3x increase from 0.05 for better detection)
+cls: 0.8  # cls loss gain (1.6x increase from 0.5 for detection classification)
+cls_pw: 1.0  # cls BCELoss positive_weight
+obj: 1.5  # obj loss gain (1.5x increase from 1.0 for object detection)
+obj_pw: 1.0  # obj BCELoss positive_weight
+iou_t: 0.15  # IoU training threshold (stricter matching from 0.2)
+anchor_t: 3.5  # anchor-multiple threshold (stricter matching from 4.0)
+fl_gamma: 1.5  # focal loss gamma (enable for hard examples from 0.0)
+
+# Classification Task specific hyperparameters - MINIMAL IMPACT
+cls_task: 0.02  # classification task loss weight (further reduced from 0.05)
+label_smoothing: 0.05  # Label smoothing epsilon (reduced from 0.1)
+temperature: 1.0  # Temperature for softmax sharpness
+
+# Anatomical Constraints hyperparameters - BALANCED
+use_anatomical_constraints: true  # Enable anatomical constraint loss
+constraint_weight: 0.3  # Weight for anatomical constraint loss (reduced from 0.5)
+constraint_mode: soft  # Constraint enforcement mode: soft, strict, or mixed
+constraint_learning_rate: 0.1  # Learning rate for constraint adaptation
+constraint_penalty: 5.0  # Penalty factor for constraint violations (reduced from 10.0)
+
+# Image augmentation hyperparameters (minimal for medical images)
+hsv_h: 0.01  # image HSV-Hue augmentation (minimal from 0.0)
+hsv_s: 0.1  # image HSV-Saturation augmentation (minimal from 0.0)
+hsv_v: 0.1  # image HSV-Value augmentation (minimal from 0.0)
+degrees: 2.0  # image rotation (+/- deg) (minimal from 0.0)
+translate: 0.02  # image translation (+/- fraction) (minimal from 0.0)
+scale: 0.1  # image scale (+/- gain) (minimal from 0.0)
+shear: 0.0  # image shear (+/- deg) (disabled for medical)
+perspective: 0.0  # image perspective (+/- fraction) (disabled for medical)
+flipud: 0.0  # image flip up-down (probability) (disabled for medical)
+fliplr: 0.0  # image flip left-right (probability) (disabled for medical)
+mosaic: 0.0  # image mosaic (probability) (disabled for medical)
+mixup: 0.0  # image mixup (probability) (disabled for medical)
+copy_paste: 0.0  # segment copy-paste (probability) (disabled for medical)

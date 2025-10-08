@@ -1,0 +1,236 @@
+ANATOMICAL CONSTRAINT VIOLATION FILE LIST
+============================================================
+
+Total Violating Files: 23 (out of 1,484 scanned)
+Violation Rate: 1.55%
+
+Distribution by Split:
+- Train: 13 files
+- Valid: 4 files  
+- Test: 6 files
+
+============================================================
+COMPLETE LIST OF VIOLATING FILES (Alphabetical Order)
+============================================================
+
+1.  ZmNlwq5mZcKcwps=-unnamed_1_1.mp4-0.txt
+    Label Path: regurgitationV1\test\labels\ZmNlwq5mZcKcwps=-unnamed_1_1.mp4-0.txt
+    Image Path: regurgitationV1\test\images\ZmNlwq5mZcKcwps=-unnamed_1_1.mp4-0.png
+
+2.  ZmNmwq5saG5m-unnamed_1_3.mp4-8.txt
+    Label Path: regurgitationV1\train\labels\ZmNmwq5saG5m-unnamed_1_3.mp4-8.txt
+    Image Path: regurgitationV1\train\images\ZmNmwq5saG5m-unnamed_1_3.mp4-8.png
+
+3.  ZmRnwqZla8Kcwp4=-unnamed_2_2.mp4-35.txt
+    Label Path: regurgitationV1\valid\labels\ZmRnwqZla8Kcwp4=-unnamed_2_2.mp4-35.txt
+    Image Path: regurgitationV1\valid\images\ZmRnwqZla8Kcwp4=-unnamed_2_2.mp4-35.png
+
+4.  ZmVrwqtpbMKawpw=-unnamed_1_2.mp4-26.txt
+    Label Path: regurgitationV1\train\labels\ZmVrwqtpbMKawpw=-unnamed_1_2.mp4-26.txt
+    Image Path: regurgitationV1\train\images\ZmVrwqtpbMKawpw=-unnamed_1_2.mp4-26.png
+
+5.  ZmVrwqtpbMKawpw=-unnamed_2_1.mp4-15.txt
+    Label Path: regurgitationV1\train\labels\ZmVrwqtpbMKawpw=-unnamed_2_1.mp4-15.txt
+    Image Path: regurgitationV1\train\images\ZmVrwqtpbMKawpw=-unnamed_2_1.mp4-15.png
+
+6.  ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-15.txt
+    Label Path: regurgitationV1\test\labels\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-15.txt
+    Image Path: regurgitationV1\test\images\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-15.png
+
+7.  ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-17.txt
+    Label Path: regurgitationV1\test\labels\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-17.txt
+    Image Path: regurgitationV1\test\images\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-17.png
+
+8.  ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-21.txt
+    Label Path: regurgitationV1\test\labels\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-21.txt
+    Image Path: regurgitationV1\test\images\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-21.png
+
+9.  ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-4.txt
+    Label Path: regurgitationV1\valid\labels\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-4.txt
+    Image Path: regurgitationV1\valid\images\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-4.png
+
+10. ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-0.txt
+    Label Path: regurgitationV1\train\labels\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-0.txt
+    Image Path: regurgitationV1\train\images\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-0.png
+
+11. ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-1.txt
+    Label Path: regurgitationV1\train\labels\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-1.txt
+    Image Path: regurgitationV1\train\images\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-1.png
+
+12. ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-10.txt
+    Label Path: regurgitationV1\train\labels\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-10.txt
+    Image Path: regurgitationV1\train\images\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-10.png
+
+13. ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-12.txt
+    Label Path: regurgitationV1\valid\labels\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-12.txt
+    Image Path: regurgitationV1\valid\images\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-12.png
+
+14. ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-13.txt
+    Label Path: regurgitationV1\test\labels\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-13.txt
+    Image Path: regurgitationV1\test\images\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-13.png
+
+15. ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-17.txt
+    Label Path: regurgitationV1\train\labels\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-17.txt
+    Image Path: regurgitationV1\train\images\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-17.png
+
+16. ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-9.txt
+    Label Path: regurgitationV1\train\labels\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-9.txt
+    Image Path: regurgitationV1\train\images\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-9.png
+
+17. a2lrwqduZsKc-unnamed_1_1.mp4-31.txt
+    Label Path: regurgitationV1\valid\labels\a2lrwqduZsKc-unnamed_1_1.mp4-31.txt
+    Image Path: regurgitationV1\valid\images\a2lrwqduZsKc-unnamed_1_1.mp4-31.png
+
+18. bWplwqlsaMKZ-unnamed_1_1.mp4-1.txt
+    Label Path: regurgitationV1\train\labels\bWplwqlsaMKZ-unnamed_1_1.mp4-1.txt
+    Image Path: regurgitationV1\train\images\bWplwqlsaMKZ-unnamed_1_1.mp4-1.png
+
+19. bWplwqlsaMKZ-unnamed_1_1.mp4-14.txt
+    Label Path: regurgitationV1\test\labels\bWplwqlsaMKZ-unnamed_1_1.mp4-14.txt
+    Image Path: regurgitationV1\test\images\bWplwqlsaMKZ-unnamed_1_1.mp4-14.png
+
+20. bWplwqlsaMKZ-unnamed_1_1.mp4-2.txt
+    Label Path: regurgitationV1\train\labels\bWplwqlsaMKZ-unnamed_1_1.mp4-2.txt
+    Image Path: regurgitationV1\train\images\bWplwqlsaMKZ-unnamed_1_1.mp4-2.png
+
+21. bWplwqlsaMKZ-unnamed_1_1.mp4-28.txt
+    Label Path: regurgitationV1\train\labels\bWplwqlsaMKZ-unnamed_1_1.mp4-28.txt
+    Image Path: regurgitationV1\train\images\bWplwqlsaMKZ-unnamed_1_1.mp4-28.png
+
+22. bWplwqlsaMKZ-unnamed_1_1.mp4-3.txt
+    Label Path: regurgitationV1\train\labels\bWplwqlsaMKZ-unnamed_1_1.mp4-3.txt
+    Image Path: regurgitationV1\train\images\bWplwqlsaMKZ-unnamed_1_1.mp4-3.png
+
+23. bWplwqlsaMKZ-unnamed_1_1.mp4-39.txt
+    Label Path: regurgitationV1\train\labels\bWplwqlsaMKZ-unnamed_1_1.mp4-39.txt
+    Image Path: regurgitationV1\train\images\bWplwqlsaMKZ-unnamed_1_1.mp4-39.png
+
+
+============================================================
+GROUPED BY VIOLATION TYPE
+============================================================
+
+PLAX_TR (10 violations) - TR detected in PLAX view (NOT ALLOWED)
+----------------------------------------------------------------
+- ZmRnwqZla8Kcwp4=-unnamed_2_2.mp4-35.txt
+- ZmVrwqtpbMKawpw=-unnamed_1_2.mp4-26.txt
+- ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-0.txt
+- ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-1.txt
+- ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-10.txt
+- ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-12.txt
+- ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-13.txt
+- ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-17.txt
+- ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-9.txt
+- a2lrwqduZsKc-unnamed_1_1.mp4-31.txt
+
+A4C_AR (4 violations) - AR detected in A4C view (NOT ALLOWED)
+----------------------------------------------------------------
+- bWplwqlsaMKZ-unnamed_1_1.mp4-1.txt
+- bWplwqlsaMKZ-unnamed_1_1.mp4-14.txt
+- bWplwqlsaMKZ-unnamed_1_1.mp4-2.txt
+- bWplwqlsaMKZ-unnamed_1_1.mp4-3.txt
+
+A4C_PR (4 violations) - PR detected in A4C view (NOT ALLOWED)
+----------------------------------------------------------------
+- ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-15.txt
+- ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-17.txt
+- ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-21.txt
+- ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-4.txt
+
+PSAX_AR (3 violations) - AR detected in PSAX view (NOT ALLOWED)
+----------------------------------------------------------------
+- ZmNlwq5mZcKcwps=-unnamed_1_1.mp4-0.txt
+- bWplwqlsaMKZ-unnamed_1_1.mp4-28.txt
+- bWplwqlsaMKZ-unnamed_1_1.mp4-39.txt
+
+PSAX_MR (2 violations) - MR detected in PSAX view (NOT ALLOWED)
+----------------------------------------------------------------
+- ZmNmwq5saG5m-unnamed_1_3.mp4-8.txt
+- ZmVrwqtpbMKawpw=-unnamed_2_1.mp4-15.txt
+
+
+============================================================
+GROUPED BY SOURCE VIDEO
+============================================================
+
+Video: ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4
+  Violations: 7 files
+  - ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-0.txt
+  - ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-1.txt
+  - ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-10.txt
+  - ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-12.txt
+  - ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-13.txt
+  - ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-17.txt
+  - ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-9.txt
+
+Video: bWplwqlsaMKZ-unnamed_1_1.mp4
+  Violations: 6 files
+  - bWplwqlsaMKZ-unnamed_1_1.mp4-1.txt
+  - bWplwqlsaMKZ-unnamed_1_1.mp4-14.txt
+  - bWplwqlsaMKZ-unnamed_1_1.mp4-2.txt
+  - bWplwqlsaMKZ-unnamed_1_1.mp4-28.txt
+  - bWplwqlsaMKZ-unnamed_1_1.mp4-3.txt
+  - bWplwqlsaMKZ-unnamed_1_1.mp4-39.txt
+
+Video: ZmZnwqlqbMKawp0=-unnamed_1_1.mp4
+  Violations: 4 files
+  - ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-15.txt
+  - ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-17.txt
+  - ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-21.txt
+  - ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-4.txt
+
+Video: ZmVrwqtpbMKawpw=-unnamed_1_2.mp4
+  Violations: 1 file
+  - ZmVrwqtpbMKawpw=-unnamed_1_2.mp4-26.txt
+
+Video: ZmVrwqtpbMKawpw=-unnamed_2_1.mp4
+  Violations: 1 file
+  - ZmVrwqtpbMKawpw=-unnamed_2_1.mp4-15.txt
+
+Video: ZmRnwqZla8Kcwp4=-unnamed_2_2.mp4
+  Violations: 1 file
+  - ZmRnwqZla8Kcwp4=-unnamed_2_2.mp4-35.txt
+
+Video: ZmNmwq5saG5m-unnamed_1_3.mp4
+  Violations: 1 file
+  - ZmNmwq5saG5m-unnamed_1_3.mp4-8.txt
+
+Video: ZmNlwq5mZcKcwps=-unnamed_1_1.mp4
+  Violations: 1 file
+  - ZmNlwq5mZcKcwps=-unnamed_1_1.mp4-0.txt
+
+Video: a2lrwqduZsKc-unnamed_1_1.mp4
+  Violations: 1 file
+  - a2lrwqduZsKc-unnamed_1_1.mp4-31.txt
+
+
+============================================================
+ANATOMICAL CONSTRAINT RULES
+============================================================
+
+A4C View (Apical 4-Chamber):
+  ✓ Allowed: MR (Mitral Regurgitation), TR (Tricuspid Regurgitation)
+  ✗ Not Allowed: AR (Aortic Regurgitation), PR (Pulmonary Regurgitation)
+
+PSAX View (Parasternal Short Axis):
+  ✓ Allowed: PR (Pulmonary Regurgitation), TR (Tricuspid Regurgitation)
+  ✗ Not Allowed: AR (Aortic Regurgitation), MR (Mitral Regurgitation)
+
+PLAX View (Parasternal Long Axis):
+  ✓ Allowed: AR (Aortic Regurgitation), MR (Mitral Regurgitation)
+  ✗ Not Allowed: PR (Pulmonary Regurgitation), TR (Tricuspid Regurgitation)
+
+
+============================================================
+RECOMMENDATIONS
+============================================================
+
+1. Review these 23 files for potential labeling errors
+2. Verify if the classification labels (view types) are correct
+3. Verify if the detection labels (valve regurgitations) are correct
+4. Consider removing or correcting these files before training
+5. Use constraint-aware training to penalize such violations during training
+
+Note: These violations represent only 1.55% of the dataset, indicating
+generally good data quality with respect to anatomical constraints.
+

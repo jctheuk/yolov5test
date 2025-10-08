@@ -1,0 +1,41 @@
+# YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
+# Detection-Prioritized hyperparameters for dual-task training
+
+# Optimizer hyperparameters
+lr0: 0.0005  # reduced learning rate for stable training
+lrf: 0.01  # final OneCycleLR learning rate (lr0 * lrf)
+momentum: 0.9  # Adam beta1
+weight_decay: 0.00005  # optimizer weight decay
+warmup_epochs: 3.0  # warmup epochs (fractions ok)
+warmup_momentum: 0.8  # warmup initial momentum
+warmup_bias_lr: 0.1  # warmup initial bias lr
+
+# Loss hyperparameters (detection prioritized)
+box: 0.05  # box loss gain (standard)
+cls: 0.5  # cls loss gain (detection classification)
+cls_pw: 1.0  # cls BCELoss positive_weight
+obj: 1.0  # obj loss gain (standard)
+obj_pw: 1.0  # obj BCELoss positive_weight
+iou_t: 0.2  # IoU training threshold
+anchor_t: 4.0  # anchor-multiple threshold
+fl_gamma: 0.0  # focal loss gamma
+
+# Classification Task specific hyperparameters (reduced weight)
+cls_task: 0.05  # classification task loss weight (reduced from 0.3 to prioritize detection)
+label_smoothing: 0.0  # Label smoothing epsilon
+temperature: 1.0 # Temperature for softmax sharpness
+
+# Image augmentation hyperparameters (disabled for medical images)
+hsv_h: 0.0  # image HSV-Hue augmentation (fraction)
+hsv_s: 0.0  # image HSV-Saturation augmentation (fraction)
+hsv_v: 0.0  # image HSV-Value augmentation (fraction)
+degrees: 0.0  # image rotation (+/- deg)
+translate: 0.0  # image translation (+/- fraction)
+scale: 0.0  # image scale (+/- gain)
+shear: 0.0  # image shear (+/- deg)
+perspective: 0.0  # image perspective (+/- fraction), range 0-0.001
+flipud: 0.0  # image flip up-down (probability)
+fliplr: 0.0  # image flip left-right (probability)
+mosaic: 0.0  # image mosaic (probability)
+mixup: 0.0  # image mixup (probability)
+copy_paste: 0.0  # segment copy-paste (probability)

@@ -1,0 +1,116 @@
+ANATOMICAL CONSTRAINT VIOLATIONS REPORT
+============================================================
+
+ANATOMICAL CONSTRAINTS:
+------------------------------
+A4C: MR, TR
+PSAX: PR, TR
+PLAX: AR, MR
+
+SUMMARY:
+--------------------
+Total files: 23
+Total violations: 23
+
+VIOLATION BREAKDOWN:
+------------------------------
+PLAX_TR: 10
+A4C_AR: 4
+A4C_PR: 4
+PSAX_AR: 3
+PSAX_MR: 2
+
+DETAILED VIOLATIONS BY FILE:
+----------------------------------------
+
+File: bWplwqlsaMKZ-unnamed_1_1.mp4-1.txt
+  - AR detected in A4C view
+    Allowed in A4C: MR, TR
+
+File: bWplwqlsaMKZ-unnamed_1_1.mp4-2.txt
+  - AR detected in A4C view
+    Allowed in A4C: MR, TR
+
+File: bWplwqlsaMKZ-unnamed_1_1.mp4-28.txt
+  - AR detected in PSAX view
+    Allowed in PSAX: PR, TR
+
+File: bWplwqlsaMKZ-unnamed_1_1.mp4-3.txt
+  - AR detected in A4C view
+    Allowed in A4C: MR, TR
+
+File: bWplwqlsaMKZ-unnamed_1_1.mp4-39.txt
+  - AR detected in PSAX view
+    Allowed in PSAX: PR, TR
+
+File: ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-0.txt
+  - TR detected in PLAX view
+    Allowed in PLAX: AR, MR
+
+File: ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-1.txt
+  - TR detected in PLAX view
+    Allowed in PLAX: AR, MR
+
+File: ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-10.txt
+  - TR detected in PLAX view
+    Allowed in PLAX: AR, MR
+
+File: ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-17.txt
+  - TR detected in PLAX view
+    Allowed in PLAX: AR, MR
+
+File: ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-9.txt
+  - TR detected in PLAX view
+    Allowed in PLAX: AR, MR
+
+File: ZmNmwq5saG5m-unnamed_1_3.mp4-8.txt
+  - MR detected in PSAX view
+    Allowed in PSAX: PR, TR
+
+File: ZmVrwqtpbMKawpw=-unnamed_1_2.mp4-26.txt
+  - TR detected in PLAX view
+    Allowed in PLAX: AR, MR
+
+File: ZmVrwqtpbMKawpw=-unnamed_2_1.mp4-15.txt
+  - MR detected in PSAX view
+    Allowed in PSAX: PR, TR
+
+File: a2lrwqduZsKc-unnamed_1_1.mp4-31.txt
+  - TR detected in PLAX view
+    Allowed in PLAX: AR, MR
+
+File: ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-12.txt
+  - TR detected in PLAX view
+    Allowed in PLAX: AR, MR
+
+File: ZmRnwqZla8Kcwp4=-unnamed_2_2.mp4-35.txt
+  - TR detected in PLAX view
+    Allowed in PLAX: AR, MR
+
+File: ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-4.txt
+  - PR detected in A4C view
+    Allowed in A4C: MR, TR
+
+File: bWplwqlsaMKZ-unnamed_1_1.mp4-14.txt
+  - AR detected in A4C view
+    Allowed in A4C: MR, TR
+
+File: ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-13.txt
+  - TR detected in PLAX view
+    Allowed in PLAX: AR, MR
+
+File: ZmNlwq5mZcKcwps=-unnamed_1_1.mp4-0.txt
+  - AR detected in PSAX view
+    Allowed in PSAX: PR, TR
+
+File: ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-15.txt
+  - PR detected in A4C view
+    Allowed in A4C: MR, TR
+
+File: ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-17.txt
+  - PR detected in A4C view
+    Allowed in A4C: MR, TR
+
+File: ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-21.txt
+  - PR detected in A4C view
+    Allowed in A4C: MR, TR

@@ -1,0 +1,52 @@
+# YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
+# Detection-Priority V6: Anti-overfitting version with data augmentation
+# Based on constraint5 success (mAP 60%) + balanced cls_task + enhanced regularization
+# constraint5 had: box=0.15, obj=1.5, cls=0.8, fl_gamma=1.5, with light augmentation
+# Target: Improve from constraint7 (56% mAP) by combining constraint5 strengths + better balance
+
+# Optimizer hyperparameters (from fixed_minimal success)
+lr0: 0.01  # initial learning rate (from fixed_minimal 71% mAP)
+lrf: 0.1  # final OneCycleLR learning rate (from fixed_minimal)
+momentum: 0.937  # SGD momentum/Adam beta1
+weight_decay: 0.005  # optimizer weight decay (INCREASED from 0.0005 for anti-overfitting)
+warmup_epochs: 5.0  # warmup epochs (from constraint5)
+warmup_momentum: 0.8  # warmup initial momentum
+warmup_bias_lr: 0.1  # warmup initial bias lr
+
+# Loss hyperparameters (STANDARD - same as V4)
+box: 0.05  # box loss gain
+cls: 0.5  # cls loss gain (detection classification)
+cls_pw: 1.0  # cls BCELoss positive_weight
+obj: 1.0  # obj loss gain (scale with pixels)
+obj_pw: 1.0  # obj BCELoss positive_weight
+iou_t: 0.2  # IoU training threshold
+anchor_t: 4.0  # anchor-multiple threshold
+fl_gamma: 0.0  # focal loss gamma (standard BCE)
+
+# Classification Task hyperparameters (BALANCED for batch=128)
+cls_task: 1.0  # INCREASED from 0.01 to 1.0 for better balance (target ~12% of total loss)
+label_smoothing: 0.08  # Slightly increased from 0.05
+temperature: 1.0  # Temperature for softmax sharpness
+
+# Anatomical Constraints hyperparameters (REDUCED from V4)
+use_anatomical_constraints: true  # Enable anatomical constraint loss
+constraint_weight: 0.3  # REDUCED from 0.5 to 0.3 for better balance
+constraint_mode: soft  # Constraint enforcement mode
+constraint_learning_rate: 0.1  # Learning rate for constraint adaptation
+constraint_penalty: 10.0  # Penalty factor for constraint violations
+
+# Image augmentation hyperparameters (from fixed_minimal success - 71% mAP)
+# fixed_minimal had stronger augmentation that achieved 71% mAP
+hsv_h: 0.015  # image HSV-Hue augmentation (from fixed_minimal)
+hsv_s: 0.4  # image HSV-Saturation augmentation (from fixed_minimal, strong)
+hsv_v: 0.3  # image HSV-Value augmentation (from fixed_minimal, strong)
+degrees: 10.0  # image rotation (from fixed_minimal, 71% mAP success)
+translate: 0.1  # image translation (from fixed_minimal, 71% mAP success)
+scale: 0.5  # image scale (from fixed_minimal, 71% mAP success)
+shear: 0.0  # image shear (kept 0, too aggressive for medical)
+perspective: 0.0  # image perspective (kept 0, not suitable for medical)
+flipud: 0.0  # image flip up-down (kept 0, not suitable for medical orientation)
+fliplr: 0.0  # image flip left-right (kept 0, same as constraint5)
+mosaic: 0.0  # image mosaic (kept 0, too aggressive for medical)
+mixup: 0.0  # image mixup (kept 0, not suitable for medical)
+copy_paste: 0.0  # segment copy-paste (kept 0)

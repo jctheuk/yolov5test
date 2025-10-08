@@ -218,3 +218,5 @@ python yolov5c/train.py \
 **Your success formula (shuffle + class_weights) is now in yolov5c!** 🎉
 
 
+
+

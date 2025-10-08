@@ -192,7 +192,7 @@ def run(
     s = ('%22s' + '%11s' * 6) % ('Class', 'Images', 'Instances', 'P', 'R', 'mAP50', 'mAP50-95')
     # Use three profiling timers for preprocessing, inference, and NMS
     dt = (Profile(), Profile(), Profile())  # profiles
-    loss = torch.zeros(4, device=device)
+    loss = torch.zeros(5, device=device)  # box, obj, cls, cls_task, constraint
     jdict, stats = [], []
     
     # Classification metrics tracking
@@ -263,7 +263,7 @@ def run(
                 ]).to(device)
             else:
                 loss_items_tensor = loss_items.to(device).view(-1)
-            loss += loss_items_tensor  # box, obj, cls, cls_task
+            loss += loss_items_tensor  # box, obj, cls, cls_task, constraint
         labels[:, 2:] *= torch.tensor((width, height, width, height), device=device)  # to pixels
         lb = [labels[labels[:, 0] == i, 1:] for i in range(nb)] if save_hybrid else []  # for autolabelling
         # NMS

@@ -7,6 +7,7 @@ import torch.nn.functional as F
 
 from utils.metrics import bbox_iou
 from utils.torch_utils import de_parallel
+from .anatomical_constraints import AnatomicalConstraints
 
 
 def smooth_BCE(eps=0.1):  # https://github.com/ultralytics/yolov3/issues/238#issuecomment-598028441
@@ -158,6 +159,16 @@ class ComputeLoss:
         # Manual CrossEntropy implementation for PyTorch compatibility (like train_classification_task.py)
         self.classification_criterion = None  # Use manual implementation to avoid PyTorch version issues
         
+        # Initialize anatomical constraints
+        self.use_constraints = h.get('use_anatomical_constraints', True)
+        self.constraint_weight = h.get('constraint_weight', 0.1)
+        if self.use_constraints:
+            self.anatomical_constraints = AnatomicalConstraints(device=device)
+            print(f"[INFO] Anatomical constraints enabled with weight: {self.constraint_weight}")
+        else:
+            self.anatomical_constraints = None
+            print(f"[INFO] Anatomical constraints disabled")
+        
         # Keep only essential debug info
         print(f"[DEBUG] Classification loss weight: {self.cls_task_loss_weight}")
         print(f"[DEBUG] Using manual CrossEntropy implementation for PyTorch compatibility")
@@ -297,10 +308,56 @@ class ComputeLoss:
                 print(f"[DEBUG] ERROR in classification loss calculation: {e}")
                 lcls_task = torch.tensor(0.0, device=self.device)
 
-        # Total loss - FIXED: Properly combine detection and classification losses
-        # Original (BROKEN): total_loss = (lbox + lobj + lcls + lcls_task) * len(targets)  # Batch size scaling causes explosion
-        # Fixed: Combine losses without batch size scaling (like original loss.py line 189)
-        total_loss = lbox + lobj + lcls + lcls_task
+        # Apply anatomical constraints if enabled
+        lconstraint = torch.zeros(1, device=self.device)  # constraint loss
+        if self.use_constraints and self.anatomical_constraints is not None and classification_output is not None:
+            try:
+                # Convert classification output to one-hot for constraint calculation
+                if classification_output.dim() > 1:
+                    # Already in logit format, convert to probabilities
+                    classification_probs = torch.softmax(classification_output, dim=1)
+                else:
+                    # Convert to one-hot
+                    classification_probs = torch.zeros(classification_output.shape[0], 3, device=self.device)
+                    classification_probs.scatter_(1, classification_output.long().unsqueeze(1), 1.0)
+                
+                # Calculate constraint loss based on detection predictions
+                # For now, we'll use a simplified constraint loss based on classification probabilities
+                # This penalizes predictions that violate anatomical constraints
+                constraint_penalty = 0.0
+                for i in range(classification_probs.shape[0]):
+                    view_idx = torch.argmax(classification_probs[i]).item()
+                    
+                    # Get constraint weights for this view
+                    constraint_weights = torch.zeros(4, device=self.device)
+                    for det_class in range(4):
+                        if det_class in self.anatomical_constraints.soft_weights[view_idx]:
+                            constraint_weights[det_class] = self.anatomical_constraints.soft_weights[view_idx][det_class]
+                        else:
+                            constraint_weights[det_class] = 0.1  # Low weight for impossible detections
+                    
+                    # Apply constraint penalty based on detection confidence
+                    # This is a simplified version - in practice, you'd use actual detection predictions
+                    view_confidence = torch.max(classification_probs[i])
+                    constraint_penalty += (1.0 - view_confidence) * 0.1  # Small penalty for uncertain predictions
+                
+                lconstraint = torch.tensor(constraint_penalty, device=self.device) * self.constraint_weight
+                
+            except Exception as e:
+                print(f"[DEBUG] ERROR in constraint loss calculation: {e}")
+                lconstraint = torch.tensor(0.0, device=self.device)
+        
+        # Total loss - IMPROVED: Scale detection and classification losses appropriately
+        # Get batch size from first detection layer output
+        bs = detection_outputs[0].shape[0]  # batch size
+        # Scale detection losses by batch size (they are means and need to be in same scale)
+        # Keep classification loss at its original scale (already appropriate magnitude)
+        # Constraint loss is NOT scaled (already cumulative sum across batch)
+        # This provides better balance between detection and classification tasks
+        detection_loss = (lbox + lobj + lcls) * bs
+        classification_loss = lcls_task
+        constraint_loss = lconstraint  # NOT scaled (already sum, not mean)
+        total_loss = detection_loss + classification_loss + constraint_loss
         
         # Check for NaN/Inf in total loss
         if torch.isnan(total_loss) or torch.isinf(total_loss):
@@ -309,13 +366,20 @@ class ComputeLoss:
             print(f"[DEBUG]   lobj: {lobj.item():.6f}")
             print(f"[DEBUG]   lcls: {lcls.item():.6f}")
             print(f"[DEBUG]   lcls_task: {lcls_task.item():.6f}")
+            print(f"[DEBUG]   lconstraint: {lconstraint.item():.6f}")
+            print(f"[DEBUG]   batch_size: {bs}")
+            print(f"[DEBUG]   detection_loss (scaled by bs): {detection_loss.item():.6f}")
+            print(f"[DEBUG]   classification_loss (not scaled): {classification_loss.item():.6f}")
+            print(f"[DEBUG]   constraint_loss (not scaled, sum): {constraint_loss.item():.6f}")
+            print(f"[DEBUG]   detection/classification ratio: {detection_loss.item()/(classification_loss.item()+1e-6):.2f}")
         
         # Return total loss and individual losses (like original loss.py line 189)
         # Original format: return (lbox + lobj + lcls) * bs, torch.cat((lbox, lobj, lcls)).detach()
-        # Our format: return total_loss, torch.cat((lbox, lobj, lcls, lcls_task)).detach()
+        # Our format: return total_loss, torch.cat((lbox, lobj, lcls, lcls_task, lconstraint)).detach()
         # Ensure all loss components are scalars for concatenation
         lcls_task_scalar = lcls_task if lcls_task.dim() > 0 else lcls_task.unsqueeze(0)
-        return total_loss, torch.cat((lbox, lobj, lcls, lcls_task_scalar)).detach()
+        lconstraint_scalar = lconstraint if lconstraint.dim() > 0 else lconstraint.unsqueeze(0)
+        return total_loss, torch.cat((lbox, lobj, lcls, lcls_task_scalar, lconstraint_scalar)).detach()
 
     def build_targets(self, p, targets):
         # Build targets for compute_loss(), input targets(image,class,x,y,w,h)

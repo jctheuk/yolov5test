@@ -1,0 +1,55 @@
+# YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
+# Detection-Priority V5: Optimized for large batch training (batch=128) with balanced ratio
+# Target: Detection:Classification:Constraint = 7:2:1 (70%:20%:10%)
+# Based on Plan B loss scaling strategy, adjusted cls_task for large batch size
+
+# Optimizer hyperparameters
+lr0: 0.01  # initial learning rate (SGD=1E-2, Adam=1E-3)
+lrf: 0.01  # final OneCycleLR learning rate (lr0 * lrf)
+momentum: 0.937  # SGD momentum/Adam beta1
+weight_decay: 0.0005  # optimizer weight decay 5e-4
+warmup_epochs: 5.0  # warmup epochs (fractions ok)
+warmup_momentum: 0.8  # warmup initial momentum
+warmup_bias_lr: 0.1  # warmup initial bias lr
+
+# Loss hyperparameters (UNCHANGED - standard values)
+box: 0.05  # box loss gain
+cls: 0.5  # cls loss gain (detection classification)
+cls_pw: 1.0  # cls BCELoss positive_weight
+obj: 1.0  # obj loss gain (scale with pixels)
+obj_pw: 1.0  # obj BCELoss positive_weight
+iou_t: 0.2  # IoU training threshold
+anchor_t: 4.0  # anchor-multiple threshold
+fl_gamma: 0.0  # focal loss gamma (efficientDet default gamma=1.5)
+
+# Classification Task specific hyperparameters (TUNED for batch=128)
+cls_task: 1.7  # classification task loss weight (INCREASED for large batch to achieve 20% ratio)
+label_smoothing: 0.05  # Label smoothing epsilon (minimal for stable training)
+temperature: 1.0  # Temperature for softmax sharpness
+
+# Anatomical Constraints hyperparameters (TUNED for 10% target)
+use_anatomical_constraints: true  # Enable anatomical constraint loss
+constraint_weight: 0.26  # Weight for anatomical constraint loss (tuned for 10% in 7:2:1 ratio)
+constraint_mode: soft  # Constraint enforcement mode: soft, strict, or mixed
+constraint_learning_rate: 0.1  # Learning rate for constraint adaptation
+constraint_penalty: 10.0  # Penalty factor for constraint violations
+
+# Regularization parameters
+dropout: 0.1  # Minimal dropout
+max_grad_norm: 1.0  # Standard gradient clipping
+
+# Image augmentation hyperparameters (disabled for medical images)
+hsv_h: 0.0  # image HSV-Hue augmentation (fraction)
+hsv_s: 0.0  # image HSV-Saturation augmentation (fraction)
+hsv_v: 0.0  # image HSV-Value augmentation (fraction)
+degrees: 0.0  # image rotation (+/- deg)
+translate: 0.0  # image translation (+/- fraction)
+scale: 0.0  # image scale (+/- gain)
+shear: 0.0  # image shear (+/- deg)
+perspective: 0.0  # image perspective (+/- fraction), range 0-0.001
+flipud: 0.0  # image flip up-down (probability)
+fliplr: 0.0  # image flip left-right (probability)
+mosaic: 0.0  # image mosaic (probability)
+mixup: 0.0  # image mixup (probability)
+copy_paste: 0.0  # segment copy-paste (probability)
+

@@ -73,6 +73,7 @@ class Loggers():
             'train/obj_loss',
             'train/cls_loss',
             'train/cls_task_loss',  # train loss (including classification task)
+            'train/constraint_loss',  # train constraint loss
             'metrics/precision',
             'metrics/recall',
             'metrics/mAP_0.5',
@@ -81,6 +82,7 @@ class Loggers():
             'val/obj_loss',
             'val/cls_loss',
             'val/cls_task_loss',  # val loss (including classification task)
+            'val/constraint_loss',  # val constraint loss
             'x/lr0',
             'x/lr1',
             'x/lr2']  # params
