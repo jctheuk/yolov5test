@@ -115,7 +115,7 @@ class ComputeLoss:
                 self.class_weights = torch.tensor(self.class_weights, dtype=torch.float32, device=device)
             elif isinstance(self.class_weights, torch.Tensor):
                 self.class_weights = self.class_weights.to(device)
-            print(f"[INFO] Using class weights for classification: {self.class_weights}")
+            # print(f"[INFO] Using class weights for classification: {self.class_weights}")
 
         # Define criteria for detection
         BCEcls = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([h['cls_pw']], device=device))
@@ -159,19 +159,19 @@ class ComputeLoss:
         # Manual CrossEntropy implementation for PyTorch compatibility (like train_classification_task.py)
         self.classification_criterion = None  # Use manual implementation to avoid PyTorch version issues
         
-        # Initialize anatomical constraints
-        self.use_constraints = h.get('use_anatomical_constraints', True)
+        # Initialize anatomical constraints (DISABLED - fixed in dataset)
+        self.use_constraints = h.get('use_anatomical_constraints', False)  # Changed default to False
         self.constraint_weight = h.get('constraint_weight', 0.1)
         if self.use_constraints:
             self.anatomical_constraints = AnatomicalConstraints(device=device)
-            print(f"[INFO] Anatomical constraints enabled with weight: {self.constraint_weight}")
+            # print(f"[INFO] Anatomical constraints enabled with weight: {self.constraint_weight}")
         else:
             self.anatomical_constraints = None
-            print(f"[INFO] Anatomical constraints disabled")
+            # print(f"[INFO] Anatomical constraints disabled")
         
         # Keep only essential debug info
-        print(f"[DEBUG] Classification loss weight: {self.cls_task_loss_weight}")
-        print(f"[DEBUG] Using manual CrossEntropy implementation for PyTorch compatibility")
+        # print(f"[DEBUG] Classification loss weight: {self.cls_task_loss_weight}")
+        # print(f"[DEBUG] Using manual CrossEntropy implementation for PyTorch compatibility")
     
     def manual_cross_entropy_loss(self, logits, targets):
         """
@@ -201,11 +201,11 @@ class ComputeLoss:
             detection_outputs, classification_output = p
             
             # Check for NaN or inf values in classification output
-            if classification_output is not None:
-                if torch.isnan(classification_output).any():
-                    print(f"[DEBUG] WARNING: NaN values found in classification output!")
-                if torch.isinf(classification_output).any():
-                    print(f"[DEBUG] WARNING: Inf values found in classification output!")
+            # if classification_output is not None:
+            #     if torch.isnan(classification_output).any():
+            #         print(f"[DEBUG] WARNING: NaN values found in classification output!")
+            #     if torch.isinf(classification_output).any():
+            #         print(f"[DEBUG] WARNING: Inf values found in classification output!")
         else:
             detection_outputs = p
             classification_output = None
@@ -291,61 +291,62 @@ class ComputeLoss:
                     lcls_task = self.manual_cross_entropy_loss(classification_output, target_indices) * self.cls_task_loss_weight
                 
                 # Check for overfitting (model predicting only one class)
-                with torch.no_grad():
-                    pred_classes = torch.argmax(classification_output, dim=1)
-                    unique_preds = torch.unique(pred_classes)
-                    unique_targets = torch.unique(target_indices)
+                # with torch.no_grad():
+                #     pred_classes = torch.argmax(classification_output, dim=1)
+                #     unique_preds = torch.unique(pred_classes)
+                #     unique_targets = torch.unique(target_indices)
                     
-                    # Check if model is predicting all same class
-                    if len(unique_preds) == 1:
-                        print(f"[DEBUG] WARNING: Model is predicting only class {unique_preds[0]} (overfitting)")
+                #     # Check if model is predicting all same class
+                #     if len(unique_preds) == 1:
+                #         print(f"[DEBUG] WARNING: Model is predicting only class {unique_preds[0]} (overfitting)")
                     
-                    # Check if targets are balanced
-                    if len(unique_targets) < 3:
-                        print(f"[DEBUG] WARNING: Only {len(unique_targets)} classes in targets")
+                #     # Check if targets are balanced
+                #     if len(unique_targets) < 3:
+                #         print(f"[DEBUG] WARNING: Only {len(unique_targets)} classes in targets")
                     
             except Exception as e:
-                print(f"[DEBUG] ERROR in classification loss calculation: {e}")
+                # print(f"[DEBUG] ERROR in classification loss calculation: {e}")
                 lcls_task = torch.tensor(0.0, device=self.device)
 
-        # Apply anatomical constraints if enabled
+        # Apply anatomical constraints if enabled (DISABLED - fixed in dataset)
         lconstraint = torch.zeros(1, device=self.device)  # constraint loss
-        if self.use_constraints and self.anatomical_constraints is not None and classification_output is not None:
-            try:
-                # Convert classification output to one-hot for constraint calculation
-                if classification_output.dim() > 1:
-                    # Already in logit format, convert to probabilities
-                    classification_probs = torch.softmax(classification_output, dim=1)
-                else:
-                    # Convert to one-hot
-                    classification_probs = torch.zeros(classification_output.shape[0], 3, device=self.device)
-                    classification_probs.scatter_(1, classification_output.long().unsqueeze(1), 1.0)
-                
-                # Calculate constraint loss based on detection predictions
-                # For now, we'll use a simplified constraint loss based on classification probabilities
-                # This penalizes predictions that violate anatomical constraints
-                constraint_penalty = 0.0
-                for i in range(classification_probs.shape[0]):
-                    view_idx = torch.argmax(classification_probs[i]).item()
-                    
-                    # Get constraint weights for this view
-                    constraint_weights = torch.zeros(4, device=self.device)
-                    for det_class in range(4):
-                        if det_class in self.anatomical_constraints.soft_weights[view_idx]:
-                            constraint_weights[det_class] = self.anatomical_constraints.soft_weights[view_idx][det_class]
-                        else:
-                            constraint_weights[det_class] = 0.1  # Low weight for impossible detections
-                    
-                    # Apply constraint penalty based on detection confidence
-                    # This is a simplified version - in practice, you'd use actual detection predictions
-                    view_confidence = torch.max(classification_probs[i])
-                    constraint_penalty += (1.0 - view_confidence) * 0.1  # Small penalty for uncertain predictions
-                
-                lconstraint = torch.tensor(constraint_penalty, device=self.device) * self.constraint_weight
-                
-            except Exception as e:
-                print(f"[DEBUG] ERROR in constraint loss calculation: {e}")
-                lconstraint = torch.tensor(0.0, device=self.device)
+        # Constraint calculation disabled - issues fixed in dataset
+        # if self.use_constraints and self.anatomical_constraints is not None and classification_output is not None:
+        #     try:
+        #         # Convert classification output to one-hot for constraint calculation
+        #         if classification_output.dim() > 1:
+        #             # Already in logit format, convert to probabilities
+        #             classification_probs = torch.softmax(classification_output, dim=1)
+        #         else:
+        #             # Convert to one-hot
+        #             classification_probs = torch.zeros(classification_output.shape[0], 3, device=self.device)
+        #             classification_probs.scatter_(1, classification_output.long().unsqueeze(1), 1.0)
+        #         
+        #         # Calculate constraint loss based on detection predictions
+        #         # For now, we'll use a simplified constraint loss based on classification probabilities
+        #         # This penalizes predictions that violate anatomical constraints
+        #         constraint_penalty = 0.0
+        #         for i in range(classification_probs.shape[0]):
+        #             view_idx = torch.argmax(classification_probs[i]).item()
+        #             
+        #             # Get constraint weights for this view
+        #             constraint_weights = torch.zeros(4, device=self.device)
+        #             for det_class in range(4):
+        #                 if det_class in self.anatomical_constraints.soft_weights[view_idx]:
+        #                     constraint_weights[det_class] = self.anatomical_constraints.soft_weights[view_idx][det_class]
+        #                 else:
+        #                     constraint_weights[det_class] = 0.1  # Low weight for impossible detections
+        #             
+        #             # Apply constraint penalty based on detection confidence
+        #             # This is a simplified version - in practice, you'd use actual detection predictions
+        #             view_confidence = torch.max(classification_probs[i])
+        #             constraint_penalty += (1.0 - view_confidence) * 0.1  # Small penalty for uncertain predictions
+        #         
+        #         lconstraint = torch.tensor(constraint_penalty, device=self.device) * self.constraint_weight
+        #         
+        #     except Exception as e:
+        #         # print(f"[DEBUG] ERROR in constraint loss calculation: {e}")
+        #         lconstraint = torch.tensor(0.0, device=self.device)
         
         # Total loss - IMPROVED: Scale detection and classification losses appropriately
         # Get batch size from first detection layer output
@@ -360,18 +361,18 @@ class ComputeLoss:
         total_loss = detection_loss + classification_loss + constraint_loss
         
         # Check for NaN/Inf in total loss
-        if torch.isnan(total_loss) or torch.isinf(total_loss):
-            print(f"[DEBUG] WARNING: NaN/Inf detected in total_loss!")
-            print(f"[DEBUG]   lbox: {lbox.item():.6f}")
-            print(f"[DEBUG]   lobj: {lobj.item():.6f}")
-            print(f"[DEBUG]   lcls: {lcls.item():.6f}")
-            print(f"[DEBUG]   lcls_task: {lcls_task.item():.6f}")
-            print(f"[DEBUG]   lconstraint: {lconstraint.item():.6f}")
-            print(f"[DEBUG]   batch_size: {bs}")
-            print(f"[DEBUG]   detection_loss (scaled by bs): {detection_loss.item():.6f}")
-            print(f"[DEBUG]   classification_loss (not scaled): {classification_loss.item():.6f}")
-            print(f"[DEBUG]   constraint_loss (not scaled, sum): {constraint_loss.item():.6f}")
-            print(f"[DEBUG]   detection/classification ratio: {detection_loss.item()/(classification_loss.item()+1e-6):.2f}")
+        # if torch.isnan(total_loss) or torch.isinf(total_loss):
+        #     print(f"[DEBUG] WARNING: NaN/Inf detected in total_loss!")
+        #     print(f"[DEBUG]   lbox: {lbox.item():.6f}")
+        #     print(f"[DEBUG]   lobj: {lobj.item():.6f}")
+        #     print(f"[DEBUG]   lcls: {lcls.item():.6f}")
+        #     print(f"[DEBUG]   lcls_task: {lcls_task.item():.6f}")
+        #     print(f"[DEBUG]   lconstraint: {lconstraint.item():.6f}")
+        #     print(f"[DEBUG]   batch_size: {bs}")
+        #     print(f"[DEBUG]   detection_loss (scaled by bs): {detection_loss.item():.6f}")
+        #     print(f"[DEBUG]   classification_loss (not scaled): {classification_loss.item():.6f}")
+        #     print(f"[DEBUG]   constraint_loss (not scaled, sum): {constraint_loss.item():.6f}")
+        #     print(f"[DEBUG]   detection/classification ratio: {detection_loss.item()/(classification_loss.item()+1e-6):.2f}")
         
         # Return total loss and individual losses (like original loss.py line 189)
         # Original format: return (lbox + lobj + lcls) * bs, torch.cat((lbox, lobj, lcls)).detach()

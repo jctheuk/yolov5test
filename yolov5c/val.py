@@ -322,55 +322,55 @@ def run(
         # Classification validation (if classification output exists)
         if classification_output is not None and classification_labels is not None:
             # Process classification labels - STANDARDIZED ONE-HOT HANDLING
-            print(f"[DEBUG] Raw classification_labels shape: {classification_labels.shape}, dtype: {classification_labels.dtype}")
+            # print(f"[DEBUG] Raw classification_labels shape: {classification_labels.shape}, dtype: {classification_labels.dtype}")
             
             if classification_labels.dim() > 1:
                 if classification_labels.shape[-1] > 1:
                     # One-hot encoded: [batch_size, num_classes] -> [batch_size]
                     cls_targets = classification_labels.argmax(dim=-1)
-                    print(f"[DEBUG] Detected one-hot encoding, converted to class indices: {cls_targets.shape}")
+                    # print(f"[DEBUG] Detected one-hot encoding, converted to class indices: {cls_targets.shape}")
                 elif classification_labels.shape[-1] == 1:
                     # Class indices with extra dim: [batch_size, 1] -> [batch_size]
                     cls_targets = classification_labels.squeeze(-1).long()
-                    print(f"[DEBUG] Detected class indices with extra dim, squeezed: {cls_targets.shape}")
+                    # print(f"[DEBUG] Detected class indices with extra dim, squeezed: {cls_targets.shape}")
                 else:
                     # Already class indices: [batch_size]
                     cls_targets = classification_labels.long()
-                    print(f"[DEBUG] Already class indices, direct conversion: {cls_targets.shape}")
+                    # print(f"[DEBUG] Already class indices, direct conversion: {cls_targets.shape}")
             else:
                 # 1D tensor: check if it's one-hot or class indices
                 if classification_labels.shape[0] > 1 and classification_labels.sum() == 1:
                     # One-hot encoding in 1D: [num_classes] -> scalar, but expand to match batch size
                     class_idx = classification_labels.argmax(dim=0)
                     cls_targets = class_idx.expand(im.shape[0]).long()
-                    print(f"[DEBUG] Detected 1D one-hot encoding, converted to class index: {cls_targets.shape}")
+                    # print(f"[DEBUG] Detected 1D one-hot encoding, converted to class index: {cls_targets.shape}")
                 else:
                     # Class indices: [batch_size]
                     cls_targets = classification_labels.long()
-                    print(f"[DEBUG] Detected class indices: {cls_targets.shape}")
+                    # print(f"[DEBUG] Detected class indices: {cls_targets.shape}")
             
             # Ensure batch size matches
             if cls_targets.shape[0] != im.shape[0]:
-                print(f"[DEBUG] Batch size mismatch: cls_targets={cls_targets.shape[0]}, im={im.shape[0]}")
+                # print(f"[DEBUG] Batch size mismatch: cls_targets={cls_targets.shape[0]}, im={im.shape[0]}")
                 if cls_targets.shape[0] < im.shape[0]:
                     # Pad with zeros
                     pad_size = im.shape[0] - cls_targets.shape[0]
                     cls_targets = torch.cat([cls_targets, torch.zeros(pad_size, dtype=torch.long, device=device)])
-                    print(f"[DEBUG] Padded cls_targets to shape: {cls_targets.shape}")
+                    # print(f"[DEBUG] Padded cls_targets to shape: {cls_targets.shape}")
                 else:
                     # Truncate
                     cls_targets = cls_targets[:im.shape[0]]
-                    print(f"[DEBUG] Truncated cls_targets to shape: {cls_targets.shape}")
+                    # print(f"[DEBUG] Truncated cls_targets to shape: {cls_targets.shape}")
             
             # Calculate classification accuracy
-            print(f"[DEBUG] Raw classification_output shape: {classification_output.shape}, dtype: {classification_output.dtype}")
+            # print(f"[DEBUG] Raw classification_output shape: {classification_output.shape}, dtype: {classification_output.dtype}")
             
             if classification_output.dim() > 1:
                 pred_classes = torch.argmax(classification_output, dim=1)
-                print(f"[DEBUG] Detected multi-dim classification output, using argmax: {pred_classes.shape}")
+                # print(f"[DEBUG] Detected multi-dim classification output, using argmax: {pred_classes.shape}")
             else:
                 pred_classes = classification_output.long()
-                print(f"[DEBUG] Detected single-dim classification output, direct conversion: {pred_classes.shape}")
+                # print(f"[DEBUG] Detected single-dim classification output, direct conversion: {pred_classes.shape}")
             
             # Ensure predictions and targets have the same shape
             if pred_classes.shape[0] != cls_targets.shape[0]:
@@ -380,20 +380,20 @@ def run(
                     cls_targets = cls_targets[:pred_classes.shape[0]]
             
             # DEBUG: Print validation batch predictions for first few batches
-            if batch_i < 3:  # Only for first 3 validation batches
-                print(f"\n[DEBUG] ===== VALIDATION BATCH {batch_i} PREDICTIONS =====")
-                print(f"[DEBUG] Classification output shape: {classification_output.shape}")
-                print(f"[DEBUG] Predicted classes: {pred_classes.cpu().numpy()}")
-                print(f"[DEBUG] True classes: {cls_targets.cpu().numpy()}")
-                print(f"[DEBUG] Correct predictions: {(pred_classes == cls_targets).sum().item()}/{cls_targets.shape[0]}")
-                
-                # Print detailed sample-by-sample results
-                for i in range(min(5, pred_classes.shape[0])):
-                    pred_class = pred_classes[i].item()
-                    true_class = cls_targets[i].item()
-                    correct = "✓" if pred_class == true_class else "✗"
-                    print(f"[DEBUG] Sample {i}: pred={pred_class}, true={true_class} {correct}")
-                print(f"[DEBUG] ===========================================\n")
+            # if batch_i < 3:  # Only for first 3 validation batches
+            #     print(f"\n[DEBUG] ===== VALIDATION BATCH {batch_i} PREDICTIONS =====")
+            #     print(f"[DEBUG] Classification output shape: {classification_output.shape}")
+            #     print(f"[DEBUG] Predicted classes: {pred_classes.cpu().numpy()}")
+            #     print(f"[DEBUG] True classes: {cls_targets.cpu().numpy()}")
+            #     print(f"[DEBUG] Correct predictions: {(pred_classes == cls_targets).sum().item()}/{cls_targets.shape[0]}")
+            #     
+            #     # Print detailed sample-by-sample results
+            #     for i in range(min(5, pred_classes.shape[0])):
+            #         pred_class = pred_classes[i].item()
+            #         true_class = cls_targets[i].item()
+            #         correct = "✓" if pred_class == true_class else "✗"
+            #         print(f"[DEBUG] Sample {i}: pred={pred_class}, true={true_class} {correct}")
+            #     print(f"[DEBUG] ===========================================\n")
             
             # Calculate correct predictions
             correct_cls = (pred_classes == cls_targets).sum().item()
@@ -503,10 +503,10 @@ def run(
                 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
                 
                 # Concatenate all outputs and targets
-                print(f"[DEBUG] Concatenating {len(all_cls_outputs)} output batches and {len(all_cls_targets)} target batches")
+                # print(f"[DEBUG] Concatenating {len(all_cls_outputs)} output batches and {len(all_cls_targets)} target batches")
                 all_cls_outputs = torch.cat(all_cls_outputs, dim=0)
                 all_cls_targets = torch.cat(all_cls_targets, dim=0)
-                print(f"[DEBUG] After concatenation - outputs: {all_cls_outputs.shape}, targets: {all_cls_targets.shape}")
+                # print(f"[DEBUG] After concatenation - outputs: {all_cls_outputs.shape}, targets: {all_cls_targets.shape}")
                 
                 # Convert to numpy for sklearn
                 if all_cls_outputs.dim() > 1:
@@ -514,17 +514,17 @@ def run(
                     all_cls_outputs_f32 = all_cls_outputs.float()
                     pred_classes = torch.argmax(all_cls_outputs_f32, dim=1).cpu().numpy()
                     pred_probs = torch.softmax(all_cls_outputs_f32, dim=1).cpu().numpy()
-                    print(f"[DEBUG] Multi-dim outputs -> pred_classes: {pred_classes.shape}, pred_probs: {pred_probs.shape}")
+                    # print(f"[DEBUG] Multi-dim outputs -> pred_classes: {pred_classes.shape}, pred_probs: {pred_probs.shape}")
                 else:
                     # Convert to float32 to avoid Half precision issues
                     all_cls_outputs_f32 = all_cls_outputs.float()
                     pred_classes = all_cls_outputs_f32.cpu().numpy()
                     pred_probs = torch.sigmoid(all_cls_outputs_f32).cpu().numpy()
-                    print(f"[DEBUG] Single-dim outputs -> pred_classes: {pred_classes.shape}, pred_probs: {pred_probs.shape}")
+                    # print(f"[DEBUG] Single-dim outputs -> pred_classes: {pred_classes.shape}, pred_probs: {pred_probs.shape}")
                 
                 true_classes = all_cls_targets.cpu().numpy()
-                print(f"[DEBUG] Final true_classes shape: {true_classes.shape}")
-                print(f"[DEBUG] Sample values - pred_classes: {pred_classes[:10]}, true_classes: {true_classes[:10]}")
+                # print(f"[DEBUG] Final true_classes shape: {true_classes.shape}")
+                # print(f"[DEBUG] Sample values - pred_classes: {pred_classes[:10]}, true_classes: {true_classes[:10]}")
                 
                 # Calculate basic metrics
                 precision, recall, f1_score, _ = precision_recall_fscore_support(
@@ -547,22 +547,22 @@ def run(
                 
                 # Print per-class results
                 num_classes = pred_probs.shape[1] if pred_probs is not None else 0
-                print(f"[DEBUG] Number of classes detected: {num_classes}")
+                # print(f"[DEBUG] Number of classes detected: {num_classes}")
                 if num_classes > 1:
                     from sklearn.metrics import precision_recall_fscore_support
                     # Calculate per-class metrics
                     precision_per_class, recall_per_class, _, _ = precision_recall_fscore_support(
                         true_classes, pred_classes, average=None, zero_division=0
                     )
-                    print(f"[DEBUG] Per-class metrics shapes - precision: {precision_per_class.shape}, recall: {recall_per_class.shape}")
+                    # print(f"[DEBUG] Per-class metrics shapes - precision: {precision_per_class.shape}, recall: {recall_per_class.shape}")
                     
                     # Count instances per class
                     class_counts = np.bincount(true_classes, minlength=num_classes)
-                    print(f"[DEBUG] Class counts: {class_counts}")
+                    # print(f"[DEBUG] Class counts: {class_counts}")
                     
                     # Get classification class names from data config
                     cls_names = data.get('cls_names', [f'class_{i}' for i in range(num_classes)])
-                    print(f"[DEBUG] Class names: {cls_names}")
+                    # print(f"[DEBUG] Class names: {cls_names}")
                     
                     # Print per-class results
                     for i in range(num_classes):

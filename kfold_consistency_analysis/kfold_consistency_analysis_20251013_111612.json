@@ -1,0 +1,670 @@
+{
+  "metadata": {
+    "timestamp": "20251013_111612",
+    "total_files_checked": 1484,
+    "files_with_differences": 23,
+    "known_v1_fixes": 14
+  },
+  "inconsistencies": [
+    {
+      "filename": "bWplwqlsaMKZ-unnamed_1_1.mp4-1.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_class: 0 vs 3",
+            "detection_x: 0.560889 vs 0.330778",
+            "detection_y: 0.504751 vs 0.643749",
+            "detection_w: 0.208202 vs 0.217834",
+            "detection_h: 0.159417 vs 0.202501"
+          ],
+          "is_known_v1_fix": true
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "bWplwqlsaMKZ-unnamed_1_1.mp4-2.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_x: 0.62885 vs 0.465431",
+            "detection_y: 0.48997 vs 0.419764",
+            "detection_w: 0.149277 vs 0.083281",
+            "detection_h: 0.167863 vs 0.15625",
+            "classification: [1, 0, 0] vs [0, 0, 1]"
+          ],
+          "is_known_v1_fix": false
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "bWplwqlsaMKZ-unnamed_1_1.mp4-28.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_class: 0 vs 1",
+            "detection_x: 0.50275 vs 0.37115",
+            "detection_y: 0.517948 vs 0.706398",
+            "detection_w: 0.249057 vs 0.124136",
+            "detection_h: 0.164696 vs 0.212204",
+            "classification: [0, 1, 0] vs [0, 0, 1]"
+          ],
+          "is_known_v1_fix": false
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "bWplwqlsaMKZ-unnamed_1_1.mp4-3.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_class: 0 vs 3",
+            "detection_x: 0.634349 vs 0.357008",
+            "detection_y: 0.498416 vs 0.572846",
+            "detection_h: 0.138302 vs 0.238598"
+          ],
+          "is_known_v1_fix": true
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "bWplwqlsaMKZ-unnamed_1_1.mp4-39.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_class: 0 vs 1",
+            "detection_x: 0.463466 vs 0.64658",
+            "detection_y: 0.469383 vs 0.549931",
+            "detection_w: 0.203488 vs 0.190817",
+            "detection_h: 0.173142 vs 0.141737",
+            "classification: [0, 1, 0] vs [1, 0, 0]"
+          ],
+          "is_known_v1_fix": false
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-0.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_x: 0.407629 vs 0.364853",
+            "detection_y: 0.489423 vs 0.632027",
+            "detection_w: 0.123411 vs 0.152616",
+            "detection_h: 0.298271 vs 0.259054",
+            "classification: [0, 0, 1] vs [1, 0, 0]"
+          ],
+          "is_known_v1_fix": false
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-1.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_class: 3 vs 0",
+            "detection_x: 0.39641 vs 0.442253",
+            "detection_y: 0.499471 vs 0.426626",
+            "detection_w: 0.106956 vs 0.104494",
+            "detection_h: 0.350098 vs 0.167863"
+          ],
+          "is_known_v1_fix": true
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-10.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_class: 3 vs 0",
+            "detection_x: 0.385939 vs 0.5795",
+            "detection_y: 0.484135 vs 0.636964",
+            "detection_w: 0.097981 vs 0.071857",
+            "detection_h: 0.264424 vs 0.172941"
+          ],
+          "is_known_v1_fix": true
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-17.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_x: 0.396784 vs 0.330162",
+            "detection_y: 0.466683 vs 0.624546",
+            "detection_w: 0.119671 vs 0.129755",
+            "detection_h: 0.212597 vs 0.134343",
+            "classification: [0, 0, 1] vs [1, 0, 0]"
+          ],
+          "is_known_v1_fix": false
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-9.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_class: 3 vs 1",
+            "detection_x: 0.393044 vs 0.378",
+            "detection_y: 0.487836 vs 0.457194",
+            "detection_w: 0.112191 vs 0.10575",
+            "detection_h: 0.25279 vs 0.125901"
+          ],
+          "is_known_v1_fix": true
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "ZmNmwq5saG5m-unnamed_1_3.mp4-8.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_class: 1 vs 0",
+            "detection_x: 0.451571 vs 0.639063",
+            "detection_y: 0.540102 vs 0.552787",
+            "detection_w: 0.067714 vs 0.147706",
+            "detection_h: 0.09515 vs 0.21326",
+            "classification: [0, 1, 0] vs [0, 0, 1]"
+          ],
+          "is_known_v1_fix": false
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "ZmVrwqtpbMKawpw=-unnamed_1_2.mp4-26.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_class: 3 vs 1",
+            "detection_x: 0.43204 vs 0.610253",
+            "detection_y: 0.714316 vs 0.627489",
+            "detection_w: 0.198774 vs 0.109779",
+            "detection_h: 0.247044 vs 0.234776",
+            "classification: [0, 0, 1] vs [1, 0, 0]"
+          ],
+          "is_known_v1_fix": true
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "ZmVrwqtpbMKawpw=-unnamed_2_1.mp4-15.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_class: 1 vs 3",
+            "detection_x: 0.591846 vs 0.445789",
+            "detection_y: 0.562769 vs 0.568095",
+            "detection_w: 0.145623 vs 0.153991",
+            "detection_h: 0.167341 vs 0.273438",
+            "classification: [0, 1, 0] vs [1, 0, 0]"
+          ],
+          "is_known_v1_fix": true
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "a2lrwqduZsKc-unnamed_1_1.mp4-31.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_class: 3 vs 0",
+            "detection_x: 0.542033 vs 0.5",
+            "detection_y: 0.465688 vs 0.576541",
+            "detection_w: 0.17049 vs 0.190132",
+            "detection_h: 0.197424 vs 0.229096"
+          ],
+          "is_known_v1_fix": true
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-12.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_class: 3 vs 1",
+            "detection_x: 0.406133 vs 0.461109",
+            "detection_y: 0.485192 vs 0.583932",
+            "detection_w: 0.126402 vs 0.159491",
+            "detection_h: 0.285578 vs 0.256546"
+          ],
+          "is_known_v1_fix": true
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "ZmRnwqZla8Kcwp4=-unnamed_2_2.mp4-35.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_class: 3 vs 1",
+            "detection_x: 0.378614 vs 0.448212",
+            "detection_y: 0.580236 vs 0.528437",
+            "detection_w: 0.121779 vs 0.143576",
+            "detection_h: 0.295608 vs 0.168751",
+            "classification: [0, 0, 1] vs [1, 0, 0]"
+          ],
+          "is_known_v1_fix": true
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-4.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_class: 2 vs 0",
+            "detection_x: 0.639456 vs 0.744736",
+            "detection_y: 0.587627 vs 0.677365",
+            "detection_w: 0.128064 vs 0.121779",
+            "detection_h: 0.179476 vs 0.14147",
+            "classification: [1, 0, 0] vs [0, 0, 1]"
+          ],
+          "is_known_v1_fix": false
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "bWplwqlsaMKZ-unnamed_1_1.mp4-14.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_x: 0.455217 vs 0.47918",
+            "detection_y: 0.449324 vs 0.586571",
+            "detection_w: 0.202703 vs 0.214488",
+            "detection_h: 0.160473 vs 0.194257",
+            "classification: [1, 0, 0] vs [0, 0, 1]"
+          ],
+          "is_known_v1_fix": false
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-13.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_class: 3 vs 1",
+            "detection_x: 0.389304 vs 0.448539",
+            "detection_y: 0.457163 vs 0.670503",
+            "detection_w: 0.104712 vs 0.172062",
+            "detection_h: 0.204136 vs 0.2481"
+          ],
+          "is_known_v1_fix": true
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "ZmNlwq5mZcKcwps=-unnamed_1_1.mp4-0.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_class: 0 vs 3",
+            "detection_x: 0.507857 vs 0.607399",
+            "detection_y: 0.473079 vs 0.510221",
+            "detection_w: 0.182275 vs 0.146597",
+            "detection_h: 0.159417 vs 0.126693",
+            "classification: [0, 1, 0] vs [1, 0, 0]"
+          ],
+          "is_known_v1_fix": true
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-15.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_class: 2 vs 1",
+            "detection_x: 0.596637 vs 0.552987",
+            "detection_y: 0.608214 vs 0.480387",
+            "detection_w: 0.215273 vs 0.175391",
+            "detection_h: 0.368454 vs 0.161887"
+          ],
+          "is_known_v1_fix": true
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-17.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_class: 2 vs 3",
+            "detection_x: 0.575817 vs 0.445003",
+            "detection_y: 0.606102 vs 0.456187",
+            "detection_w: 0.212916 vs 0.14142",
+            "detection_h: 0.330448 vs 0.241765"
+          ],
+          "is_known_v1_fix": true
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    },
+    {
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-21.txt",
+      "reference_dataset": "V2",
+      "differences": [
+        {
+          "dataset": "V1",
+          "differences": [
+            "detection_class: 2 vs 0",
+            "detection_x: 0.613136 vs 0.579353",
+            "detection_y: 0.559122 vs 0.5322",
+            "detection_w: 0.164991 vs 0.212131",
+            "detection_h: 0.282939 vs 0.243877",
+            "classification: [1, 0, 0] vs [0, 0, 1]"
+          ],
+          "is_known_v1_fix": false
+        }
+      ],
+      "datasets_involved": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ]
+    }
+  ],
+  "known_v1_fixes": [
+    {
+      "filename": "bWplwqlsaMKZ-unnamed_1_1.mp4-1.txt",
+      "original_detection": 0,
+      "fixed_detection": 3,
+      "view_class": 0,
+      "violation_type": "A4C_AR"
+    },
+    {
+      "filename": "bWplwqlsaMKZ-unnamed_1_1.mp4-3.txt",
+      "original_detection": 0,
+      "fixed_detection": 3,
+      "view_class": 0,
+      "violation_type": "A4C_AR"
+    },
+    {
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-1.txt",
+      "original_detection": 3,
+      "fixed_detection": 0,
+      "view_class": 2,
+      "violation_type": "PLAX_TR"
+    },
+    {
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-10.txt",
+      "original_detection": 3,
+      "fixed_detection": 0,
+      "view_class": 2,
+      "violation_type": "PLAX_TR"
+    },
+    {
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-9.txt",
+      "original_detection": 3,
+      "fixed_detection": 1,
+      "view_class": 2,
+      "violation_type": "PLAX_TR"
+    },
+    {
+      "filename": "ZmVrwqtpbMKawpw=-unnamed_1_2.mp4-26.txt",
+      "original_detection": 3,
+      "fixed_detection": 1,
+      "view_class": 2,
+      "violation_type": "PLAX_TR"
+    },
+    {
+      "filename": "ZmVrwqtpbMKawpw=-unnamed_2_1.mp4-15.txt",
+      "original_detection": 1,
+      "fixed_detection": 3,
+      "view_class": 1,
+      "violation_type": "PSAX_MR"
+    },
+    {
+      "filename": "a2lrwqduZsKc-unnamed_1_1.mp4-31.txt",
+      "original_detection": 3,
+      "fixed_detection": 0,
+      "view_class": 2,
+      "violation_type": "PLAX_TR"
+    },
+    {
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-12.txt",
+      "original_detection": 3,
+      "fixed_detection": 1,
+      "view_class": 2,
+      "violation_type": "PLAX_TR"
+    },
+    {
+      "filename": "ZmRnwqZla8Kcwp4=-unnamed_2_2.mp4-35.txt",
+      "original_detection": 3,
+      "fixed_detection": 1,
+      "view_class": 2,
+      "violation_type": "PLAX_TR"
+    },
+    {
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-13.txt",
+      "original_detection": 3,
+      "fixed_detection": 1,
+      "view_class": 2,
+      "violation_type": "PLAX_TR"
+    },
+    {
+      "filename": "ZmNlwq5mZcKcwps=-unnamed_1_1.mp4-0.txt",
+      "original_detection": 0,
+      "fixed_detection": 3,
+      "view_class": 1,
+      "violation_type": "PSAX_AR"
+    },
+    {
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-15.txt",
+      "original_detection": 2,
+      "fixed_detection": 1,
+      "view_class": 0,
+      "violation_type": "A4C_PR"
+    },
+    {
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-17.txt",
+      "original_detection": 2,
+      "fixed_detection": 3,
+      "view_class": 0,
+      "violation_type": "A4C_PR"
+    }
+  ]
+}

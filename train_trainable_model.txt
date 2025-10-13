@@ -1,8 +1,0 @@
-# Training command for the trainable model
-python train_classification_task.py \
-    --data regurgitationV1/data.yaml \
-    --epochs 50 \
-    --batch-size 16 \
-    --device auto \
-    --weights yolov5c/runs/classifybackbone13/weights/last_trainable.pt \
-    --hyp yolov5c/runs/classifybackbone13/hyp.yaml

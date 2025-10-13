@@ -431,17 +431,17 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             ni = i + nb * epoch  # number integrated batches (since train start)
             
             # Debug: Print batch information
-            if i == 0:  # Only print for first batch to avoid spam
-                print(f"[DEBUG] Batch {i} information:")
-                print(f"[DEBUG]   imgs shape: {imgs.shape}")
-                print(f"[DEBUG]   targets shape: {targets.shape}")
-                print(f"[DEBUG]   classification_labels type: {type(classification_labels)}")
-                if classification_labels is not None:
-                    print(f"[DEBUG]   classification_labels shape: {classification_labels.shape}")
-                    print(f"[DEBUG]   classification_labels dtype: {classification_labels.dtype}")
-                    print(f"[DEBUG]   classification_labels sample: {classification_labels[:3] if hasattr(classification_labels, '__len__') else classification_labels}")
-                else:
-                    print(f"[DEBUG]   classification_labels is None")
+            # if i == 0:  # Only print for first batch to avoid spam
+            #     print(f"[DEBUG] Batch {i} information:")
+            #     print(f"[DEBUG]   imgs shape: {imgs.shape}")
+            #     print(f"[DEBUG]   targets shape: {targets.shape}")
+            #     print(f"[DEBUG]   classification_labels type: {type(classification_labels)}")
+            #     if classification_labels is not None:
+            #         print(f"[DEBUG]   classification_labels shape: {classification_labels.shape}")
+            #         print(f"[DEBUG]   classification_labels dtype: {classification_labels.dtype}")
+            #         print(f"[DEBUG]   classification_labels sample: {classification_labels[:3] if hasattr(classification_labels, '__len__') else classification_labels}")
+            #     else:
+            #         print(f"[DEBUG]   classification_labels is None")
             
             imgs = imgs.to(device, non_blocking=True).float() / 255  # uint8 to float32, 0-255 to 0.0-1.0
 
@@ -560,32 +560,32 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                             total_loss *= 4
                     
                 # Enhanced NaN detection before backward pass
-                if torch.isnan(total_loss) or torch.isinf(total_loss):
-                    print(f"[DEBUG] NaN/Inf detected in total_loss at epoch {epoch}, batch {i}")
-                    print(f"[DEBUG] total_loss: {total_loss}")
-                    print(f"[DEBUG] Skipping this batch...")
-                    continue
+                # if torch.isnan(total_loss) or torch.isinf(total_loss):
+                #     print(f"[DEBUG] NaN/Inf detected in total_loss at epoch {epoch}, batch {i}")
+                #     print(f"[DEBUG] total_loss: {total_loss}")
+                #     print(f"[DEBUG] Skipping this batch...")
+                #     continue
                 
                 # Check for NaN in loss components
-                if isinstance(loss_items, list):
-                    for idx, item in enumerate(loss_items):
-                        if isinstance(item, torch.Tensor) and (torch.isnan(item) or torch.isinf(item)):
-                            print(f"[DEBUG] NaN/Inf detected in loss_items[{idx}]: {item}")
-                            print(f"[DEBUG] Skipping this batch...")
-                            continue
+                # if isinstance(loss_items, list):
+                #     for idx, item in enumerate(loss_items):
+                #         if isinstance(item, torch.Tensor) and (torch.isnan(item) or torch.isinf(item)):
+                #             print(f"[DEBUG] NaN/Inf detected in loss_items[{idx}]: {item}")
+                #             print(f"[DEBUG] Skipping this batch...")
+                #             continue
                 
                 # Backward pass with enhanced error handling
                 try:
                     scaler.scale(total_loss).backward()
                 except RuntimeError as e:
-                    if "nan" in str(e).lower():
-                        print(f"[DEBUG] NaN error during backward pass: {e}")
-                        print(f"[DEBUG] Resetting optimizer and scaler...")
-                        optimizer.zero_grad()
-                        scaler.update()
-                        continue
-                    else:
-                        raise e
+                    # if "nan" in str(e).lower():
+                    #     print(f"[DEBUG] NaN error during backward pass: {e}")
+                    #     print(f"[DEBUG] Resetting optimizer and scaler...")
+                    #     optimizer.zero_grad()
+                    #     scaler.update()
+                    #     continue
+                    # else:
+                    raise e
 
                 # Optimize - https://pytorch.org/docs/master/notes/amp_examples.html
                 if ni - last_opt_step >= accumulate:
@@ -822,8 +822,8 @@ def parse_opt(known=False):
     parser.add_argument('--bbox_interval', type=int, default=-1, help='Set bounding-box image logging interval')
     parser.add_argument('--artifact_alias', type=str, default='latest', help='Version of dataset artifact to use')
 
-    # Anatomical constraints arguments
-    parser.add_argument('--enable-constraints', action='store_true', default=True, help='enable anatomical constraints (default: True)')
+    # Anatomical constraints arguments (DISABLED - fixed in dataset)
+    parser.add_argument('--enable-constraints', action='store_true', default=False, help='enable anatomical constraints (default: False - fixed in dataset)')
     parser.add_argument('--disable-constraints', action='store_true', help='disable anatomical constraints')
     parser.add_argument('--constraint-weight', type=float, default=None, help='weight for constraint loss (overrides hyperparameter file)')
     parser.add_argument('--constraint-mode', type=str, default='soft', choices=['soft', 'strict', 'mixed'], help='constraint enforcement mode: soft, strict, or mixed')

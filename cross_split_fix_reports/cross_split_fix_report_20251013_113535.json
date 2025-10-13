@@ -1,0 +1,594 @@
+{
+  "metadata": {
+    "timestamp": "20251013_113535",
+    "total_fixes_applied": 58,
+    "verification_results": {
+      "V2": 0,
+      "V3": 0,
+      "V4": 0,
+      "V5": 0
+    }
+  },
+  "fixes_applied": [
+    {
+      "dataset": "V2",
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-12.txt",
+      "target_split": "train",
+      "source_split": "valid",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.406133 0.485192 0.126402 0.285578\n0 0 1",
+      "fixed_content": "1 0.461109 0.583932 0.159491 0.256546\n0 0 1",
+      "backup_path": "./regurgitationV2\\train\\labels\\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-12.txt.backup"
+    },
+    {
+      "dataset": "V2",
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-13.txt",
+      "target_split": "train",
+      "source_split": "test",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.389304 0.457163 0.104712 0.204136\n0 0 1",
+      "fixed_content": "1 0.448539 0.670503 0.172062 0.248100\n0 0 1",
+      "backup_path": "./regurgitationV2\\train\\labels\\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-13.txt.backup"
+    },
+    {
+      "dataset": "V2",
+      "filename": "ZmNlwq5mZcKcwps=-unnamed_1_1.mp4-0.txt",
+      "target_split": "train",
+      "source_split": "test",
+      "original_violation": "PSAX_AR",
+      "original_content": "0 0.507857 0.473079 0.182275 0.159417\n0 1 0",
+      "fixed_content": "3 0.607399 0.510221 0.146597 0.126693\n1 0 0",
+      "backup_path": "./regurgitationV2\\train\\labels\\ZmNlwq5mZcKcwps=-unnamed_1_1.mp4-0.txt.backup"
+    },
+    {
+      "dataset": "V2",
+      "filename": "ZmRnwqZla8Kcwp4=-unnamed_2_2.mp4-35.txt",
+      "target_split": "train",
+      "source_split": "valid",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.378614 0.580236 0.121779 0.295608\n0 0 1",
+      "fixed_content": "1 0.448212 0.528437 0.143576 0.168751\n1 0 0",
+      "backup_path": "./regurgitationV2\\train\\labels\\ZmRnwqZla8Kcwp4=-unnamed_2_2.mp4-35.txt.backup"
+    },
+    {
+      "dataset": "V2",
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-15.txt",
+      "target_split": "train",
+      "source_split": "test",
+      "original_violation": "A4C_PR",
+      "original_content": "2 0.596637 0.608214 0.215273 0.368454\n1 0 0",
+      "fixed_content": "1 0.552987 0.480387 0.175391 0.161887\n1 0 0",
+      "backup_path": "./regurgitationV2\\train\\labels\\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-15.txt.backup"
+    },
+    {
+      "dataset": "V2",
+      "filename": "bWplwqlsaMKZ-unnamed_1_1.mp4-14.txt",
+      "target_split": "valid",
+      "source_split": "test",
+      "original_violation": "A4C_AR",
+      "original_content": "0 0.455217 0.449324 0.202703 0.160473\n1 0 0",
+      "fixed_content": "0 0.479180 0.586571 0.214488 0.194257\n0 0 1",
+      "backup_path": "./regurgitationV2\\valid\\labels\\bWplwqlsaMKZ-unnamed_1_1.mp4-14.txt.backup"
+    },
+    {
+      "dataset": "V2",
+      "filename": "bWplwqlsaMKZ-unnamed_1_1.mp4-39.txt",
+      "target_split": "valid",
+      "source_split": "train",
+      "original_violation": "PSAX_AR",
+      "original_content": "0 0.463466 0.469383 0.203488 0.173142\n0 1 0",
+      "fixed_content": "1 0.646580 0.549931 0.190817 0.141737\n1 0 0",
+      "backup_path": "./regurgitationV2\\valid\\labels\\bWplwqlsaMKZ-unnamed_1_1.mp4-39.txt.backup"
+    },
+    {
+      "dataset": "V2",
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-17.txt",
+      "target_split": "valid",
+      "source_split": "test",
+      "original_violation": "A4C_PR",
+      "original_content": "2 0.575817 0.606102 0.212916 0.330448\n1 0 0",
+      "fixed_content": "3 0.445003 0.456187 0.141420 0.241765\n1 0 0",
+      "backup_path": "./regurgitationV2\\valid\\labels\\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-17.txt.backup"
+    },
+    {
+      "dataset": "V2",
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-21.txt",
+      "target_split": "valid",
+      "source_split": "test",
+      "original_violation": "A4C_PR",
+      "original_content": "2 0.613136 0.559122 0.164991 0.282939\n1 0 0",
+      "fixed_content": "0 0.579353 0.532200 0.212131 0.243877\n0 0 1",
+      "backup_path": "./regurgitationV2\\valid\\labels\\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-21.txt.backup"
+    },
+    {
+      "dataset": "V2",
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-0.txt",
+      "target_split": "test",
+      "source_split": "train",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.407629 0.489423 0.123411 0.298271\n0 0 1",
+      "fixed_content": "3 0.364853 0.632027 0.152616 0.259054\n1 0 0",
+      "backup_path": "./regurgitationV2\\test\\labels\\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-0.txt.backup"
+    },
+    {
+      "dataset": "V2",
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-10.txt",
+      "target_split": "test",
+      "source_split": "train",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.385939 0.484135 0.097981 0.264424\n0 0 1",
+      "fixed_content": "0 0.579500 0.636964 0.071857 0.172941\n0 0 1",
+      "backup_path": "./regurgitationV2\\test\\labels\\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-10.txt.backup"
+    },
+    {
+      "dataset": "V2",
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-4.txt",
+      "target_split": "test",
+      "source_split": "valid",
+      "original_violation": "A4C_PR",
+      "original_content": "2 0.639456 0.587627 0.128064 0.179476\n1 0 0",
+      "fixed_content": "0 0.744736 0.677365 0.121779 0.141470\n0 0 1",
+      "backup_path": "./regurgitationV2\\test\\labels\\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-4.txt.backup"
+    },
+    {
+      "dataset": "V3",
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-12.txt",
+      "target_split": "train",
+      "source_split": "valid",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.406133 0.485192 0.126402 0.285578\n0 0 1",
+      "fixed_content": "1 0.461109 0.583932 0.159491 0.256546\n0 0 1",
+      "backup_path": "./regurgitationV3\\train\\labels\\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-12.txt.backup"
+    },
+    {
+      "dataset": "V3",
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-13.txt",
+      "target_split": "train",
+      "source_split": "test",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.389304 0.457163 0.104712 0.204136\n0 0 1",
+      "fixed_content": "1 0.448539 0.670503 0.172062 0.248100\n0 0 1",
+      "backup_path": "./regurgitationV3\\train\\labels\\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-13.txt.backup"
+    },
+    {
+      "dataset": "V3",
+      "filename": "ZmNlwq5mZcKcwps=-unnamed_1_1.mp4-0.txt",
+      "target_split": "train",
+      "source_split": "test",
+      "original_violation": "PSAX_AR",
+      "original_content": "0 0.507857 0.473079 0.182275 0.159417\n0 1 0",
+      "fixed_content": "3 0.607399 0.510221 0.146597 0.126693\n1 0 0",
+      "backup_path": "./regurgitationV3\\train\\labels\\ZmNlwq5mZcKcwps=-unnamed_1_1.mp4-0.txt.backup"
+    },
+    {
+      "dataset": "V3",
+      "filename": "ZmRnwqZla8Kcwp4=-unnamed_2_2.mp4-35.txt",
+      "target_split": "train",
+      "source_split": "valid",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.378614 0.580236 0.121779 0.295608\n0 0 1",
+      "fixed_content": "1 0.448212 0.528437 0.143576 0.168751\n1 0 0",
+      "backup_path": "./regurgitationV3\\train\\labels\\ZmRnwqZla8Kcwp4=-unnamed_2_2.mp4-35.txt.backup"
+    },
+    {
+      "dataset": "V3",
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-15.txt",
+      "target_split": "train",
+      "source_split": "test",
+      "original_violation": "A4C_PR",
+      "original_content": "2 0.596637 0.608214 0.215273 0.368454\n1 0 0",
+      "fixed_content": "1 0.552987 0.480387 0.175391 0.161887\n1 0 0",
+      "backup_path": "./regurgitationV3\\train\\labels\\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-15.txt.backup"
+    },
+    {
+      "dataset": "V3",
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-17.txt",
+      "target_split": "train",
+      "source_split": "test",
+      "original_violation": "A4C_PR",
+      "original_content": "2 0.575817 0.606102 0.212916 0.330448\n1 0 0",
+      "fixed_content": "3 0.445003 0.456187 0.141420 0.241765\n1 0 0",
+      "backup_path": "./regurgitationV3\\train\\labels\\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-17.txt.backup"
+    },
+    {
+      "dataset": "V3",
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-21.txt",
+      "target_split": "train",
+      "source_split": "test",
+      "original_violation": "A4C_PR",
+      "original_content": "2 0.613136 0.559122 0.164991 0.282939\n1 0 0",
+      "fixed_content": "0 0.579353 0.532200 0.212131 0.243877\n0 0 1",
+      "backup_path": "./regurgitationV3\\train\\labels\\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-21.txt.backup"
+    },
+    {
+      "dataset": "V3",
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-4.txt",
+      "target_split": "train",
+      "source_split": "valid",
+      "original_violation": "A4C_PR",
+      "original_content": "2 0.639456 0.587627 0.128064 0.179476\n1 0 0",
+      "fixed_content": "0 0.744736 0.677365 0.121779 0.141470\n0 0 1",
+      "backup_path": "./regurgitationV3\\train\\labels\\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-4.txt.backup"
+    },
+    {
+      "dataset": "V3",
+      "filename": "bWplwqlsaMKZ-unnamed_1_1.mp4-14.txt",
+      "target_split": "valid",
+      "source_split": "test",
+      "original_violation": "A4C_AR",
+      "original_content": "0 0.455217 0.449324 0.202703 0.160473\n1 0 0",
+      "fixed_content": "0 0.479180 0.586571 0.214488 0.194257\n0 0 1",
+      "backup_path": "./regurgitationV3\\valid\\labels\\bWplwqlsaMKZ-unnamed_1_1.mp4-14.txt.backup"
+    },
+    {
+      "dataset": "V3",
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-1.txt",
+      "target_split": "valid",
+      "source_split": "train",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.396410 0.499471 0.106956 0.350098\n0 0 1",
+      "fixed_content": "0 0.442253 0.426626 0.104494 0.167863\n0 0 1",
+      "backup_path": "./regurgitationV3\\valid\\labels\\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-1.txt.backup"
+    },
+    {
+      "dataset": "V3",
+      "filename": "a2lrwqduZsKc-unnamed_1_1.mp4-31.txt",
+      "target_split": "test",
+      "source_split": "valid",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.542033 0.465688 0.170490 0.197424\n0 0 1",
+      "fixed_content": "0 0.500000 0.576541 0.190132 0.229096\n0 0 1",
+      "backup_path": "./regurgitationV3\\test\\labels\\a2lrwqduZsKc-unnamed_1_1.mp4-31.txt.backup"
+    },
+    {
+      "dataset": "V3",
+      "filename": "bWplwqlsaMKZ-unnamed_1_1.mp4-2.txt",
+      "target_split": "test",
+      "source_split": "train",
+      "original_violation": "A4C_AR",
+      "original_content": "0 0.628850 0.489970 0.149277 0.167863\n1 0 0",
+      "fixed_content": "0 0.465431 0.419764 0.083281 0.156250\n0 0 1",
+      "backup_path": "./regurgitationV3\\test\\labels\\bWplwqlsaMKZ-unnamed_1_1.mp4-2.txt.backup"
+    },
+    {
+      "dataset": "V3",
+      "filename": "bWplwqlsaMKZ-unnamed_1_1.mp4-28.txt",
+      "target_split": "test",
+      "source_split": "train",
+      "original_violation": "PSAX_AR",
+      "original_content": "0 0.502750 0.517948 0.249057 0.164696\n0 1 0",
+      "fixed_content": "1 0.371150 0.706398 0.124136 0.212204\n0 0 1",
+      "backup_path": "./regurgitationV3\\test\\labels\\bWplwqlsaMKZ-unnamed_1_1.mp4-28.txt.backup"
+    },
+    {
+      "dataset": "V3",
+      "filename": "bWplwqlsaMKZ-unnamed_1_1.mp4-3.txt",
+      "target_split": "test",
+      "source_split": "train",
+      "original_violation": "A4C_AR",
+      "original_content": "0 0.634349 0.498416 0.158705 0.138302\n1 0 0",
+      "fixed_content": "3 0.357008 0.572846 0.158705 0.238598\n1 0 0",
+      "backup_path": "./regurgitationV3\\test\\labels\\bWplwqlsaMKZ-unnamed_1_1.mp4-3.txt.backup"
+    },
+    {
+      "dataset": "V3",
+      "filename": "ZmVrwqtpbMKawpw=-unnamed_2_1.mp4-15.txt",
+      "target_split": "test",
+      "source_split": "train",
+      "original_violation": "PSAX_MR",
+      "original_content": "1 0.591846 0.562769 0.145623 0.167341\n0 1 0",
+      "fixed_content": "3 0.445789 0.568095 0.153991 0.273438\n1 0 0",
+      "backup_path": "./regurgitationV3\\test\\labels\\ZmVrwqtpbMKawpw=-unnamed_2_1.mp4-15.txt.backup"
+    },
+    {
+      "dataset": "V4",
+      "filename": "a2lrwqduZsKc-unnamed_1_1.mp4-31.txt",
+      "target_split": "train",
+      "source_split": "valid",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.542033 0.465688 0.170490 0.197424\n0 0 1",
+      "fixed_content": "0 0.500000 0.576541 0.190132 0.229096\n0 0 1",
+      "backup_path": "./regurgitationV4\\train\\labels\\a2lrwqduZsKc-unnamed_1_1.mp4-31.txt.backup"
+    },
+    {
+      "dataset": "V4",
+      "filename": "bWplwqlsaMKZ-unnamed_1_1.mp4-14.txt",
+      "target_split": "train",
+      "source_split": "test",
+      "original_violation": "A4C_AR",
+      "original_content": "0 0.455217 0.449324 0.202703 0.160473\n1 0 0",
+      "fixed_content": "0 0.479180 0.586571 0.214488 0.194257\n0 0 1",
+      "backup_path": "./regurgitationV4\\train\\labels\\bWplwqlsaMKZ-unnamed_1_1.mp4-14.txt.backup"
+    },
+    {
+      "dataset": "V4",
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-12.txt",
+      "target_split": "train",
+      "source_split": "valid",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.406133 0.485192 0.126402 0.285578\n0 0 1",
+      "fixed_content": "1 0.461109 0.583932 0.159491 0.256546\n0 0 1",
+      "backup_path": "./regurgitationV4\\train\\labels\\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-12.txt.backup"
+    },
+    {
+      "dataset": "V4",
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-13.txt",
+      "target_split": "train",
+      "source_split": "test",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.389304 0.457163 0.104712 0.204136\n0 0 1",
+      "fixed_content": "1 0.448539 0.670503 0.172062 0.248100\n0 0 1",
+      "backup_path": "./regurgitationV4\\train\\labels\\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-13.txt.backup"
+    },
+    {
+      "dataset": "V4",
+      "filename": "ZmNlwq5mZcKcwps=-unnamed_1_1.mp4-0.txt",
+      "target_split": "train",
+      "source_split": "test",
+      "original_violation": "PSAX_AR",
+      "original_content": "0 0.507857 0.473079 0.182275 0.159417\n0 1 0",
+      "fixed_content": "3 0.607399 0.510221 0.146597 0.126693\n1 0 0",
+      "backup_path": "./regurgitationV4\\train\\labels\\ZmNlwq5mZcKcwps=-unnamed_1_1.mp4-0.txt.backup"
+    },
+    {
+      "dataset": "V4",
+      "filename": "ZmRnwqZla8Kcwp4=-unnamed_2_2.mp4-35.txt",
+      "target_split": "train",
+      "source_split": "valid",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.378614 0.580236 0.121779 0.295608\n0 0 1",
+      "fixed_content": "1 0.448212 0.528437 0.143576 0.168751\n1 0 0",
+      "backup_path": "./regurgitationV4\\train\\labels\\ZmRnwqZla8Kcwp4=-unnamed_2_2.mp4-35.txt.backup"
+    },
+    {
+      "dataset": "V4",
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-15.txt",
+      "target_split": "train",
+      "source_split": "test",
+      "original_violation": "A4C_PR",
+      "original_content": "2 0.596637 0.608214 0.215273 0.368454\n1 0 0",
+      "fixed_content": "1 0.552987 0.480387 0.175391 0.161887\n1 0 0",
+      "backup_path": "./regurgitationV4\\train\\labels\\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-15.txt.backup"
+    },
+    {
+      "dataset": "V4",
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-17.txt",
+      "target_split": "train",
+      "source_split": "test",
+      "original_violation": "A4C_PR",
+      "original_content": "2 0.575817 0.606102 0.212916 0.330448\n1 0 0",
+      "fixed_content": "3 0.445003 0.456187 0.141420 0.241765\n1 0 0",
+      "backup_path": "./regurgitationV4\\train\\labels\\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-17.txt.backup"
+    },
+    {
+      "dataset": "V4",
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-4.txt",
+      "target_split": "train",
+      "source_split": "valid",
+      "original_violation": "A4C_PR",
+      "original_content": "2 0.639456 0.587627 0.128064 0.179476\n1 0 0",
+      "fixed_content": "0 0.744736 0.677365 0.121779 0.141470\n0 0 1",
+      "backup_path": "./regurgitationV4\\train\\labels\\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-4.txt.backup"
+    },
+    {
+      "dataset": "V4",
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-21.txt",
+      "target_split": "valid",
+      "source_split": "test",
+      "original_violation": "A4C_PR",
+      "original_content": "2 0.613136 0.559122 0.164991 0.282939\n1 0 0",
+      "fixed_content": "0 0.579353 0.532200 0.212131 0.243877\n0 0 1",
+      "backup_path": "./regurgitationV4\\valid\\labels\\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-21.txt.backup"
+    },
+    {
+      "dataset": "V4",
+      "filename": "bWplwqlsaMKZ-unnamed_1_1.mp4-39.txt",
+      "target_split": "test",
+      "source_split": "train",
+      "original_violation": "PSAX_AR",
+      "original_content": "0 0.463466 0.469383 0.203488 0.173142\n0 1 0",
+      "fixed_content": "1 0.646580 0.549931 0.190817 0.141737\n1 0 0",
+      "backup_path": "./regurgitationV4\\test\\labels\\bWplwqlsaMKZ-unnamed_1_1.mp4-39.txt.backup"
+    },
+    {
+      "dataset": "V4",
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-1.txt",
+      "target_split": "test",
+      "source_split": "train",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.396410 0.499471 0.106956 0.350098\n0 0 1",
+      "fixed_content": "0 0.442253 0.426626 0.104494 0.167863\n0 0 1",
+      "backup_path": "./regurgitationV4\\test\\labels\\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-1.txt.backup"
+    },
+    {
+      "dataset": "V4",
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-9.txt",
+      "target_split": "test",
+      "source_split": "train",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.393044 0.487836 0.112191 0.252790\n0 0 1",
+      "fixed_content": "1 0.378000 0.457194 0.105750 0.125901\n0 0 1",
+      "backup_path": "./regurgitationV4\\test\\labels\\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-9.txt.backup"
+    },
+    {
+      "dataset": "V4",
+      "filename": "ZmNmwq5saG5m-unnamed_1_3.mp4-8.txt",
+      "target_split": "test",
+      "source_split": "train",
+      "original_violation": "PSAX_MR",
+      "original_content": "1 0.451571 0.540102 0.067714 0.095150\n0 1 0",
+      "fixed_content": "0 0.639063 0.552787 0.147706 0.213260\n0 0 1",
+      "backup_path": "./regurgitationV4\\test\\labels\\ZmNmwq5saG5m-unnamed_1_3.mp4-8.txt.backup"
+    },
+    {
+      "dataset": "V4",
+      "filename": "ZmVrwqtpbMKawpw=-unnamed_1_2.mp4-26.txt",
+      "target_split": "test",
+      "source_split": "train",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.432040 0.714316 0.198774 0.247044\n0 0 1",
+      "fixed_content": "1 0.610253 0.627489 0.109779 0.234776\n1 0 0",
+      "backup_path": "./regurgitationV4\\test\\labels\\ZmVrwqtpbMKawpw=-unnamed_1_2.mp4-26.txt.backup"
+    },
+    {
+      "dataset": "V5",
+      "filename": "a2lrwqduZsKc-unnamed_1_1.mp4-31.txt",
+      "target_split": "train",
+      "source_split": "valid",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.542033 0.465688 0.170490 0.197424\n0 0 1",
+      "fixed_content": "0 0.500000 0.576541 0.190132 0.229096\n0 0 1",
+      "backup_path": "./regurgitationV5\\train\\labels\\a2lrwqduZsKc-unnamed_1_1.mp4-31.txt.backup"
+    },
+    {
+      "dataset": "V5",
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-13.txt",
+      "target_split": "train",
+      "source_split": "test",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.389304 0.457163 0.104712 0.204136\n0 0 1",
+      "fixed_content": "1 0.448539 0.670503 0.172062 0.248100\n0 0 1",
+      "backup_path": "./regurgitationV5\\train\\labels\\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-13.txt.backup"
+    },
+    {
+      "dataset": "V5",
+      "filename": "ZmNlwq5mZcKcwps=-unnamed_1_1.mp4-0.txt",
+      "target_split": "train",
+      "source_split": "test",
+      "original_violation": "PSAX_AR",
+      "original_content": "0 0.507857 0.473079 0.182275 0.159417\n0 1 0",
+      "fixed_content": "3 0.607399 0.510221 0.146597 0.126693\n1 0 0",
+      "backup_path": "./regurgitationV5\\train\\labels\\ZmNlwq5mZcKcwps=-unnamed_1_1.mp4-0.txt.backup"
+    },
+    {
+      "dataset": "V5",
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-15.txt",
+      "target_split": "train",
+      "source_split": "test",
+      "original_violation": "A4C_PR",
+      "original_content": "2 0.596637 0.608214 0.215273 0.368454\n1 0 0",
+      "fixed_content": "1 0.552987 0.480387 0.175391 0.161887\n1 0 0",
+      "backup_path": "./regurgitationV5\\train\\labels\\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-15.txt.backup"
+    },
+    {
+      "dataset": "V5",
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-17.txt",
+      "target_split": "train",
+      "source_split": "test",
+      "original_violation": "A4C_PR",
+      "original_content": "2 0.575817 0.606102 0.212916 0.330448\n1 0 0",
+      "fixed_content": "3 0.445003 0.456187 0.141420 0.241765\n1 0 0",
+      "backup_path": "./regurgitationV5\\train\\labels\\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-17.txt.backup"
+    },
+    {
+      "dataset": "V5",
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-21.txt",
+      "target_split": "train",
+      "source_split": "test",
+      "original_violation": "A4C_PR",
+      "original_content": "2 0.613136 0.559122 0.164991 0.282939\n1 0 0",
+      "fixed_content": "0 0.579353 0.532200 0.212131 0.243877\n0 0 1",
+      "backup_path": "./regurgitationV5\\train\\labels\\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-21.txt.backup"
+    },
+    {
+      "dataset": "V5",
+      "filename": "ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-4.txt",
+      "target_split": "train",
+      "source_split": "valid",
+      "original_violation": "A4C_PR",
+      "original_content": "2 0.639456 0.587627 0.128064 0.179476\n1 0 0",
+      "fixed_content": "0 0.744736 0.677365 0.121779 0.141470\n0 0 1",
+      "backup_path": "./regurgitationV5\\train\\labels\\ZmZnwqlqbMKawp0=-unnamed_1_1.mp4-4.txt.backup"
+    },
+    {
+      "dataset": "V5",
+      "filename": "bWplwqlsaMKZ-unnamed_1_1.mp4-14.txt",
+      "target_split": "valid",
+      "source_split": "test",
+      "original_violation": "A4C_AR",
+      "original_content": "0 0.455217 0.449324 0.202703 0.160473\n1 0 0",
+      "fixed_content": "0 0.479180 0.586571 0.214488 0.194257\n0 0 1",
+      "backup_path": "./regurgitationV5\\valid\\labels\\bWplwqlsaMKZ-unnamed_1_1.mp4-14.txt.backup"
+    },
+    {
+      "dataset": "V5",
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-10.txt",
+      "target_split": "valid",
+      "source_split": "train",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.385939 0.484135 0.097981 0.264424\n0 0 1",
+      "fixed_content": "0 0.579500 0.636964 0.071857 0.172941\n0 0 1",
+      "backup_path": "./regurgitationV5\\valid\\labels\\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-10.txt.backup"
+    },
+    {
+      "dataset": "V5",
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-9.txt",
+      "target_split": "valid",
+      "source_split": "train",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.393044 0.487836 0.112191 0.252790\n0 0 1",
+      "fixed_content": "1 0.378000 0.457194 0.105750 0.125901\n0 0 1",
+      "backup_path": "./regurgitationV5\\valid\\labels\\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-9.txt.backup"
+    },
+    {
+      "dataset": "V5",
+      "filename": "ZmVrwqtpbMKawpw=-unnamed_1_2.mp4-26.txt",
+      "target_split": "valid",
+      "source_split": "train",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.432040 0.714316 0.198774 0.247044\n0 0 1",
+      "fixed_content": "1 0.610253 0.627489 0.109779 0.234776\n1 0 0",
+      "backup_path": "./regurgitationV5\\valid\\labels\\ZmVrwqtpbMKawpw=-unnamed_1_2.mp4-26.txt.backup"
+    },
+    {
+      "dataset": "V5",
+      "filename": "ZmVrwqtpbMKawpw=-unnamed_2_1.mp4-15.txt",
+      "target_split": "valid",
+      "source_split": "train",
+      "original_violation": "PSAX_MR",
+      "original_content": "1 0.591846 0.562769 0.145623 0.167341\n0 1 0",
+      "fixed_content": "3 0.445789 0.568095 0.153991 0.273438\n1 0 0",
+      "backup_path": "./regurgitationV5\\valid\\labels\\ZmVrwqtpbMKawpw=-unnamed_2_1.mp4-15.txt.backup"
+    },
+    {
+      "dataset": "V5",
+      "filename": "bWplwqlsaMKZ-unnamed_1_1.mp4-1.txt",
+      "target_split": "test",
+      "source_split": "train",
+      "original_violation": "A4C_AR",
+      "original_content": "0 0.560889 0.504751 0.208202 0.159417\n1 0 0",
+      "fixed_content": "3 0.330778 0.643749 0.217834 0.202501\n1 0 0",
+      "backup_path": "./regurgitationV5\\test\\labels\\bWplwqlsaMKZ-unnamed_1_1.mp4-1.txt.backup"
+    },
+    {
+      "dataset": "V5",
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-12.txt",
+      "target_split": "test",
+      "source_split": "valid",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.406133 0.485192 0.126402 0.285578\n0 0 1",
+      "fixed_content": "1 0.461109 0.583932 0.159491 0.256546\n0 0 1",
+      "backup_path": "./regurgitationV5\\test\\labels\\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-12.txt.backup"
+    },
+    {
+      "dataset": "V5",
+      "filename": "ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-17.txt",
+      "target_split": "test",
+      "source_split": "train",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.396784 0.466683 0.119671 0.212597\n0 0 1",
+      "fixed_content": "3 0.330162 0.624546 0.129755 0.134343\n1 0 0",
+      "backup_path": "./regurgitationV5\\test\\labels\\ZmhmwqduY8KU-Mmode+2D+Doppler_Echo_color_1_2.mp4-17.txt.backup"
+    },
+    {
+      "dataset": "V5",
+      "filename": "ZmRnwqZla8Kcwp4=-unnamed_2_2.mp4-35.txt",
+      "target_split": "test",
+      "source_split": "valid",
+      "original_violation": "PLAX_TR",
+      "original_content": "3 0.378614 0.580236 0.121779 0.295608\n0 0 1",
+      "fixed_content": "1 0.448212 0.528437 0.143576 0.168751\n1 0 0",
+      "backup_path": "./regurgitationV5\\test\\labels\\ZmRnwqZla8Kcwp4=-unnamed_2_2.mp4-35.txt.backup"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+# YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
+# Default hyperparameters for YOLOv5WithClassification - NO CONSTRAINTS
+# Based on V6 success but with constraints removed (dataset now clean)
+# Optimized for detection + classification dual-task training
+# Target: Clean medical image training with balanced detection and view classification
+
+# Optimizer hyperparameters (from V6 success)
+lr0: 0.01  # initial learning rate (proven successful)
+lrf: 0.1  # final OneCycleLR learning rate
+momentum: 0.937  # SGD momentum/Adam beta1
+weight_decay: 0.005  # optimizer weight decay (anti-overfitting)
+warmup_epochs: 5.0  # warmup epochs
+warmup_momentum: 0.8  # warmup initial momentum
+warmup_bias_lr: 0.1  # warmup initial bias lr
+
+# Loss hyperparameters (standard YOLO + classification)
+box: 0.05  # box loss gain
+cls: 0.5  # cls loss gain (detection classification)
+cls_pw: 1.0  # cls BCELoss positive_weight
+obj: 1.0  # obj loss gain (scale with pixels)
+obj_pw: 1.0  # obj BCELoss positive_weight
+iou_t: 0.2  # IoU training threshold
+anchor_t: 4.0  # anchor-multiple threshold
+fl_gamma: 0.0  # focal loss gamma (standard BCE)
+
+# Classification Task hyperparameters (balanced for dual-task)
+cls_task: 1.0  # view classification weight (A4C, PSAX, PLAX)
+label_smoothing: 0.08  # label smoothing for classification
+temperature: 1.0  # temperature for softmax sharpness
+
+# Anatomical Constraints (DISABLED - dataset now clean)
+use_anatomical_constraints: false  # Constraints disabled (dataset fixed)
+
+# Image augmentation hyperparameters (medical-optimized)
+# Conservative augmentation suitable for medical images
+hsv_h: 0.015  # image HSV-Hue augmentation (conservative)
+hsv_s: 0.4  # image HSV-Saturation augmentation
+hsv_v: 0.3  # image HSV-Value augmentation
+degrees: 10.0  # image rotation (±10 degrees)
+translate: 0.1  # image translation (±10%)
+scale: 0.5  # image scale (±50%)
+shear: 0.0  # image shear (disabled for medical)
+perspective: 0.0  # image perspective (disabled for medical)
+flipud: 0.0  # image flip up-down (disabled - orientation matters)
+fliplr: 0.0  # image flip left-right (disabled - anatomy orientation)
+mosaic: 0.0  # image mosaic (disabled - too aggressive for medical)
+mixup: 0.0  # image mixup (disabled - not suitable for medical)
+copy_paste: 0.0  # segment copy-paste (disabled)

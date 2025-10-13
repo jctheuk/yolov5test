@@ -1,0 +1,16 @@
+# YOLO Multi-Task Dataset (Detection + Classification)
+# Detection: 4 classes (AR, MR, PR, TR) - Valve regurgitation types  
+# Classification: 3 classes (PSAX, PLAX, A4C) - Echocardiogram views
+
+# Dataset paths (relative to yolov5c directory where training script runs)
+train: ../regurgitationV3/train/images
+val: ../regurgitationV3/valid/images  
+test: ../regurgitationV3/test/images
+
+# Detection configuration
+nc: 4  # number of detection classes
+names: ['AR', 'MR', 'PR', 'TR']  # detection class names
+
+# Classification configuration
+num_cls: 3  # number of classification classes
+cls_names: ['A4C', 'PSAX', 'PLAX']  # classification class names
