@@ -48,7 +48,7 @@ head:
   [-1, 3, C3, [1024, False]],  # 23 (P5/32-large)
 
   # Classification head connected directly to backbone (like classify/)
-  [9, 1, YOLOv5WithClassification, [512, 3]],  # Classification head on backbone output (512 channels, 3 classes)
+  [9, 1, YOLOv5WithClassification, [768, 3]],  # Classification head on backbone output (768 channels after width_multiple 0.75, 3 classes)
   
   # Detection head
   [[17, 20, 23], 1, Detect, [nc, anchors]],  # Detect(P3, P4, P5)

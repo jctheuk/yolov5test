@@ -1,0 +1,43 @@
+# Example: fold1_training.log (Individual Training Log)
+
+Epoch    GPU_mem   box_loss   obj_loss   cls_loss cls_task_loss   Instances  Size
+     0/49     14.1G    0.115      0.0871     2.19      1.386        312      640: 100%|██████████| 63/63 [01:18<00:00,  1.25s/it]
+               Class     Images  Instances          P          R      mAP50   mAP50-95: 100%|██████████| 16/16 [00:12<00:00,  1.26it/s]
+                 all        306        306      0.834      0.756      0.802       0.48
+
+     1/49     14.1G    0.108      0.0834     1.98      1.204        312      640: 100%|██████████| 63/63 [01:16<00:00,  1.21s/it]
+               Class     Images  Instances          P          R      mAP50   mAP50-95: 100%|██████████| 16/16 [00:11<00:00,  1.41it/s]
+                 all        306        306      0.842      0.778      0.817       0.501
+
+     ...
+
+    48/49     14.1G    0.0421     0.0523     0.891     0.743        312      640: 100%|██████████| 63/63 [01:14<00:00,  1.18s/it]
+               Class     Images  Instances          P          R      mAP50   mAP50-95: 100%|██████████| 16/16 [00:11<00:00,  1.44it/s]
+                 all        306        306      0.889      0.801      0.847      0.538
+
+    49/49     14.1G    0.0419     0.0521     0.887     0.741        312      640: 100%|██████████| 63/63 [01:13<00:00,  1.16s/it]
+               Class     Images  Instances          P          R      mAP50   mAP50-95: 100%|██████████| 16/16 [00:11<00:00,  1.42it/s]
+                 all        306        306      0.891      0.803      0.847      0.539
+
+Classification Results:
+                Class      Images   Instances           P           R          F1         Acc
+                 all         306         306       0.924       0.918       0.921       0.924
+                 A4C         123         123       0.934       0.943       0.938       0.943
+                PSAX          89          89       0.921       0.876       0.898       0.876
+                PLAX          94          94       0.918       0.936       0.927       0.936
+
+50 epochs completed in 0.763 hours.
+Optimizer stripped from runs/train/fold1/weights/last.pt, 14.4MB
+Optimizer stripped from runs/train/fold1/weights/best.pt, 14.4MB
+
+Validating runs/train/fold1/weights/best.pt...
+Fusing layers... 
+YOLOv5sc summary: 214 layers, 7235269 parameters, 0 gradients, 16.3 GFLOPs
+               Class     Images  Instances          P          R      mAP50   mAP50-95: 100%|██████████| 16/16 [00:14<00:00,  1.08it/s]
+                 all        306        306      0.891      0.803      0.847      0.539
+                  AR         72         72      0.889      0.806      0.841      0.534
+                  MR         89         89      0.887      0.798      0.839      0.528
+                  PR         71         71      0.893      0.817      0.853      0.547
+                  TR         74         74      0.895      0.791      0.855      0.549
+
+Results saved to runs/train/fold1
