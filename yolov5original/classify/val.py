@@ -67,6 +67,8 @@ def run(
     dataloader=None,
     criterion=None,
     pbar=None,
+    compute_metrics=False,  # compute detailed per-class metrics
+    save_dir=None,  # save directory for metrics
 ):
     """Validates a YOLOv5 classification model on a dataset, computing metrics like top1 and top5 accuracy."""
     # Initialize/load model and set device
@@ -143,6 +145,112 @@ def run(
         shape = (1, 3, imgsz, imgsz)
         LOGGER.info(f"Speed: %.1fms pre-process, %.1fms inference, %.1fms post-process per image at shape {shape}" % t)
         LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}")
+
+    # Compute detailed per-class metrics if requested
+    if compute_metrics and not training:
+        try:
+            import numpy as np
+            import pandas as pd
+            import matplotlib.pyplot as plt
+            import seaborn as sns
+            from sklearn.metrics import precision_recall_fscore_support, confusion_matrix, accuracy_score
+            
+            # Get predictions and targets
+            pred_classes = pred[:, 0].cpu().numpy()  # top1 predictions
+            true_classes = targets.cpu().numpy()
+            
+            # Get class names
+            if hasattr(model, 'names'):
+                class_names = list(model.names) if isinstance(model.names, (list, tuple)) else list(model.names.values())
+            else:
+                class_names = [f'class_{i}' for i in range(int(pred_classes.max()) + 1)]
+            
+            num_classes = len(class_names)
+            
+            # Overall metrics
+            overall_accuracy = accuracy_score(true_classes, pred_classes)
+            
+            # Per-class metrics
+            precision, recall, f1, support = precision_recall_fscore_support(
+                true_classes, pred_classes, average=None, zero_division=0, labels=range(num_classes)
+            )
+            
+            # Per-class accuracy
+            per_class_acc = []
+            for i in range(num_classes):
+                mask = true_classes == i
+                if mask.sum() > 0:
+                    acc_i = (pred_classes[mask] == i).sum() / mask.sum()
+                    per_class_acc.append(acc_i)
+                else:
+                    per_class_acc.append(0.0)
+            
+            # Confusion matrix
+            cm = confusion_matrix(true_classes, pred_classes, labels=range(num_classes))
+            
+            # Determine save directory
+            if save_dir is None:
+                save_dir = Path(project) / name
+                save_dir.mkdir(parents=True, exist_ok=True)
+            else:
+                save_dir = Path(save_dir)
+            
+            # Print detailed results
+            LOGGER.info('\n' + '='*80)
+            LOGGER.info('DETAILED CLASSIFICATION METRICS')
+            LOGGER.info('='*80)
+            LOGGER.info(f'\nOverall Accuracy: {overall_accuracy:.4f} ({overall_accuracy*100:.2f}%)')
+            LOGGER.info('\nPer-Class Metrics:')
+            LOGGER.info(f"{'Class':>15}{'Accuracy':>12}{'Precision':>12}{'Recall':>12}{'F1-Score':>12}{'Support':>12}")
+            LOGGER.info('-'*80)
+            
+            for i in range(num_classes):
+                LOGGER.info(f"{class_names[i]:>15}{per_class_acc[i]:>12.4f}{precision[i]:>12.4f}"
+                           f"{recall[i]:>12.4f}{f1[i]:>12.4f}{support[i]:>12.0f}")
+            
+            # Macro averages
+            macro_prec, macro_rec, macro_f1, _ = precision_recall_fscore_support(
+                true_classes, pred_classes, average='macro', zero_division=0
+            )
+            LOGGER.info('-'*80)
+            LOGGER.info(f"{'Macro Avg':>15}{np.mean(per_class_acc):>12.4f}{macro_prec:>12.4f}"
+                       f"{macro_rec:>12.4f}{macro_f1:>12.4f}{len(true_classes):>12.0f}")
+            
+            # Save metrics to CSV
+            metrics_df = pd.DataFrame({
+                'Class': class_names,
+                'Accuracy': per_class_acc,
+                'Precision': precision,
+                'Recall': recall,
+                'F1-Score': f1,
+                'Support': support
+            })
+            csv_path = save_dir / 'detailed_metrics.csv'
+            metrics_df.to_csv(csv_path, index=False, float_format='%.4f')
+            LOGGER.info(f'\n✅ Saved: {csv_path}')
+            
+            # Plot and save confusion matrix
+            plt.figure(figsize=(10, 8))
+            cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+            sns.heatmap(cm_normalized, annot=cm, fmt='d', cmap='Blues',
+                       xticklabels=class_names, yticklabels=class_names,
+                       cbar_kws={'label': 'Normalized Count'}, square=True)
+            plt.xlabel('Predicted Label', fontsize=12, fontweight='bold')
+            plt.ylabel('True Label', fontsize=12, fontweight='bold')
+            plt.title('Confusion Matrix', fontsize=14, fontweight='bold')
+            plt.tight_layout()
+            cm_path = save_dir / 'confusion_matrix.png'
+            plt.savefig(cm_path, dpi=300, bbox_inches='tight')
+            plt.close()
+            LOGGER.info(f'✅ Saved: {cm_path}')
+            
+            LOGGER.info('='*80 + '\n')
+            
+        except ImportError as e:
+            LOGGER.warning(f'Could not compute detailed metrics: {e}')
+            LOGGER.warning('Install required packages: pip install scikit-learn pandas seaborn matplotlib')
+        except Exception as e:
+            LOGGER.warning(f'Error computing detailed metrics: {e}')
 
     return top1, top5, loss
 

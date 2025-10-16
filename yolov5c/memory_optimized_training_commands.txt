@@ -1,0 +1,73 @@
+# YOLOv5WithClassification 記憶體優化訓練命令 - 緊急版本
+# 針對 99.7% GPU 記憶體使用率 (31.9GB/32GB) 的緊急修正
+# 大幅降低批次大小 + 混合精度訓練 + 梯度累積
+
+# ========== 記憶體優化版 YOLOv5lc Classify Backbone ==========
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV1/data.yaml --cfg models/yolov5lc_classify_backbone.yaml --epochs 300 --batch-size 16 --imgsz 416 --name yolov5lc_backbone_v1_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV2/data.yaml --cfg models/yolov5lc_classify_backbone.yaml --epochs 300 --batch-size 16 --imgsz 416 --name yolov5lc_backbone_v2_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV3/data.yaml --cfg models/yolov5lc_classify_backbone.yaml --epochs 300 --batch-size 16 --imgsz 416 --name yolov5lc_backbone_v3_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV4/data.yaml --cfg models/yolov5lc_classify_backbone.yaml --epochs 300 --batch-size 16 --imgsz 416 --name yolov5lc_backbone_v4_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV5/data.yaml --cfg models/yolov5lc_classify_backbone.yaml --epochs 300 --batch-size 16 --imgsz 416 --name yolov5lc_backbone_v5_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+# ========== 記憶體優化版 YOLOv5lc P3 ==========
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV1/data.yaml --cfg models/yolov5lc_p3.yaml --epochs 300 --batch-size 32 --imgsz 416 --name yolov5lc_p3_v1_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV2/data.yaml --cfg models/yolov5lc_p3.yaml --epochs 300 --batch-size 32 --imgsz 416 --name yolov5lc_p3_v2_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV3/data.yaml --cfg models/yolov5lc_p3.yaml --epochs 300 --batch-size 32 --imgsz 416 --name yolov5lc_p3_v3_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV4/data.yaml --cfg models/yolov5lc_p3.yaml --epochs 300 --batch-size 32 --imgsz 416 --name yolov5lc_p3_v4_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV5/data.yaml --cfg models/yolov5lc_p3.yaml --epochs 300 --batch-size 32 --imgsz 416 --name yolov5lc_p3_v5_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+# ========== 記憶體優化版 YOLOv5lc P4 ==========
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV1/data.yaml --cfg models/yolov5lc_p4.yaml --epochs 300 --batch-size 16 --imgsz 416 --name yolov5lc_p4_v1_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV2/data.yaml --cfg models/yolov5lc_p4.yaml --epochs 300 --batch-size 16 --imgsz 416 --name yolov5lc_p4_v2_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV3/data.yaml --cfg models/yolov5lc_p4.yaml --epochs 300 --batch-size 16 --imgsz 416 --name yolov5lc_p4_v3_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV4/data.yaml --cfg models/yolov5lc_p4.yaml --epochs 300 --batch-size 16 --imgsz 416 --name yolov5lc_p4_v4_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV5/data.yaml --cfg models/yolov5lc_p4.yaml --epochs 300 --batch-size 16 --imgsz 416 --name yolov5lc_p4_v5_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+# ========== 記憶體優化版 YOLOv5lc P5 ==========
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV1/data.yaml --cfg models/yolov5lc_p5.yaml --epochs 300 --batch-size 16 --imgsz 416 --name yolov5lc_p5_v1_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV2/data.yaml --cfg models/yolov5lc_p5.yaml --epochs 300 --batch-size 16 --imgsz 416 --name yolov5lc_p5_v2_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV3/data.yaml --cfg models/yolov5lc_p5.yaml --epochs 300 --batch-size 16 --imgsz 416 --name yolov5lc_p5_v3_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV4/data.yaml --cfg models/yolov5lc_p5.yaml --epochs 300 --batch-size 16 --imgsz 416 --name yolov5lc_p5_v4_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+cd /work/jonchang3909/yolov5test/yolov5c/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas seaborn && python train.py --data ../regurgitationV5/data.yaml --cfg models/yolov5lc_p5.yaml --epochs 300 --batch-size 16 --imgsz 416 --name yolov5lc_p5_v5_memory_opt --cache --nosave --patience 0 --hyp data/hyps/hyp.stable_training.yaml --cos-lr --amp
+
+# ===== 🚨 緊急記憶體優化措施 =====
+# 1. 批次大小大幅降低：128 → 16 (Backbone/P4/P5)，128 → 32 (P3)
+# 2. 混合精度訓練：--amp (減少 30-50% 記憶體使用)
+# 3. 穩定訓練超參數：梯度剪裁 + 餘弦學習率
+# 4. 記憶體目標：從 31.9GB → <16GB (50% 使用率)
+
+# ===== 預期記憶體改善 =====
+# - 批次大小減少 87.5%：記憶體使用 -70~80%
+# - 混合精度訓練：額外 -30~50% 記憶體
+# - 總預期記憶體：<12GB (安全範圍)
+# - GPU 使用率：從 99.7% → <40%
+
+# ===== 性能預期 =====
+# - 訓練速度：可能略慢 (更多 iterations)
+# - 模型性能：應該保持或改善 (更穩定的梯度)
+# - 數值穩定性：大幅改善 (充足記憶體緩衝)
+# - 成功率：預期 100% 完成 300 epochs
+
+# ===== 使用說明 =====
+# 1. 這些命令針對 99.7% 記憶體使用率問題
+# 2. 優先使用這個版本而不是之前的穩定版
+# 3. 監控記憶體使用應 <16GB
+# 4. 如果仍有問題，進一步降低批次大小至 8
+
+

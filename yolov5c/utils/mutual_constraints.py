@@ -1,10 +1,8 @@
 """
+互斥事件約束實現
 Mutually Exclusive Constraints for Medical Image Detection
-互斥事件约束实现
 
-医学背景：
-在特定超声视图中，某些反流类型在空间上是互斥的。
-同时检测到互斥的反流通常表示模型误检。
+基於醫學解剖學規則，避免在同一視圖中同時檢測到互斥的反流類型
 """
 
 import torch
@@ -13,41 +11,42 @@ import torch.nn as nn
 
 class MutuallyExclusiveConstraints:
     """
-    互斥事件约束 - 惩罚同时检测到互斥的反流类型
+    互斥事件約束 - 惩罰同時檢測到互斥的反流類型
     
-    Example:
-        在 A4C 视图中，如果同时检测到 AR 和 MR：
-        E_a4c = E_ar × E_mr
-        理想情况：E_a4c = 0（一个为1，另一个为0）
-        违反情况：E_a4c > 0（两者都大于0）
+    醫學背景：
+    - A4C 視圖：MR (二尖瓣) vs TR (三尖瓣) 互斥
+    - PSAX 視圖：PR (肺動脈瓣) vs TR (三尖瓣) 互斥  
+    - PLAX 視圖：AR (主動脈瓣) vs MR (二尖瓣) 互斥
     """
     
     def __init__(self, device='cpu'):
         self.device = device
         
-        # 定义互斥关系
-        # 基于 anatomical_constraints.py 的视图定义：
-        # - A4C (0) allows: MR (1), TR (3)
-        # - PSAX (1) allows: PR (2), TR (3)
-        # - PLAX (2) allows: AR (0), MR (1)
+        # 定義互斥關係：每個視圖中哪些檢測類別是互斥的
         # 格式：{view_index: [(class_a, class_b), ...]}
-        # 类别索引：0=AR, 1=MR, 2=PR, 3=TR
         self.mutually_exclusive_pairs = {
-            0: [(1, 3)],  # A4C: MR (1) vs TR (3) 互斥
-            1: [(2, 3)],  # PSAX: PR (2) vs TR (3) 互斥  
-            2: [(0, 1)],  # PLAX: AR (0) vs MR (1) 互斥
+            0: [(1, 3)],  # A4C: MR (class 1) vs TR (class 3) 互斥
+            1: [(2, 3)],  # PSAX: PR (class 2) vs TR (class 3) 互斥
+            2: [(0, 1)],  # PLAX: AR (class 0) vs MR (class 1) 互斥
         }
         
-        # 类别和视图名称（用于调试）
+        # 類別和視圖名稱（用於調試）
         self.class_names = ['AR', 'MR', 'PR', 'TR']
         self.view_names = ['A4C', 'PSAX', 'PLAX']
         
         print(f"[INFO] Mutually Exclusive Constraints initialized")
-        print(f"[INFO] Exclusive pairs:")
+        print(f"[INFO] Exclusive pairs: {self.format_pairs()}")
+    
+    def format_pairs(self):
+        """格式化互斥對為可讀字符串"""
+        formatted = {}
         for view_idx, pairs in self.mutually_exclusive_pairs.items():
+            view_name = self.view_names[view_idx]
+            pair_names = []
             for class_a, class_b in pairs:
-                print(f"       {self.view_names[view_idx]}: "
-                      f"{self.class_names[class_a]} <-> {self.class_names[class_b]}")
+                pair_names.append(f"{self.class_names[class_a]} vs {self.class_names[class_b]}")
+            formatted[view_name] = pair_names
+        return formatted
     
     def compute_mutual_exclusion_loss(
         self, 
@@ -56,219 +55,230 @@ class MutuallyExclusiveConstraints:
         confidence_threshold=0.25
     ):
         """
-        计算互斥约束损失
+        計算互斥約束損失
         
         Args:
-            detection_predictions: 检测预测
-                如果是 list: YOLOv5 的三层输出 [P3, P4, P5]
-                如果是 tensor: 后处理后的检测 [batch, num_det, 5+nc]
-            view_labels: 视图标签 [batch_size]
-            confidence_threshold: 置信度阈值
+            detection_predictions: 檢測預測
+                - 可以是 YOLOv5 輸出 [batch_size, num_anchors, 5+num_classes]
+                - 或處理後的檢測結果 [batch_size, max_det, 6] (x1,y1,x2,y2,conf,cls)
+            view_labels: 視圖標籤 [batch_size] (0=A4C, 1=PSAX, 2=PLAX)
+            confidence_threshold: 置信度閾值
             
         Returns:
-            mutual_loss: 互斥约束损失 (标量 tensor)
-            violation_count: 违反次数 (int)
+            mutual_loss: 互斥約束損失 (標量 tensor)
+            violation_count: 違反次數 (int)
+            debug_info: 調試信息 (dict)
         """
         
         total_penalty = 0.0
         violation_count = 0
+        debug_info = {
+            'violations_per_view': {view: 0 for view in self.view_names},
+            'max_violation': 0.0,
+            'total_samples': view_labels.shape[0]
+        }
         
-        # 获取 batch size
-        if isinstance(view_labels, torch.Tensor):
-            batch_size = view_labels.shape[0]
-        else:
-            batch_size = len(view_labels)
+        batch_size = view_labels.shape[0]
         
         for batch_idx in range(batch_size):
             view_idx = view_labels[batch_idx].item()
             
-            # 跳过没有定义互斥对的视图
+            # 跳過未定義互斥關係的視圖
             if view_idx not in self.mutually_exclusive_pairs:
                 continue
             
             exclusive_pairs = self.mutually_exclusive_pairs[view_idx]
+            view_name = self.view_names[view_idx]
             
-            # 对每个互斥对计算惩罚
+            # 對每個互斥對計算惩罰
             for class_a, class_b in exclusive_pairs:
-                # 获取每个类别的最大置信度
-                conf_a = self._get_max_confidence(
-                    detection_predictions, 
-                    batch_idx,
+                # 獲取每個類別的最大置信度
+                conf_a = self._get_max_confidence_for_class(
+                    detection_predictions[batch_idx], 
                     class_a, 
                     confidence_threshold
                 )
-                conf_b = self._get_max_confidence(
-                    detection_predictions,
-                    batch_idx,
+                conf_b = self._get_max_confidence_for_class(
+                    detection_predictions[batch_idx], 
                     class_b, 
                     confidence_threshold
                 )
                 
-                # 互斥惩罚：E_mutual = P(A) × P(B)
-                # 理想情况：一个为 1，另一个为 0，乘积为 0
-                # 违反情况：两者都 > 0，乘积 > 0
+                # 互斥惩罰：E_mutual = P(A) × P(B)
+                # 理想情況：一個為 1，另一個為 0，乘積為 0
+                # 違反情況：兩者都 > 0，乘積 > 0
                 mutual_penalty = conf_a * conf_b
                 
-                # 只惩罚显著的违反（避免噪声）
+                # 只有當違反程度足夠大時才计算损失
                 if mutual_penalty > 0.01:
                     total_penalty += mutual_penalty
                     violation_count += 1
+                    debug_info['violations_per_view'][view_name] += 1
+                    debug_info['max_violation'] = max(debug_info['max_violation'], mutual_penalty)
                     
-                    # 打印显著违反
+                    # 顯著違反時輸出調試信息
                     if mutual_penalty > 0.1:
-                        print(f"[MUTUAL] {self.view_names[view_idx]} violation: "
+                        print(f"[CONSTRAINT] Mutual violation in {view_name}: "
                               f"{self.class_names[class_a]}={conf_a:.3f} × "
-                              f"{self.class_names[class_b]}={conf_b:.3f} = "
-                              f"{mutual_penalty:.3f}")
+                              f"{self.class_names[class_b]}={conf_b:.3f} = {mutual_penalty:.3f}")
         
-        # 归一化到 batch（返回平均惩罚）
+        # 歸一化到 batch size
         if batch_size > 0:
             mutual_loss = total_penalty / batch_size
         else:
             mutual_loss = 0.0
         
-        return torch.tensor(mutual_loss, device=self.device), violation_count
+        return torch.tensor(mutual_loss, device=self.device, requires_grad=True), violation_count, debug_info
     
-    def _get_max_confidence(self, detections, batch_idx, target_class, threshold):
+    def _get_max_confidence_for_class(self, detections, target_class, threshold):
         """
-        获取指定类别的最大置信度
+        獲取指定類別的最大置信度
         
         Args:
-            detections: 检测输出（list 或 tensor）
-            batch_idx: batch 索引
-            target_class: 目标类别索引
-            threshold: 置信度阈值
+            detections: 單個樣本的檢測結果
+            target_class: 目標類別索引 (0-3)
+            threshold: 置信度閾值
             
         Returns:
-            max_conf: 该类别的最大置信度（0 如果没有检测到）
+            max_conf: 該類別的最大置信度
         """
         
-        # 处理不同的检测输出格式
-        if isinstance(detections, list):
-            # YOLOv5 原始输出：list of [P3, P4, P5]
-            # 这种情况比较复杂，需要从原始输出中提取
-            # 简化处理：返回 0（在实际使用中需要后处理）
+        if detections is None or len(detections) == 0:
             return 0.0
         
-        elif isinstance(detections, torch.Tensor):
-            # 后处理后的检测：[batch, num_det, 5+nc]
-            # [x, y, w, h, objectness, class_0, ..., class_n]
-            
-            if detections.dim() == 2:
-                # 单个样本 [num_det, 5+nc]
-                batch_detections = detections
-            elif detections.dim() == 3:
-                # 多个样本 [batch, num_det, 5+nc]
-                batch_detections = detections[batch_idx]
-            else:
-                return 0.0
-            
-            if len(batch_detections) == 0:
-                return 0.0
-            
-            try:
-                # 提取置信度
-                objectness = batch_detections[:, 4]  # [num_det]
-                class_probs = batch_detections[:, 5 + target_class]  # [num_det]
+        try:
+            # 處理不同的檢測輸出格式
+            if len(detections.shape) == 2:
+                # 格式1: [num_det, 6] - (x1, y1, x2, y2, conf, cls)
+                if detections.shape[1] == 6:
+                    confidences = detections[:, 4]  # 總置信度
+                    classes = detections[:, 5]      # 預測類別
+                    
+                    # 找到目標類別的檢測
+                    target_mask = (classes == target_class) & (confidences > threshold)
+                    
+                    if target_mask.any():
+                        return confidences[target_mask].max().item()
+                    else:
+                        return 0.0
                 
-                # 最终置信度 = objectness × class_prob
-                confidences = objectness * class_probs
-                
-                # 过滤低置信度
-                valid_confidences = confidences[confidences > threshold]
-                
-                if len(valid_confidences) > 0:
-                    return valid_confidences.max().item()
-                else:
-                    return 0.0
+                # 格式2: [num_det, 5+num_classes] - (x, y, w, h, obj, cls0, cls1, ...)
+                elif detections.shape[1] >= 9:  # 5 + 4 classes
+                    objectness = detections[:, 4]
+                    class_probs = detections[:, 5 + target_class]
+                    
+                    # 最終置信度 = objectness × class_prob
+                    confidences = objectness * class_probs
+                    
+                    # 過濾低置信度
+                    valid_confidences = confidences[confidences > threshold]
+                    
+                    if len(valid_confidences) > 0:
+                        return valid_confidences.max().item()
+                    else:
+                        return 0.0
             
-            except Exception as e:
-                print(f"[DEBUG] Error extracting confidence: {e}")
-                return 0.0
-        
-        else:
+            # 其他格式處理
+            return 0.0
+            
+        except Exception as e:
+            print(f"[DEBUG] Error processing detections for class {target_class}: {e}")
             return 0.0
     
-    def add_exclusive_pair(self, view_idx, class_a, class_b):
+    def compute_soft_mutual_loss(self, class_logits, view_labels):
         """
-        动态添加互斥对
+        基於分類 logits 計算軟互斥損失
+        適用於直接的分類預測輸出
         
         Args:
-            view_idx: 视图索引
-            class_a: 类别 A 索引
-            class_b: 类别 B 索引
-        """
-        if view_idx not in self.mutually_exclusive_pairs:
-            self.mutually_exclusive_pairs[view_idx] = []
-        
-        self.mutually_exclusive_pairs[view_idx].append((class_a, class_b))
-        
-        print(f"[INFO] Added exclusive pair: "
-              f"{self.view_names[view_idx]} - "
-              f"{self.class_names[class_a]} <-> {self.class_names[class_b]}")
-    
-    def get_statistics(self):
-        """
-        获取约束统计信息
-        
+            class_logits: 分類 logits [batch_size, num_classes]
+            view_labels: 視圖標籤 [batch_size]
+            
         Returns:
-            stats: 字典，包含约束的统计信息
+            mutual_loss: 軟互斥損失
         """
-        stats = {
-            'num_views': len(self.mutually_exclusive_pairs),
-            'total_pairs': sum(len(pairs) for pairs in self.mutually_exclusive_pairs.values()),
-            'pairs_by_view': {
-                self.view_names[view_idx]: [
-                    f"{self.class_names[a]} <-> {self.class_names[b]}"
-                    for a, b in pairs
-                ]
-                for view_idx, pairs in self.mutually_exclusive_pairs.items()
-            }
-        }
-        return stats
+        
+        # 轉換為概率（多標籤場景）
+        class_probs = torch.sigmoid(class_logits)
+        
+        total_penalty = 0.0
+        batch_size = view_labels.shape[0]
+        
+        for batch_idx in range(batch_size):
+            view_idx = view_labels[batch_idx].item()
+            
+            if view_idx not in self.mutually_exclusive_pairs:
+                continue
+            
+            # 對每個互斥對計算惩罰
+            for class_a, class_b in self.mutually_exclusive_pairs[view_idx]:
+                prob_a = class_probs[batch_idx, class_a]
+                prob_b = class_probs[batch_idx, class_b]
+                
+                # 軟互斥惩罰
+                penalty = prob_a * prob_b
+                total_penalty += penalty
+        
+        # 歸一化
+        mutual_loss = total_penalty / batch_size if batch_size > 0 else 0.0
+        
+        return mutual_loss
 
 
-# 测试代码
-if __name__ == '__main__':
-    """测试互斥约束"""
+def test_mutual_constraints():
+    """測試互斥約束功能"""
     
-    print("="*60)
-    print("Testing Mutually Exclusive Constraints")
-    print("="*60)
+    print("=" * 60)
+    print("TESTING MUTUALLY EXCLUSIVE CONSTRAINTS")
+    print("=" * 60)
     
-    # 初始化约束
-    constraints = MutuallyExclusiveConstraints(device='cpu')
+    # 初始化
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    constraints = MutuallyExclusiveConstraints(device=device)
     
-    # 打印统计信息
-    stats = constraints.get_statistics()
-    print(f"\nConstraint Statistics:")
-    print(f"  Number of views with constraints: {stats['num_views']}")
-    print(f"  Total exclusive pairs: {stats['total_pairs']}")
-    print(f"  Pairs by view:")
-    for view, pairs in stats['pairs_by_view'].items():
-        print(f"    {view}: {pairs}")
-    
-    # 模拟检测输出
+    # 測試數據
     batch_size = 4
-    num_detections = 10
+    max_detections = 10
     num_classes = 4
     
-    # 创建模拟检测 [batch, num_det, 5+nc]
-    detections = torch.rand(batch_size, num_detections, 5 + num_classes)
+    # 模擬檢測結果 [batch, max_det, 6] (x1, y1, x2, y2, conf, cls)
+    detections = torch.zeros(batch_size, max_detections, 6)
     
-    # 模拟视图标签
-    view_labels = torch.tensor([0, 1, 2, 0])  # A4C, PSAX, PLAX, A4C
+    # 設置一些檢測結果
+    # Batch 0: A4C 視圖，同時檢測到 MR (class 1) 和 TR (class 3) - 應該違反
+    detections[0, 0] = torch.tensor([10, 10, 50, 50, 0.8, 1])  # MR, high confidence
+    detections[0, 1] = torch.tensor([60, 60, 100, 100, 0.7, 3])  # TR, high confidence
     
-    # 计算互斥损失
-    mutual_loss, violations = constraints.compute_mutual_exclusion_loss(
-        detections,
-        view_labels,
+    # Batch 1: A4C 視圖，只檢測到 MR - 正常
+    detections[1, 0] = torch.tensor([10, 10, 50, 50, 0.9, 1])  # MR only
+    
+    # 視圖標籤
+    view_labels = torch.tensor([0, 0, 1, 2])  # A4C, A4C, PSAX, PLAX
+    
+    # 計算互斥損失
+    mutual_loss, violations, debug_info = constraints.compute_mutual_exclusion_loss(
+        detections, 
+        view_labels, 
         confidence_threshold=0.25
     )
     
-    print(f"\n{'='*60}")
-    print(f"Test Results:")
-    print(f"  Mutual exclusion loss: {mutual_loss:.4f}")
-    print(f"  Violations detected: {violations}")
-    print(f"{'='*60}")
+    print(f"\nResults:")
+    print(f"Mutual Loss: {mutual_loss:.6f}")
+    print(f"Violations: {violations}")
+    print(f"Debug Info: {debug_info}")
+    
+    # 測試軟約束版本
+    print(f"\n" + "=" * 40)
+    print("TESTING SOFT CONSTRAINTS")
+    print("=" * 40)
+    
+    class_logits = torch.randn(batch_size, num_classes)
+    soft_loss = constraints.compute_soft_mutual_loss(class_logits, view_labels)
+    
+    print(f"Soft Mutual Loss: {soft_loss:.6f}")
+    
+    return mutual_loss, violations
 
+
+if __name__ == "__main__":
+    test_mutual_constraints()

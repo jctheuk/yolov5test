@@ -1,0 +1,49 @@
+# YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
+# Lower Learning Rate hyperparameters for V2 stability
+# Reduced lr0 from 0.01 to 0.005 to prevent gradient explosion
+# Extended warmup for gentler training start
+
+# Optimizer hyperparameters (STABILITY FOCUSED)
+lr0: 0.005  # initial learning rate (REDUCED from 0.01)
+lrf: 0.1  # final OneCycleLR learning rate
+momentum: 0.937  # SGD momentum/Adam beta1
+weight_decay: 0.005  # optimizer weight decay
+warmup_epochs: 10.0  # warmup epochs (EXTENDED from 5.0)
+warmup_momentum: 0.8  # warmup initial momentum
+warmup_bias_lr: 0.1  # warmup initial bias lr
+
+# Loss hyperparameters (standard YOLO + classification)
+box: 0.05  # box loss gain
+cls: 0.5  # cls loss gain (detection classification)
+cls_pw: 1.0  # cls BCELoss positive_weight
+obj: 1.0  # obj loss gain (scale with pixels)
+obj_pw: 1.0  # obj BCELoss positive_weight
+iou_t: 0.2  # IoU training threshold
+anchor_t: 4.0  # anchor-multiple threshold
+fl_gamma: 0.0  # focal loss gamma (standard BCE)
+
+# Classification Task hyperparameters (balanced for dual-task)
+cls_task: 1.0  # view classification weight (A4C, PSAX, PLAX)
+label_smoothing: 0.08  # label smoothing for classification
+temperature: 1.0  # temperature for softmax sharpness
+
+# Anatomical Constraints (DISABLED)
+use_anatomical_constraints: false
+
+# Image augmentation hyperparameters (medical-optimized)
+hsv_h: 0.015  # image HSV-Hue augmentation (conservative)
+hsv_s: 0.4  # image HSV-Saturation augmentation
+hsv_v: 0.3  # image HSV-Value augmentation
+degrees: 10.0  # image rotation (±10 degrees)
+translate: 0.1  # image translation (±10%)
+scale: 0.5  # image scale (±50%)
+shear: 0.0  # image shear (disabled for medical)
+perspective: 0.0  # image perspective (disabled for medical)
+flipud: 0.0  # image flip up-down (disabled)
+fliplr: 0.0  # image flip left-right (disabled)
+mosaic: 0.0  # image mosaic (disabled)
+mixup: 0.0  # image mixup (disabled)
+copy_paste: 0.0  # segment copy-paste (disabled)
+
+
+

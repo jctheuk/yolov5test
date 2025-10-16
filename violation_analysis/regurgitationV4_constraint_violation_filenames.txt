@@ -1,6 +1,0 @@
-# Constraint Violation Files for regurgitationV4
-# Generated: 2025-10-13 11:38:28
-# Total violations: 0
-# Violation rate: 0.00%
-# Format: filename
-

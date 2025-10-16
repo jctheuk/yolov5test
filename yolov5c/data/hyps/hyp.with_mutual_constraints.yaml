@@ -1,68 +1,51 @@
 # YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
-# Hyperparameters with Mutually Exclusive Constraints
-# 包含互斥事件约束的超参数配置
+# Hyperparameters for YOLOv5WithClassification with Mutually Exclusive Constraints
+# python train.py --hyp hyp.with_mutual_constraints.yaml
 
-# Optimizer hyperparameters
-lr0: 0.01  # initial learning rate (SGD=1E-2, Adam=1E-3)
+# Optimizer settings
+lr0: 0.01  # initial learning rate (SGD=1E-3, Adam=1E-3)
 lrf: 0.1  # final OneCycleLR learning rate (lr0 * lrf)
 momentum: 0.937  # SGD momentum/Adam beta1
-weight_decay: 0.0005  # optimizer weight decay
-warmup_epochs: 5.0  # warmup epochs
+weight_decay: 0.0005  # optimizer weight decay 5e-4
+warmup_epochs: 5.0  # warmup epochs (fractions ok)
 warmup_momentum: 0.8  # warmup initial momentum
 warmup_bias_lr: 0.1  # warmup initial bias lr
 
-# Detection loss weights - STANDARD
+# Loss hyperparameters
 box: 0.05  # box loss gain
-cls: 0.5  # cls loss gain (detection classification)
+cls: 0.5  # cls loss gain
 cls_pw: 1.0  # cls BCELoss positive_weight
-obj: 1.0  # obj loss gain (objectness)
+obj: 1.0  # obj loss gain (scale with pixels)
 obj_pw: 1.0  # obj BCELoss positive_weight
-
-# IoU and anchor parameters
 iou_t: 0.20  # IoU training threshold
 anchor_t: 4.0  # anchor-multiple threshold
+fl_gamma: 0.0  # focal loss gamma (efficientDet default gamma=1.5)
 
-# Focal loss
-fl_gamma: 0.0  # focal loss gamma (0 = disabled)
+# Classification task settings
+cls_task: 1.0  # classification task loss weight (increased for better balance)
+label_smoothing: 0.08  # label smoothing for classification task
+temperature: 1.0  # temperature for softmax in classification
 
-# Classification Task parameters
-cls_task: 0.3  # classification task loss weight
-label_smoothing: 0.05  # label smoothing epsilon
-temperature: 1.0  # temperature for softmax
-
-# Regularization
-dropout: 0.1  # dropout rate
-max_grad_norm: 1.0  # gradient clipping
-
-# Anatomical Constraints (existing)
-use_anatomical_constraints: true  # enable anatomical constraint loss
-constraint_weight: 0.3  # weight for anatomical constraint loss
-constraint_mode: soft  # constraint enforcement mode
-constraint_learning_rate: 0.1  # learning rate for constraint adaptation
-constraint_penalty: 10.0  # penalty factor for violations
+# Anatomical constraints (DISABLED - fixed in dataset)
+use_anatomical_constraints: false
+constraint_weight: 0.3
 
 # Mutually Exclusive Constraints (NEW)
-use_mutual_constraints: true  # enable mutual exclusion constraints
-mutual_constraint_weight: 0.15  # weight for mutual exclusion loss
-mutual_confidence_threshold: 0.25  # confidence threshold for mutual check
+use_mutual_constraints: true  # Enable mutually exclusive constraints
+mutual_constraint_weight: 0.15  # Weight for mutual exclusion loss
+mutual_confidence_threshold: 0.25  # Confidence threshold for mutual constraints
 
-# Augmentation parameters - DISABLED FOR MEDICAL IMAGES
-hsv_h: 0.0  # image HSV-Hue augmentation
-hsv_s: 0.0  # image HSV-Saturation augmentation
-hsv_v: 0.0  # image HSV-Value augmentation
-degrees: 0.0  # image rotation (+/- deg)
-translate: 0.0  # image translation (+/- fraction)
-scale: 0.0  # image scale (+/- gain)
+# Data augmentation (DISABLED for medical images)
+hsv_h: 0.015  # image HSV-Hue augmentation (fraction)
+hsv_s: 0.4  # image HSV-Saturation augmentation (fraction) 
+hsv_v: 0.3  # image HSV-Value augmentation (fraction)
+degrees: 10.0  # image rotation (+/- deg)
+translate: 0.1  # image translation (+/- fraction)
+scale: 0.5  # image scale (+/- gain)
 shear: 0.0  # image shear (+/- deg)
-perspective: 0.0  # image perspective (+/- fraction)
+perspective: 0.0  # image perspective (+/- fraction), range 0-0.001
 flipud: 0.0  # image flip up-down (probability)
 fliplr: 0.0  # image flip left-right (probability)
-mosaic: 0.0  # image mosaic (probability)
-mixup: 0.0  # image mixup (probability)
-copy_paste: 0.0  # segment copy-paste (probability)
-
-
-
-
-
-
+mosaic: 0.0  # image mosaic (probability) - DISABLED for medical images
+mixup: 0.0  # image mixup (probability) - DISABLED for medical images
+copy_paste: 0.0  # segment copy-paste (probability) - DISABLED for medical images

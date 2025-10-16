@@ -8,6 +8,7 @@ import torch.nn.functional as F
 from utils.metrics import bbox_iou
 from utils.torch_utils import de_parallel
 from .anatomical_constraints import AnatomicalConstraints
+from .mutual_constraints import MutuallyExclusiveConstraints
 
 
 def smooth_BCE(eps=0.1):  # https://github.com/ultralytics/yolov3/issues/238#issuecomment-598028441
@@ -168,6 +169,17 @@ class ComputeLoss:
         else:
             self.anatomical_constraints = None
             # print(f"[INFO] Anatomical constraints disabled")
+        
+        # Initialize mutually exclusive constraints
+        self.use_mutual_constraints = h.get('use_mutual_constraints', False)
+        self.mutual_constraint_weight = h.get('mutual_constraint_weight', 0.15)
+        self.mutual_confidence_threshold = h.get('mutual_confidence_threshold', 0.25)
+        
+        if self.use_mutual_constraints:
+            self.mutual_constraints = MutuallyExclusiveConstraints(device=device)
+            print(f"[INFO] Mutually exclusive constraints enabled with weight: {self.mutual_constraint_weight}")
+        else:
+            self.mutual_constraints = None
         
         # Keep only essential debug info
         # print(f"[DEBUG] Classification loss weight: {self.cls_task_loss_weight}")
@@ -348,6 +360,26 @@ class ComputeLoss:
         #         # print(f"[DEBUG] ERROR in constraint loss calculation: {e}")
         #         lconstraint = torch.tensor(0.0, device=self.device)
         
+        # Apply mutually exclusive constraints if enabled
+        lmutual = torch.zeros(1, device=self.device)  # mutual exclusion loss
+        if self.use_mutual_constraints and self.mutual_constraints is not None and classification_targets is not None:
+            try:
+                # Use detection outputs for mutual exclusion constraint
+                mutual_loss, violations, debug_info = self.mutual_constraints.compute_mutual_exclusion_loss(
+                    detection_outputs,  # Raw detection outputs
+                    classification_targets,  # View labels
+                    confidence_threshold=self.mutual_confidence_threshold
+                )
+                lmutual = mutual_loss * self.mutual_constraint_weight
+                
+                # Log violations if they occur
+                if violations > 0:
+                    print(f"[CONSTRAINT] {violations} mutual exclusion violations detected (loss: {lmutual.item():.6f})")
+                
+            except Exception as e:
+                print(f"[DEBUG] ERROR in mutual constraint calculation: {e}")
+                lmutual = torch.tensor(0.0, device=self.device)
+        
         # Total loss - IMPROVED: Scale detection and classification losses appropriately
         # Get batch size from first detection layer output
         bs = detection_outputs[0].shape[0]  # batch size
@@ -358,7 +390,8 @@ class ComputeLoss:
         detection_loss = (lbox + lobj + lcls) * bs
         classification_loss = lcls_task
         constraint_loss = lconstraint  # NOT scaled (already sum, not mean)
-        total_loss = detection_loss + classification_loss + constraint_loss
+        mutual_loss = lmutual  # NOT scaled (already normalized by batch size)
+        total_loss = detection_loss + classification_loss + constraint_loss + mutual_loss
         
         # Check for NaN/Inf in total loss
         # if torch.isnan(total_loss) or torch.isinf(total_loss):
@@ -376,11 +409,12 @@ class ComputeLoss:
         
         # Return total loss and individual losses (like original loss.py line 189)
         # Original format: return (lbox + lobj + lcls) * bs, torch.cat((lbox, lobj, lcls)).detach()
-        # Our format: return total_loss, torch.cat((lbox, lobj, lcls, lcls_task, lconstraint)).detach()
+        # Our format: return total_loss, torch.cat((lbox, lobj, lcls, lcls_task, lconstraint, lmutual)).detach()
         # Ensure all loss components are scalars for concatenation
         lcls_task_scalar = lcls_task if lcls_task.dim() > 0 else lcls_task.unsqueeze(0)
         lconstraint_scalar = lconstraint if lconstraint.dim() > 0 else lconstraint.unsqueeze(0)
-        return total_loss, torch.cat((lbox, lobj, lcls, lcls_task_scalar, lconstraint_scalar)).detach()
+        lmutual_scalar = lmutual if lmutual.dim() > 0 else lmutual.unsqueeze(0)
+        return total_loss, torch.cat((lbox, lobj, lcls, lcls_task_scalar, lconstraint_scalar, lmutual_scalar)).detach()
 
     def build_targets(self, p, targets):
         # Build targets for compute_loss(), input targets(image,class,x,y,w,h)

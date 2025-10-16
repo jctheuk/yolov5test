@@ -309,6 +309,22 @@ def train(opt, device):
         logger.log_images(file, name="Test Examples (true-predicted)", epoch=epoch)
         logger.log_model(best, epochs, metadata=meta)
 
+        # Run final detailed validation with per-class metrics
+        LOGGER.info('\n' + '='*80)
+        LOGGER.info('Running final detailed validation...')
+        LOGGER.info('='*80)
+        validate.run(
+            data=data_dir,
+            weights=best,
+            batch_size=bs,
+            imgsz=imgsz,
+            device=device,
+            workers=nw,
+            verbose=True,
+            compute_metrics=True,
+            save_dir=save_dir
+        )
+
 
 def parse_opt(known=False):
     """Parses command line arguments for YOLOv5 training including model path, dataset, epochs, and more, returning

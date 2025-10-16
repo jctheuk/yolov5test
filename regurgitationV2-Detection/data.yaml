@@ -1,0 +1,11 @@
+# YOLO Detection Dataset
+# Detection: 4 classes (AR, MR, PR, TR) - Valve regurgitation types
+
+# Dataset paths (relative to training script location)
+train: regurgitationV2-Detection/train/images
+val: regurgitationV2-Detection/valid/images  
+test: regurgitationV2-Detection/test/images
+
+# Detection configuration
+nc: 4  # number of detection classes
+names: ['AR', 'MR', 'PR', 'TR']  # detection class names

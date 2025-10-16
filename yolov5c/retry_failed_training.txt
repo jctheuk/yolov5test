@@ -1,0 +1,143 @@
+# YOLOv5lc Failed Training Retry Commands
+# Configuration: batch-size 128, workers 8, imgsz 416
+# Total: 12 tasks to retry
+
+# ============================================
+# ARCHITECTURE DIFFERENCES
+# ============================================
+# Backbone: Classification head at backbone level
+# P3: Classification head at P3 layer (highest resolution)
+# P4: Classification head at P4 layer (medium resolution)
+# P5: Classification head at P5 layer (lowest resolution)
+
+# DATASET DIFFERENCES
+# V1-V5: Different K-Fold splits of the same data
+
+# ============================================
+# FAILURE PATTERN: Connection Point × Data Split
+# ============================================
+#          V1    V2    V3    V4    V5    Success Rate
+# P3       ❌    ❌    ❌    ✅    ❌    20% (1/5)
+# P4       ✅    ❌    ❌    ✅    ✅    60% (3/5) ⭐
+# P5       ✅    ❌    ✅    ❌    ❌    40% (2/5)
+# Backbone ✅    ❌    ✅    ❌    ❌    40% (2/5)
+
+# KEY INSIGHTS:
+# 1. V2 split = CRITICAL ISSUE (0/4 models succeeded)
+# 2. P3 connection = Most unstable (only works with V4)
+# 3. P4 connection = Most stable (works with V1,V4,V5)
+# 4. V4 split = Most reliable (works with all architectures)
+
+# ============================================
+# PRIORITY 1: CHECK V2 DATA SPLIT
+# ============================================
+# V2 failed on ALL architectures → data quality issue
+# Actions:
+# 1. Check regurgitationV2/ for corrupted labels/images
+# 2. Verify class distribution balance
+# 3. Look for edge cases (extreme bbox sizes, unusual aspect ratios)
+# 4. Compare V2 split statistics with successful V1,V3,V4,V5
+
+# ============================================
+# P3 Model - 4 tasks (Most problematic architecture)
+# ============================================
+
+# P3 + V1
+python train.py --data ../regurgitationV1/data.yaml --cfg models/yolov5lc_p3.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 128 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p3_v1
+
+# P3 + V2 (CHECK V2 DATA FIRST!)
+python train.py --data ../regurgitationV2/data.yaml --cfg models/yolov5lc_p3.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 128 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p3_v2
+
+# P3 + V3
+python train.py --data ../regurgitationV3/data.yaml --cfg models/yolov5lc_p3.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 128 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p3_v3
+
+# P3 + V5
+python train.py --data ../regurgitationV5/data.yaml --cfg models/yolov5lc_p3.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 128 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p3_v5
+
+# ============================================
+# P4 Model - 2 tasks (Most stable architecture)
+# ============================================
+
+# P4 + V2 (CHECK V2 DATA FIRST!)
+python train.py --data ../regurgitationV2/data.yaml --cfg models/yolov5lc_p4.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 128 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p4_v2
+
+# P4 + V3
+python train.py --data ../regurgitationV3/data.yaml --cfg models/yolov5lc_p4.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 128 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p4_v3
+
+# ============================================
+# P5 Model - 3 tasks
+# ============================================
+
+# P5 + V2 (CHECK V2 DATA FIRST!)
+python train.py --data ../regurgitationV2/data.yaml --cfg models/yolov5lc_p5.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 128 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p5_v2
+
+# P5 + V4
+python train.py --data ../regurgitationV4/data.yaml --cfg models/yolov5lc_p5.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 128 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p5_v4
+
+# P5 + V5
+python train.py --data ../regurgitationV5/data.yaml --cfg models/yolov5lc_p5.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 128 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p5_v5
+
+# ============================================
+# Classify Backbone Model - 3 tasks
+# ============================================
+
+# Backbone + V2 (CHECK V2 DATA FIRST!)
+python train.py --data ../regurgitationV2/data.yaml --cfg models/yolov5lc_classify_backbone.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 128 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_backbone_v2
+
+# Backbone + V4
+python train.py --data ../regurgitationV4/data.yaml --cfg models/yolov5lc_classify_backbone.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 128 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_backbone_v4
+
+# Backbone + V5
+python train.py --data ../regurgitationV5/data.yaml --cfg models/yolov5lc_classify_backbone.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 128 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_backbone_v5
+
+# ============================================
+# EXECUTION STRATEGY
+# ============================================
+# Phase 1: Investigate V2 Dataset
+#   cd regurgitationV2
+#   python -c "
+#   import yaml
+#   with open('data.yaml') as f:
+#       data = yaml.safe_load(f)
+#   print('Train:', data['train'])
+#   print('Val:', data['val'])
+#   "
+#   # Check for corrupted files, label issues
+
+# Phase 2: Test with most stable combo first
+#   Start with: P4 + V4 (known to work)
+#   Then try: P4 + V2 (to isolate V2 issue)
+
+# Phase 3: Systematic retry
+#   - Run individually (not batch)
+#   - Wait 2-3 min between tasks
+#   - Monitor for NaN errors
+
+# ============================================
+# WHY CERTAIN COMBINATIONS FAIL
+# ============================================
+# Hypothesis 1: Feature Resolution vs Data Characteristics
+#   - P3 (high-res features) may be too sensitive to noise
+#   - P4 (mid-res features) provides best balance
+#   - P5 (low-res features) may miss fine details
+#   - Backbone features may lack task-specific info
+
+# Hypothesis 2: Data Split Characteristics
+#   - V2 may have unusual class distribution
+#   - V2 may have edge cases (tiny/huge objects)
+#   - V2 may have different image quality
+#   - V1,V4 may be more "typical" data
+
+# Hypothesis 3: Gradient Flow Issues
+#   - P3 deeper backprop path → gradient instability
+#   - P4 optimal gradient flow
+#   - Combined with challenging V2 data → NaN
+
+# ============================================
+# RECOMMENDED NEXT STEPS
+# ============================================
+# 1. ✅ Analyze V2 data split statistics
+# 2. ✅ Compare V2 vs V1/V4 characteristics
+# 3. ✅ Consider P4 as default architecture (best stability)
+# 4. ✅ Add gradient clipping for P3 if needed
+# 5. ✅ Run tasks individually to isolate issues

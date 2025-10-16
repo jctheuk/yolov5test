@@ -1,0 +1,46 @@
+# YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
+# Hyperparameters BASED on Original YOLOv5 Large Model Success
+# Conservative settings proven to work with Large models
+
+# Optimizer hyperparameters (Original YOLOv5 Large proven settings)
+lr0: 0.01  # Original YOLOv5 default learning rate
+lrf: 0.1  # final OneCycleLR learning rate (10x lower)
+momentum: 0.937  # SGD momentum/Adam beta1 (YOLOv5 default)
+weight_decay: 0.0005  # optimizer weight decay 5e-4 (YOLOv5 default)
+warmup_epochs: 3.0  # warmup epochs (YOLOv5 default)
+warmup_momentum: 0.8  # warmup initial momentum
+warmup_bias_lr: 0.1  # warmup initial bias lr
+
+# Loss hyperparameters (YOLOv5 proven ratios)
+box: 0.05  # box loss gain
+cls: 0.5  # cls loss gain (YOLOv5 default)
+cls_pw: 1.0  # cls BCELoss positive_weight
+obj: 1.0  # obj loss gain (scale with pixels)
+obj_pw: 1.0  # obj BCELoss positive_weight
+iou_t: 0.20  # IoU training threshold
+anchor_t: 4.0  # anchor-multiple threshold
+fl_gamma: 0.0  # focal loss gamma (efficientDet default gamma=1.5)
+
+# Classification Task hyperparameters (Conservative for dual-task)
+cls_task: 0.5  # REDUCED classification weight (was 1.0)
+label_smoothing: 0.0  # DISABLED label smoothing for stability
+temperature: 1.0  # temperature for softmax
+
+# Anatomical Constraints (DISABLED for stability testing)
+use_anatomical_constraints: false
+
+# Image augmentation hyperparameters (YOLOv5 Large defaults)
+# Based on original YOLOv5 augmentation that works with Large models
+hsv_h: 0.015  # image HSV-Hue augmentation (fraction)
+hsv_s: 0.7  # image HSV-Saturation augmentation (fraction)
+hsv_v: 0.4  # image HSV-Value augmentation (fraction)
+degrees: 0.0  # image rotation (+/- deg)
+translate: 0.1  # image translation (+/- fraction)
+scale: 0.5  # image scale (+/- gain)
+shear: 0.0  # image shear (+/- deg)
+perspective: 0.0  # image perspective (+/- fraction), range 0-0.001
+flipud: 0.0  # image flip up-down (probability)
+fliplr: 0.5  # image flip left-right (probability)
+mosaic: 1.0  # image mosaic (probability)
+mixup: 0.0  # image mixup (probability)
+copy_paste: 0.0  # segment copy-paste (probability)

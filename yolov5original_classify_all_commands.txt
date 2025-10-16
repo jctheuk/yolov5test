@@ -1,0 +1,74 @@
+# ============================================================
+# YOLOv5 Original Classification - All Training Commands
+# All models use batch-size 128 for consistency
+# Modified to auto-generate detailed metrics and confusion matrix
+# ============================================================
+
+# ========== YOLOv5S (Small) - All Datasets ==========
+cd /work/jonchang3909/yolov5test/yolov5original/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas && sudo pip install seaborn && sudo pip install scikit-learn && python classify/train.py --data ../regurgitationV1_classify --model yolov5s-cls.pt --epochs 300 --batch-size 128 --img 416 --name classifys_v1 --cache --nosave
+cd /work/jonchang3909/yolov5test/yolov5original/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas && sudo pip install seaborn && sudo pip install scikit-learn && python classify/train.py --data ../regurgitationV2_classify --model yolov5s-cls.pt --epochs 300 --batch-size 128 --img 416 --name classifys_v2 --cache --nosave
+cd /work/jonchang3909/yolov5test/yolov5original/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas && sudo pip install seaborn && sudo pip install scikit-learn && python classify/train.py --data ../regurgitationV3_classify --model yolov5s-cls.pt --epochs 300 --batch-size 128 --img 416 --name classifys_v3 --cache --nosave
+cd /work/jonchang3909/yolov5test/yolov5original/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas && sudo pip install seaborn && sudo pip install scikit-learn && python classify/train.py --data ../regurgitationV4_classify --model yolov5s-cls.pt --epochs 300 --batch-size 128 --img 416 --name classifys_v4 --cache --nosave
+cd /work/jonchang3909/yolov5test/yolov5original/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas && sudo pip install seaborn && sudo pip install scikit-learn && python classify/train.py --data ../regurgitationV5_classify --model yolov5s-cls.pt --epochs 300 --batch-size 128 --img 416 --name classifys_v5 --cache --nosave
+
+# ========== YOLOv5M (Medium) - All Datasets ==========
+cd /work/jonchang3909/yolov5test/yolov5original/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas && sudo pip install seaborn && sudo pip install scikit-learn && python classify/train.py --data ../regurgitationV1_classify --model yolov5m-cls.pt --epochs 300 --batch-size 128 --img 416 --name classifym_v1 --cache --nosave
+cd /work/jonchang3909/yolov5test/yolov5original/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas && sudo pip install seaborn && sudo pip install scikit-learn && python classify/train.py --data ../regurgitationV2_classify --model yolov5m-cls.pt --epochs 300 --batch-size 128 --img 416 --name classifym_v2 --cache --nosave
+cd /work/jonchang3909/yolov5test/yolov5original/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas && sudo pip install seaborn && sudo pip install scikit-learn && python classify/train.py --data ../regurgitationV3_classify --model yolov5m-cls.pt --epochs 300 --batch-size 128 --img 416 --name classifym_v3 --cache --nosave
+cd /work/jonchang3909/yolov5test/yolov5original/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas && sudo pip install seaborn && sudo pip install scikit-learn && python classify/train.py --data ../regurgitationV4_classify --model yolov5m-cls.pt --epochs 300 --batch-size 128 --img 416 --name classifym_v4 --cache --nosave
+cd /work/jonchang3909/yolov5test/yolov5original/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas && sudo pip install seaborn && sudo pip install scikit-learn && python classify/train.py --data ../regurgitationV5_classify --model yolov5m-cls.pt --epochs 300 --batch-size 128 --img 416 --name classifym_v5 --cache --nosave
+
+# ========== YOLOv5L (Large) - All Datasets ==========
+cd /work/jonchang3909/yolov5test/yolov5original/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas && sudo pip install seaborn && sudo pip install scikit-learn && python classify/train.py --data ../regurgitationV1_classify --model yolov5l-cls.pt --epochs 300 --batch-size 128 --img 416 --name classifyl_v1 --cache --nosave
+cd /work/jonchang3909/yolov5test/yolov5original/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas && sudo pip install seaborn && sudo pip install scikit-learn && python classify/train.py --data ../regurgitationV2_classify --model yolov5l-cls.pt --epochs 300 --batch-size 128 --img 416 --name classifyl_v2 --cache --nosave
+cd /work/jonchang3909/yolov5test/yolov5original/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas && sudo pip install seaborn && sudo pip install scikit-learn && python classify/train.py --data ../regurgitationV3_classify --model yolov5l-cls.pt --epochs 300 --batch-size 128 --img 416 --name classifyl_v3 --cache --nosave
+cd /work/jonchang3909/yolov5test/yolov5original/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas && sudo pip install seaborn && sudo pip install scikit-learn && python classify/train.py --data ../regurgitationV4_classify --model yolov5l-cls.pt --epochs 300 --batch-size 128 --img 416 --name classifyl_v4 --cache --nosave
+cd /work/jonchang3909/yolov5test/yolov5original/ && sudo apt-get update && sudo apt-get install libgl1 -y && sudo pip install pandas && sudo pip install seaborn && sudo pip install scikit-learn && python classify/train.py --data ../regurgitationV5_classify --model yolov5l-cls.pt --epochs 300 --batch-size 128 --img 416 --name classifyl_v5 --cache --nosave
+
+# ============================================================
+# Arguments Explanation
+# ============================================================
+# --data               : Classification dataset path
+# --model              : Pretrained model (.pt file)
+# --epochs 300         : Training epochs (consistent with yolov5c)
+# --batch-size 128     : UNIFIED batch size for all models
+# --img 416            : Image size 416x416
+# --name               : Experiment name
+# --cache              : Cache images in RAM for faster training
+# --nosave             : Only save best and last weights
+
+# ============================================================
+# Model Summary (All using batch-size 128)
+# ============================================================
+# | Model | Pretrained | Batch | Params | GPU Mem* | Training Time |
+# |-------|-----------|-------|--------|----------|---------------|
+# | S     | ✅        | 128   | ~5M    | ~6-8GB   | ~5h           |
+# | M     | ✅        | 128   | ~12M   | ~10-12GB | ~10h          |
+# | L     | ✅        | 128   | ~25M   | ~16-20GB | ~20h          |
+
+# *GPU Memory usage with batch-size 128
+# ⚠️ WARNING: Larger models (M, L) may require reducing batch-size if OOM occurs
+
+# ============================================================
+# Advantage of Unified Batch Size
+# ============================================================
+# ✅ Fair comparison across all model sizes
+# ✅ Consistent training dynamics
+# ✅ Same gradient accumulation behavior
+# ✅ Easier to analyze results
+
+# ============================================================
+# If OOM (Out of Memory) Occurs
+# ============================================================
+# Reduce batch size for M and L models:
+# --batch-size 64   # For Medium model
+# --batch-size 32   # For Large model
+
+# ============================================================
+# Output Location
+# ============================================================
+# yolov5original/runs/train-cls/
+# ├── classifys_v1/ ... classifys_v5/
+# ├── classifym_v1/ ... classifym_v5/
+# └── classifyl_v1/ ... classifyl_v5/
+

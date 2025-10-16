@@ -1,0 +1,137 @@
+# YOLOv5lc Failed Training Retry Commands - FINAL VERSION
+# Root Cause: Gradient instability from Channel Size × Batch Size × V2 Feature Distribution
+# Solution: Reduce batch size OR lower learning rate
+
+# ============================================
+# DIAGNOSIS SUMMARY
+# ============================================
+# Problem: Channel × Batch Size gradient explosion
+#   P3: 256 channels × 128 batch = 32,768 gradients/sample
+#   P4: 512 channels × 128 batch = 65,536 gradients/sample
+#   P5: 1024 channels × 128 batch = 131,072 gradients/sample
+#   Backbone: 1024 channels × 128 batch = 131,072 gradients/sample
+
+# V2 Failure Pattern:
+#   All architectures fail at epoch 2-6 (early NaN errors)
+#   P3 fails even when run FIRST (not sequential training issue)
+#   V2 data statistics normal but feature distribution causes instability
+
+# ============================================
+# SOLUTION A: Reduce Batch Size (RECOMMENDED)
+# ============================================
+# Reduces gradient magnitude by 50%
+# Less memory usage, more stable training
+
+# P3 Model (4 tasks)
+python train.py --data ../regurgitationV1/data.yaml --cfg models/yolov5lc_p3.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 64 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p3_v1
+
+python train.py --data ../regurgitationV2/data.yaml --cfg models/yolov5lc_p3.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 64 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p3_v2
+
+python train.py --data ../regurgitationV3/data.yaml --cfg models/yolov5lc_p3.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 64 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p3_v3
+
+python train.py --data ../regurgitationV5/data.yaml --cfg models/yolov5lc_p3.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 64 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p3_v5
+
+# P4 Model (2 tasks)
+python train.py --data ../regurgitationV2/data.yaml --cfg models/yolov5lc_p4.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 64 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p4_v2
+
+python train.py --data ../regurgitationV3/data.yaml --cfg models/yolov5lc_p4.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 64 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p4_v3
+
+# P5 Model (3 tasks)
+python train.py --data ../regurgitationV2/data.yaml --cfg models/yolov5lc_p5.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 64 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p5_v2
+
+python train.py --data ../regurgitationV4/data.yaml --cfg models/yolov5lc_p5.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 64 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p5_v4
+
+python train.py --data ../regurgitationV5/data.yaml --cfg models/yolov5lc_p5.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 64 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p5_v5
+
+# Classify Backbone Model (3 tasks)
+python train.py --data ../regurgitationV2/data.yaml --cfg models/yolov5lc_classify_backbone.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 64 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_backbone_v2
+
+python train.py --data ../regurgitationV4/data.yaml --cfg models/yolov5lc_classify_backbone.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 64 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_backbone_v4
+
+python train.py --data ../regurgitationV5/data.yaml --cfg models/yolov5lc_classify_backbone.yaml --hyp data/hyps/hyp.default.yaml --epochs 300 --batch-size 64 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_backbone_v5
+
+# ============================================
+# SOLUTION B: Lower Learning Rate (Alternative)
+# ============================================
+# If batch 64 still fails, try lower LR with batch 128
+
+# Example for V2 tasks:
+python train.py --data ../regurgitationV2/data.yaml --cfg models/yolov5lc_p4.yaml --hyp data/hyps/hyp.lowlr.yaml --epochs 300 --batch-size 128 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p4_v2_lowlr
+
+# ============================================
+# SOLUTION C: Combination (Most Conservative)
+# ============================================
+# Batch 64 + Lower LR + Extended Warmup
+
+python train.py --data ../regurgitationV2/data.yaml --cfg models/yolov5lc_p4.yaml --hyp data/hyps/hyp.lowlr.yaml --epochs 300 --batch-size 64 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --nosave --project runs/train --name yolov5lc_p4_v2_stable
+
+# ============================================
+# QUICK DIAGNOSTIC TEST (Run this FIRST!)
+# ============================================
+# 50 epochs test to quickly verify solution
+
+python train.py --data ../regurgitationV2/data.yaml --cfg models/yolov5lc_p4.yaml --hyp data/hyps/hyp.default.yaml --epochs 50 --batch-size 64 --workers 8 --imgsz 416 --patience 0 --device 0 --cache ram --project runs/train --name DIAGNOSTIC_v2_p4_batch64
+
+# Monitor:
+# - If reaches epoch 10+ → batch 64 works! ✅
+# - If fails at epoch <6 → try batch 32 or lower LR
+# - Check: tail -f runs/train/DIAGNOSTIC_v2_p4_batch64/results.csv
+
+# ============================================
+# SUMMARY OF TASKS TO RETRY
+# ============================================
+# Total: 12 tasks (8/20 completed, 12 failed)
+
+# By Model:
+#   P3: 4 tasks (V1, V2, V3, V5)
+#   P4: 2 tasks (V2, V3)
+#   P5: 3 tasks (V2, V4, V5)
+#   Backbone: 3 tasks (V2, V4, V5)
+
+# By Dataset:
+#   V1: 1 task (P3 only)
+#   V2: 4 tasks (ALL models failed) 🔴
+#   V3: 2 tasks (P3, P4)
+#   V4: 2 tasks (P5, Backbone)
+#   V5: 3 tasks (P3, P5, Backbone)
+
+# ============================================
+# EXECUTION PLAN
+# ============================================
+# Day 1: Diagnostic
+#   1. Run DIAGNOSTIC_v2_p4_batch64 (50 epochs, ~20 min)
+#   2. If successful at epoch 10+, proceed with batch 64
+#   3. If fails, try batch 32
+
+# Day 2: Retry V2 Tasks (if batch 64 works)
+#   1. P4 + V2 (most stable architecture)
+#   2. P5 + V2
+#   3. Backbone + V2
+#   4. P3 + V2 (may still need extra care)
+
+# Day 3: Retry Other Failed Tasks
+#   1. Non-V2 tasks with batch 64
+#   2. Monitor for any remaining issues
+
+# ============================================
+# SUCCESS CRITERIA
+# ============================================
+# Diagnostic test passes epoch 10 without NaN
+# → Confirms batch size is the issue
+# → Apply batch 64 to all failed tasks
+# → Expected final success rate: 90-100%
+
+# ============================================
+# COMPLETED TRAININGS (Keep for reference)
+# ============================================
+# P3 V4: ✅ 96.69% (batch 128)
+# P4 V1: ✅ 97.24% (batch 128)
+# P4 V4: ✅ 97.78% (batch 128)
+# P4 V5: ✅ 96.70% (batch 128)
+# P5 V1: ✅ 97.79% (batch 128)
+# P5 V3: ✅ 97.22% (batch 128)
+# Backbone V1: ✅ 92.27% (batch 128)
+# Backbone V3: ✅ 97.78% (batch 128)
+
+
+
