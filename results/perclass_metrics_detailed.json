@@ -1,0 +1,50 @@
+{
+  "yolov5sc_backbone": {
+    "detection": {},
+    "classification": {}
+  },
+  "yolov5mc_backbone": {
+    "detection": {},
+    "classification": {}
+  },
+  "yolov5mlc_backbone": {
+    "detection": {},
+    "classification": {}
+  },
+  "yolov5sc_p3": {
+    "detection": {},
+    "classification": {}
+  },
+  "yolov5mc_p3": {
+    "detection": {},
+    "classification": {}
+  },
+  "yolov5mlc_p3": {
+    "detection": {},
+    "classification": {}
+  },
+  "yolov5sc_p4": {
+    "detection": {},
+    "classification": {}
+  },
+  "yolov5mc_p4": {
+    "detection": {},
+    "classification": {}
+  },
+  "yolov5mlc_p4": {
+    "detection": {},
+    "classification": {}
+  },
+  "yolov5sc_p5": {
+    "detection": {},
+    "classification": {}
+  },
+  "yolov5mc_p5": {
+    "detection": {},
+    "classification": {}
+  },
+  "yolov5mlc_p5": {
+    "detection": {},
+    "classification": {}
+  }
+}

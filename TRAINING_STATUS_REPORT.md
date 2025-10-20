@@ -198,3 +198,6 @@ python train.py --data ../regurgitationV2/data.yaml --cfg models/yolov5lc_p4.yam
 
 
 
+
+
+

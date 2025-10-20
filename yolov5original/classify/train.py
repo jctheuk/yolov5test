@@ -253,7 +253,8 @@ def train(opt, device):
         # Log metrics
         if RANK in {-1, 0}:
             # Best fitness
-            if fitness > best_fitness:
+            is_best = fitness > best_fitness
+            if is_best:
                 best_fitness = fitness
 
             # Log
@@ -268,24 +269,32 @@ def train(opt, device):
 
             # Save model
             final_epoch = epoch + 1 == epochs
-            if (not opt.nosave) or final_epoch:
-                ckpt = {
-                    "epoch": epoch,
-                    "best_fitness": best_fitness,
-                    "model": deepcopy(ema.ema).half(),  # deepcopy(de_parallel(model)).half(),
-                    "ema": None,  # deepcopy(ema.ema).half(),
-                    "updates": ema.updates,
-                    "optimizer": None,  # optimizer.state_dict(),
-                    "opt": vars(opt),
-                    "git": GIT_INFO,  # {remote, branch, commit} if a git repo
-                    "date": datetime.now().isoformat(),
-                }
 
-                # Save last, best and delete
-                torch.save(ckpt, last)
-                if best_fitness == fitness:
-                    torch.save(ckpt, best)
-                del ckpt
+            # Always keep last.pt and best.pt up to date (even when --nosave is set)
+            ckpt = {
+                "epoch": epoch,
+                "best_fitness": best_fitness,
+                "model": deepcopy(ema.ema).half(),  # deepcopy(de_parallel(model)).half(),
+                "ema": None,  # deepcopy(ema.ema).half(),
+                "updates": ema.updates,
+                "optimizer": None,  # optimizer.state_dict(),
+                "opt": vars(opt),
+                "git": GIT_INFO,  # {remote, branch, commit} if a git repo
+                "date": datetime.now().isoformat(),
+            }
+
+            # Save last checkpoint every epoch
+            torch.save(ckpt, last)
+            LOGGER.info(f"Saved last.pt to {last}")
+            
+            # Save best checkpoint whenever fitness improves
+            if is_best:
+                torch.save(ckpt, best)
+                LOGGER.info(f"🏆 New best model! fitness={best_fitness:.5f} - Saved to {best}")
+
+            # If nosave is False, this is where additional artifacts could be saved
+            # (we intentionally do nothing extra here to minimize I/O when --nosave is used)
+            del ckpt
 
     # Train complete
     if RANK in {-1, 0} and final_epoch:

@@ -87,3 +87,6 @@ python train.py --data ../regurgitationV5/data.yaml --cfg models/yolov5lc_classi
 
 
 
+
+
+

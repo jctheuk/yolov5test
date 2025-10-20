@@ -1,0 +1,25 @@
+Model,Architecture,Class,Precision,Recall,mAP@0.5,mAP@0.5:0.95,Note
+YOLOv5-MC,backbone,A4C,,,,,Run validation for per-class metrics
+YOLOv5-MC,backbone,PSAX,,,,,Run validation for per-class metrics
+YOLOv5-MC,p3,A4C,,,,,Run validation for per-class metrics
+YOLOv5-MC,p3,PSAX,,,,,Run validation for per-class metrics
+YOLOv5-MC,p4,A4C,,,,,Run validation for per-class metrics
+YOLOv5-MC,p4,PSAX,,,,,Run validation for per-class metrics
+YOLOv5-MC,p5,A4C,,,,,Run validation for per-class metrics
+YOLOv5-MC,p5,PSAX,,,,,Run validation for per-class metrics
+YOLOv5-MLC,backbone,A4C,,,,,Run validation for per-class metrics
+YOLOv5-MLC,backbone,PSAX,,,,,Run validation for per-class metrics
+YOLOv5-MLC,p3,A4C,,,,,Run validation for per-class metrics
+YOLOv5-MLC,p3,PSAX,,,,,Run validation for per-class metrics
+YOLOv5-MLC,p4,A4C,,,,,Run validation for per-class metrics
+YOLOv5-MLC,p4,PSAX,,,,,Run validation for per-class metrics
+YOLOv5-MLC,p5,A4C,,,,,Run validation for per-class metrics
+YOLOv5-MLC,p5,PSAX,,,,,Run validation for per-class metrics
+YOLOv5-SC,backbone,A4C,,,,,Run validation for per-class metrics
+YOLOv5-SC,backbone,PSAX,,,,,Run validation for per-class metrics
+YOLOv5-SC,p3,A4C,,,,,Run validation for per-class metrics
+YOLOv5-SC,p3,PSAX,,,,,Run validation for per-class metrics
+YOLOv5-SC,p4,A4C,,,,,Run validation for per-class metrics
+YOLOv5-SC,p4,PSAX,,,,,Run validation for per-class metrics
+YOLOv5-SC,p5,A4C,,,,,Run validation for per-class metrics
+YOLOv5-SC,p5,PSAX,,,,,Run validation for per-class metrics

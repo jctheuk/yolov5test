@@ -1,0 +1,11 @@
+Model,Task,Class,Precision,Recall,F1-Score,mAP50,mAP50-95,Accuracy,Support
+yolov5l,Classification,A4C,0.9665,0.9690,0.9675,-,-,-,96
+yolov5l,Classification,PLAX,0.9826,0.9884,0.9855,-,-,-,139
+yolov5l,Classification,PSAX,0.9643,0.9498,0.9565,-,-,-,61
+yolov5m,Classification,A4C,0.9791,0.9692,0.9737,-,-,-,96
+yolov5m,Classification,PLAX,0.9914,0.9927,0.9920,-,-,-,139
+yolov5m,Classification,PSAX,0.9674,0.9811,0.9739,-,-,-,61
+yolov5s,Classification,A4C,0.9707,0.9733,0.9716,-,-,-,96
+yolov5s,Classification,PLAX,0.9856,0.9855,0.9854,-,-,-,139
+yolov5s,Classification,PSAX,0.9672,0.9651,0.9659,-,-,-,61
+yolov5s,Detection,Overall,-,-,0.0000,-,0.0137,-,-
